@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace XFramework
 {
-    public static partial class XReferencePool
+    public partial class XReferencePoolManager
     {
         /// <summary>
         /// 单种类别引用对象的集合
         /// </summary>
-        private sealed class ReferenceCollection
+        private sealed class ReferencePool
         {
             private readonly Queue<IReference> _pool;
             private readonly Type _referenceType;
@@ -18,7 +18,7 @@ namespace XFramework
             private int _addedReferenceCount;
             private int _removedReferenceCount;
 
-            public ReferenceCollection(Type referenceType)
+            public ReferencePool(Type referenceType)
             {
                 if (referenceType is null)
                 {
