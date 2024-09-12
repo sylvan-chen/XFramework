@@ -227,6 +227,7 @@ namespace XFramework
             {
                 throw new ArgumentNullException(nameof(node), $"ReleaseNode Failed: Node {nameof(node)} is null.");
             }
+            node.Value = default;
             _nodePool.Enqueue(node);
         }
     }
