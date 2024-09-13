@@ -13,6 +13,14 @@ namespace XFramework
         /// </remarks>
         private readonly Dictionary<int, EventHandlerChain> _events = new();
 
+        /// <summary>
+        /// 发布队列
+        /// </summary>
+        /// <remarks>
+        /// 用于存储等待延迟发布的事件。
+        /// </remarks>
+        private readonly Queue<KeyValuePair<int, EventHandlerChain>> _publishQueue = new();
+
         internal override int Priority
         {
             get { return 0; }
@@ -20,7 +28,9 @@ namespace XFramework
 
         public void ClearAll()
         {
-            throw new NotImplementedException();
+            foreach (KeyValuePair<int, EventHandlerChain> pair in _events)
+            {
+            }
         }
 
         public int EventHandlerCount(int id)
@@ -46,12 +56,31 @@ namespace XFramework
 
         public void Subscribe(int id, Action<IEventArgs> handler)
         {
-            throw new NotImplementedException();
+            if (_events.TryGetValue(id, out EventHandlerChain handlers))
+            {
+                handlers.AddHandler(handler);
+            }
+            else
+            {
+                _events[id] = new EventHandlerChain();
+                _events[id].AddHandler(handler);
+            }
         }
 
         public void Unsubscribe(int id, Action<IEventArgs> handler)
         {
-            throw new NotImplementedException();
+            if (_events.TryGetValue(id, out EventHandlerChain handlers))
+            {
+                handlers.RemoveHandler(handler);
+                if (handlers.Count == 0)
+                {
+                    _events.Remove(id);
+                }
+            }
+            else
+            {
+                XLogger.Warning($"[XFramework] [EventManager] Try to unsubscribe event (id: {id}) but there are no subscribers.");
+            }
         }
 
         internal override void Shutdown()
