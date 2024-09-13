@@ -20,13 +20,13 @@ namespace XFramework
         /// <summary>
         /// 取消订阅 T 类型的事件
         /// </summary>
+        /// <param name="id">要取消订阅的事件 ID</param>
         /// <param name="handler">事件处理器</param>
         public void Unsubscribe(int id, Action<IEventArgs> handler);
 
         /// <summary>
         /// 发布事件
         /// </summary>
-        /// <param name="id">事件 ID</param>
         /// <param name="args">事件参数</param>
         public void Publish(int id, IEventArgs args);
 

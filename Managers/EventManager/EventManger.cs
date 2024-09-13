@@ -9,9 +9,9 @@ namespace XFramework
         /// 事件字典
         /// </summary>
         /// <remarks>
-        /// key 为事件 ID，value 为事件处理器调用链。实现上，禁止 Action 的多播行为，以链表的形式构建调用链。
+        /// key 为事件 ID，value 为事件委托调用链。
         /// </remarks>
-        private readonly Dictionary<int, XLinkedList<Action<IEventArgs>>> _eventHandlers4Id = new();
+        private readonly Dictionary<int, EventHandlerChain> _events = new();
 
         internal override int Priority
         {
@@ -34,7 +34,14 @@ namespace XFramework
             {
                 throw new ArgumentNullException("args", "EventArgs cannot be null.");
             }
-            _eventHandlers4Id.TryGetValue(id, out XLinkedList<Action<IEventArgs>> handlers);
+            if (_events.TryGetValue(id, out EventHandlerChain handlers))
+            {
+                handlers.Fire(args);
+            }
+            else
+            {
+                XLogger.Warning($"[XFramework] [EventManager] Event (id: {id}) has been published but there are no subscribers.");
+            }
         }
 
         public void Subscribe(int id, Action<IEventArgs> handler)
