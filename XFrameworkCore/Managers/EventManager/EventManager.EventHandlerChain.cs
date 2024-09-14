@@ -2,7 +2,7 @@ using System;
 
 namespace XFramework
 {
-    internal sealed partial class EventManger
+    internal sealed partial class EventManager
     {
         /// <summary>
         /// 事件委托链
@@ -10,7 +10,12 @@ namespace XFramework
         private class EventHandlerChain
         {
             // 约束上最好禁止单个 Action 的多播行为。
-            private readonly XLinkedList<Action<IEventArgs>> _handlers = new();
+            private readonly XLinkedList<Action<IEventArgs>> _handlers;
+
+            public EventHandlerChain()
+            {
+                _handlers = new XLinkedList<Action<IEventArgs>>();
+            }
 
             public int Count
             {
