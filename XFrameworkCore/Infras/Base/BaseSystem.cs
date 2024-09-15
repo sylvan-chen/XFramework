@@ -19,14 +19,14 @@ namespace XFramework
         internal abstract int Priority { get; }
 
         /// <summary>
-        /// 系统的更新函数
+        /// 更新系统
         /// </summary>
         /// <param name="logicSeconds">逻辑流逝时间</param>
         /// <param name="realSeconds">真实流逝时间</param>
         internal abstract void Update(float logicSeconds, float realSeconds);
 
         /// <summary>
-        /// 清理并终止系统
+        /// 销毁系统
         /// </summary>
         internal abstract void Shutdown();
     }

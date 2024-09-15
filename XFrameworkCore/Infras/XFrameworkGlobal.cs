@@ -5,9 +5,9 @@ using System.Linq;
 namespace XFramework
 {
     /// <summary>
-    /// 主要对外入口，外部游戏引擎通过此静态类来与各个系统进行交互
+    /// 框架系统全局管理类，外部通过此类来与各个系统进行交互
     /// </summary>
-    public static class XFrameworkCore
+    public static class XFrameworkGlobal
     {
         private static readonly XLinkedList<BaseSystem> _systems = new();
 
@@ -43,7 +43,7 @@ namespace XFramework
         /// <typeparam name="T">要获取的系统接口类型</typeparam>
         /// <returns>系统实例</returns>
         /// <remarks>如果系统不存在，则自动创建该系统并返回</remarks>
-        public static T GetManager<T>() where T : class, ISystem
+        public static T GetSystem<T>() where T : class, ISystem
         {
             Type interfaceType = typeof(T);
             if (!interfaceType.IsInterface)
@@ -53,7 +53,7 @@ namespace XFramework
             // 接口实现类的类名为接口名去掉 'I'
             string systemTypeFullName = $"{interfaceType.Namespace}.{interfaceType.Name.Substring(1)}";
             Type systemType = Type.GetType(systemTypeFullName) ?? throw new InvalidOperationException($"Cannot find system type {systemTypeFullName}.");
-            return AcquireManager(systemType) as T ?? throw new InvalidOperationException($"Cannot get system of type {systemTypeFullName}.");
+            return AcquireSystem(systemType) as T ?? throw new InvalidOperationException($"Cannot get system of type {systemTypeFullName}.");
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace XFramework
         /// </summary>
         /// <param name="type">要获取的系统类型</param>
         /// <returns>系统实例</returns>
-        private static BaseSystem AcquireManager(Type type)
+        private static BaseSystem AcquireSystem(Type type)
         {
             foreach (BaseSystem system in _systems)
             {
@@ -70,7 +70,7 @@ namespace XFramework
                     return system;
                 }
             }
-            return RegisterManager(type);
+            return RegisterSystem(type);
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace XFramework
         /// <param name="systemType">要注册的系统类型</param>
         /// <returns>新的系统实例</returns>
         /// <exception cref="InvalidOperationException"></exception>
-        private static BaseSystem RegisterManager(Type systemType)
+        private static BaseSystem RegisterSystem(Type systemType)
         {
             BaseSystem system = Activator.CreateInstance(systemType) as BaseSystem ?? throw new InvalidOperationException($"Cannot create system instance of type {systemType.FullName}.");
             // 找到系统插入链表的位置（优先级从高到低，值从小到大）

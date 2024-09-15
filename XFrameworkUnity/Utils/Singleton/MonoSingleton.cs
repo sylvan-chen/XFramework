@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace XFrameworkUnity
@@ -12,13 +13,7 @@ namespace XFrameworkUnity
             {
                 if (_instance == null)
                 {
-                    _instance = FindObjectOfType<T>();
-                    // 如果场景中没有找到实例，则创建一个
-                    if (_instance == null)
-                    {
-                        var obj = new GameObject(name: typeof(T).Name);
-                        _instance = obj.AddComponent<T>();
-                    }
+                    _instance = FindObjectOfType<T>() ?? throw new NullReferenceException("MonoSingleton<" + typeof(T).Name + "> is not initialized, please check if there is an instance in the scene.");
                 }
                 return _instance;
             }
