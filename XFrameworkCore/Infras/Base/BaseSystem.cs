@@ -3,9 +3,9 @@ namespace XFramework
     /// <summary>
     /// 所有系统的基类，不对程序集外部暴露
     /// </summary>
-    internal abstract class BaseManager
+    internal abstract class BaseSystem
     {
-        public BaseManager()
+        public BaseSystem()
         {
         }
 

@@ -1,6 +1,6 @@
 namespace XFramework
 {
-    internal sealed partial class EventManager
+    internal sealed partial class EventSystem
     {
         /// <summary>
         /// 延迟事件包装类

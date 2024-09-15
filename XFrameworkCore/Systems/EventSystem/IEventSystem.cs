@@ -2,7 +2,7 @@ using System;
 
 namespace XFramework
 {
-    public interface IEventManager : IManager
+    public interface IEventSystem : ISystem
     {
         /// <summary>
         /// 对应 ID 事件的委托数量（委托调用链长度）

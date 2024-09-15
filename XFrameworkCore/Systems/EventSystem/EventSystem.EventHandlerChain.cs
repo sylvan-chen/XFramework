@@ -2,7 +2,7 @@ using System;
 
 namespace XFramework
 {
-    internal sealed partial class EventManager
+    internal sealed partial class EventSystem
     {
         /// <summary>
         /// 事件委托链
