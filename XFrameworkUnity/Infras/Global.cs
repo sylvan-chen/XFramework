@@ -5,98 +5,73 @@ using UnityEngine;
 namespace XFramework.Unity
 {
     /// <summary>
-    /// 全局管理所有其他管理器
+    /// 全局管理
     /// </summary>
-    public sealed class Global : MonoSingleton<Global>
+    public static class Global
     {
-        private readonly Dictionary<Type, BaseManager> _managerDict = new();
-
-        private void Update()
-        {
-            XFrameworkGlobal.Update(Time.deltaTime, Time.unscaledDeltaTime);
-        }
-
-        protected override void OnApplicationQuit()
-        {
-            base.OnApplicationQuit();
-            XFrameworkGlobal.Shutdown();
-            StopAllCoroutines();
-        }
+        private static readonly Dictionary<Type, BaseManager> _managerDict = new();
 
         /// <summary>
         /// 获取指定类型的管理器
         /// </summary>
         /// <typeparam name="T">要获取的管理器类型</typeparam>
         /// <returns>获取到的管理器实例</returns>
-        public T GetManager<T>() where T : BaseManager
+        public static T GetManager<T>() where T : BaseManager
         {
-            Type type = typeof(T);
-            if (!_managerDict.ContainsKey(type))
+            if (_managerDict.TryGetValue(typeof(T), out BaseManager manager))
             {
-                XLog.Error($"[XFramework] [GlobalManager] Cannot find manager of type {typeof(T).Name}");
-                return null;
+                return manager as T;
             }
-            return _managerDict[type] as T ?? throw new NullReferenceException($"Manager with type {type.Name} is null");
+            XLog.Error($"[XFramework] [GlobalManager] Cannot find manager of type {typeof(T).Name}");
+            return null;
         }
 
         /// <summary>
         /// 注册管理器
         /// </summary>
         /// <param name="manager">要注册的管理器</param>
-        public void RegisterManager(BaseManager manager)
+        public static void RegisterManager(BaseManager manager)
         {
             if (manager == null)
             {
                 XLog.Error("[XFramework] [GlobalManager] Cannot register null manager");
                 return;
             }
-            // 检查这个类型的管理器是否已经注册过
+            // 同类型的管理器不允许重复注册
             Type registeredType = manager.GetType();
             if (_managerDict.ContainsKey(registeredType))
             {
-                XLog.Error($"[XFramework] [GlobalManager] Manager {manager.GetType().Name} has already been registered");
+                XLog.Error($"[XFramework] [GlobalManager] Manager {manager.GetType().Name} is registered multiple times, please check");
                 return;
             }
             _managerDict.Add(registeredType, manager);
         }
 
-        public void UnregisterManager(BaseManager manager)
-        {
-            if (manager == null)
-            {
-                XLog.Error("[XFramework] [GlobalManager] Cannot unregister null manager");
-                return;
-            }
-            Type registeredType = manager.GetType();
-            if (!_managerDict.ContainsKey(registeredType))
-            {
-                XLog.Error($"[XFramework] [GlobalManager] Manager {manager.GetType().Name} has not been registered but try to unregister");
-                return;
-            }
-            _managerDict.Remove(registeredType);
-        }
-
         /// <summary>
-        /// 关闭游戏框架
+        /// 游戏关闭
         /// </summary>
         /// <param name="mode">关闭模式，默认为关闭游戏框架并退出游戏</param>
-        public void Shutdown(ShutdownMode mode = ShutdownMode.WithGameQuit)
+        /// <remarks>
+        /// 通过该方法安全关闭游戏而非直接调用 Application.Quit()，避免因管理器未正常关闭导致的异常。
+        /// 除了直接关闭游戏外，还提供了其他模式，如重启游戏、仅关闭游戏框架等。
+        /// </remarks>
+        public static void Shutdown(ShutdownMode mode = ShutdownMode.Default)
         {
             XLog.Info($"[XFramework] [GlobalManager] Shutdown XFramework ({mode})...");
             foreach (BaseManager manager in _managerDict.Values)
             {
                 manager.Shutdown();
             }
-            XFrameworkGlobal.Shutdown();
+            _managerDict.Clear();
             switch (mode)
             {
-                case ShutdownMode.OnlyFramework:
-                    break;
-                case ShutdownMode.WithGameQuit:
+                case ShutdownMode.Default:
                     Application.Quit();
 #if UNITY_EDITOR
                     UnityEditor.EditorApplication.isPlaying = false;
 #endif
+                    break;
+                case ShutdownMode.OnlyFramework:
                     break;
             }
         }
@@ -104,13 +79,17 @@ namespace XFramework.Unity
         public enum ShutdownMode
         {
             /// <summary>
+            /// 关闭游戏框架并退出游戏
+            /// </summary>
+            Default,
+            /// <summary>
+            /// 重启游戏
+            /// </summary>
+            Restart,
+            /// <summary>
             /// 仅关闭游戏框架，不关闭游戏
             /// </summary>
             OnlyFramework,
-            /// <summary>
-            /// 关闭游戏框架并退出游戏
-            /// </summary>
-            WithGameQuit,
         }
     }
 }

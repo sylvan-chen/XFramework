@@ -82,7 +82,7 @@ namespace XFramework.Unity
             Screen.sleepTimeout = _neverSleep ? SleepTimeout.NeverSleep : SleepTimeout.SystemSetting;
 #else
             XLog.Error("XFrameworkUnity just support Unity 5.3 or later");
-            GlobalManager.Instance.Shutdown();
+            Global.Shutdown();
 #endif
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory += OnLowMemory;

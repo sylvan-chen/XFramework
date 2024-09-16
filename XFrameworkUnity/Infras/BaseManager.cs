@@ -12,15 +12,14 @@ namespace XFramework.Unity
         /// </summary>
         protected virtual void Awake()
         {
-            Global.Instance.RegisterManager(this);
+            Global.RegisterManager(this);
         }
 
         /// <summary>
-        /// 关闭 Manager，注销自己
+        /// 关闭管理器，销毁自己
         /// </summary>
         public virtual void Shutdown()
         {
-            Global.Instance.UnregisterManager(this);
             Destroy(gameObject);
         }
     }

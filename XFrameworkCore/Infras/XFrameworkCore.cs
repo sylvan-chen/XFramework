@@ -7,7 +7,7 @@ namespace XFramework
     /// <summary>
     /// 框架模块全局管理类，外部通过此类来与各个模块进行交互
     /// </summary>
-    public static class XFrameworkGlobal
+    public static class XFrameworkCore
     {
         private static readonly XLinkedList<BaseModule> _modules = new();
 
@@ -29,7 +29,7 @@ namespace XFramework
         /// </summary>
         public static void Shutdown()
         {
-            // 按优先级倒序遍历，确保先销毁高优先级的模块
+            // 按优先级倒序遍历，确保先终止高优先级的模块
             foreach (BaseModule module in _modules.Reverse())
             {
                 module.Shutdown();

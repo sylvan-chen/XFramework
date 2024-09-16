@@ -26,7 +26,7 @@ namespace XFramework
         internal abstract void Update(float logicSeconds, float realSeconds);
 
         /// <summary>
-        /// 销毁模块
+        /// 终止模块
         /// </summary>
         internal abstract void Shutdown();
     }

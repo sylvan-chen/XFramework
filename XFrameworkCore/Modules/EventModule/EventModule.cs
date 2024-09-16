@@ -14,9 +14,9 @@ namespace XFramework
         private readonly Dictionary<int, EventHandlerChain> _events = new();
 
         /// <summary>
-        /// 延迟发布队列
+        /// 延迟发布事件列表
         /// </summary>
-        private readonly Queue<DelayEventWrapper> _delayPublishQueue = new();
+        private readonly XLinkedList<DelayEventWrapper> _delayedEvents = new();
 
         internal override int Priority
         {
@@ -57,12 +57,11 @@ namespace XFramework
             {
                 throw new ArgumentNullException("args", "EventArgs cannot be null.");
             }
-            lock (_delayPublishQueue)
+            lock (_delayedEvents)
             {
                 if (_events.TryGetValue(args.EventId, out EventHandlerChain handlerChain))
                 {
-                    // TODO: GC 优化 - 从对象池中获取 DelayEventWrapper 对象
-                    _delayPublishQueue.Enqueue(new DelayEventWrapper(args, handlerChain, delayFrame));
+                    _delayedEvents.AddLast(new DelayEventWrapper(args, handlerChain, delayFrame));
                 }
                 else
                 {
@@ -111,22 +110,24 @@ namespace XFramework
         internal override void Shutdown()
         {
             _events.Clear();
-            _delayPublishQueue.Clear();
+            _delayedEvents.Clear();
         }
 
         internal override void Update(float logicSeconds, float realSeconds)
         {
-            lock (_delayPublishQueue)
+            lock (_delayedEvents)
             {
-                while (_delayPublishQueue.Count > 0)
+                var node = _delayedEvents.First;
+                while (node != null)
                 {
-                    DelayEventWrapper eventWrapper = _delayPublishQueue.Dequeue();
-                    eventWrapper.DelayFrame--;
-                    if (eventWrapper.DelayFrame <= 0)
+                    DelayEventWrapper wrapper = node.Value;
+                    wrapper.DelayFrame--;
+                    if (wrapper.DelayFrame <= 0)
                     {
-                        eventWrapper.HandlerChain.Fire(eventWrapper.Args);
-                        // TODO: GC 优化 - 将 eventWrapper 回收到对象池
+                        wrapper.HandlerChain.Fire(wrapper.Args);
+                        _delayedEvents.Remove(node);
                     }
+                    node = node.Next;
                 }
             }
         }

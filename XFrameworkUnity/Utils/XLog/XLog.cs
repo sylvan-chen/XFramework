@@ -15,7 +15,7 @@ namespace XFramework.Unity
         [Conditional("LOG_LEVEL_DEBUG")]
         public static void Debug(object message)
         {
-            UnityEngine.Debug.Log(message);
+            UnityEngine.Debug.Log("[Debug]" + message);
         }
 
         /// <summary>

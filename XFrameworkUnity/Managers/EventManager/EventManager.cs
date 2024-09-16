@@ -7,15 +7,15 @@ namespace XFramework.Unity
     [AddComponentMenu("XFramework/EventManager")]
     public sealed class EventManager : BaseManager
     {
-        private readonly IEventModule _eventSystem = XFrameworkGlobal.GetModule<IEventModule>();
+        private readonly IEventModule _eventModule = XFrameworkCore.GetModule<IEventModule>();
 
         protected override void Awake()
         {
             base.Awake();
-            if (_eventSystem == null)
+            if (_eventModule == null)
             {
                 XLog.Fatal("[XFramework] [EventManager] EventSystem is not found, please check if it is registered in XFrameworkGlobal");
-                Global.Instance.Shutdown();
+                Global.Shutdown();
             }
         }
 
@@ -25,7 +25,7 @@ namespace XFramework.Unity
         /// <param name="id">要查询的事件 ID</param>
         public int EventHandlerCount(int id)
         {
-            return _eventSystem.EventHandlerCount(id);
+            return _eventModule.EventHandlerCount(id);
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace XFramework.Unity
         /// <param name="handler">事件委托</param>
         public void Subscribe(int id, Action<IEventArgs> handler)
         {
-            _eventSystem.Subscribe(id, handler);
+            _eventModule.Subscribe(id, handler);
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace XFramework.Unity
         /// <param name="handler">事件委托</param>
         public void Unsubscribe(int id, Action<IEventArgs> handler)
         {
-            _eventSystem.Unsubscribe(id, handler);
+            _eventModule.Unsubscribe(id, handler);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace XFramework.Unity
         /// <param name="args">事件参数</param>
         public void Publish(IEventArgs args)
         {
-            _eventSystem.Publish(args);
+            _eventModule.Publish(args);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace XFramework.Unity
         /// <param name="delayFrame">延迟帧数</param>
         public void PublishLater(IEventArgs args, int delayFrame = 1)
         {
-            _eventSystem.PublishLater(args, delayFrame);
+            _eventModule.PublishLater(args, delayFrame);
         }
     }
 }
