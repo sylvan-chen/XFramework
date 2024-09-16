@@ -35,23 +35,23 @@ namespace XFramework
             }
         }
 
-        public void Publish(int id, IEventArgs args)
+        public void Publish(IEventArgs args)
         {
             if (args == null)
             {
                 throw new ArgumentNullException("args", "EventArgs cannot be null.");
             }
-            if (_events.TryGetValue(id, out EventHandlerChain handlerChain))
+            if (_events.TryGetValue(args.EventId, out EventHandlerChain handlerChain))
             {
                 handlerChain.Fire(args);
             }
             else
             {
-                throw new ArgumentException($"Event (id: {id}) does not exist.");
+                throw new ArgumentException($"Event (id: {args.EventId}) does not exist.");
             }
         }
 
-        public void PublishLater(int id, IEventArgs args, int delayFrame = 1)
+        public void PublishLater(IEventArgs args, int delayFrame = 1)
         {
             if (args == null)
             {
@@ -59,14 +59,14 @@ namespace XFramework
             }
             lock (_delayPublishQueue)
             {
-                if (_events.TryGetValue(id, out EventHandlerChain handlerChain))
+                if (_events.TryGetValue(args.EventId, out EventHandlerChain handlerChain))
                 {
                     // TODO: GC 优化 - 从对象池中获取 DelayEventWrapper 对象
                     _delayPublishQueue.Enqueue(new DelayEventWrapper(args, handlerChain, delayFrame));
                 }
                 else
                 {
-                    throw new ArgumentException($"Event (id: {id}) does not exist.");
+                    throw new ArgumentException($"Event (id: {args.EventId}) does not exist.");
                 }
             }
         }

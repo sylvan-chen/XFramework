@@ -8,5 +8,9 @@ namespace XFramework
     /// </remarks>
     public interface IEventArgs
     {
+        /// <summary>
+        /// 事件参数对应的事件 ID
+        /// </summary>
+        public int EventId { get; }
     }
 }

@@ -18,7 +18,7 @@ namespace XFramework
         public void Subscribe(int id, Action<IEventArgs> handler);
 
         /// <summary>
-        /// 取消订阅 T 类型的事件
+        /// 取消订阅事件
         /// </summary>
         /// <param name="id">要取消订阅的事件 ID</param>
         /// <param name="handler">事件委托</param>
@@ -27,18 +27,14 @@ namespace XFramework
         /// <summary>
         /// 发布事件
         /// </summary>
-        /// <param name="id">要发布的事件 ID</param>
         /// <param name="args">事件参数</param>
-        public void Publish(int id, IEventArgs args);
+        public void Publish(IEventArgs args);
 
         /// <summary>
-        /// 延迟发布事件，下一帧发布
+        /// 延迟发布事件
         /// </summary>
-        /// <param name="id">事件 ID</param>
         /// <param name="args">事件参数</param>
-        /// <remarks>
-        /// 该方法是线程安全的
-        /// </remarks>
-        public void PublishLater(int id, IEventArgs args, int delayFrame = 1);
+        /// <param name="delayFrame">延迟帧数</param>
+        public void PublishLater(IEventArgs args, int delayFrame = 1);
     }
 }
