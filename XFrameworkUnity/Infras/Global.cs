@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using XFramework;
 
-namespace XFrameworkUnity
+namespace XFramework.Unity
 {
     /// <summary>
     /// 全局管理所有其他管理器

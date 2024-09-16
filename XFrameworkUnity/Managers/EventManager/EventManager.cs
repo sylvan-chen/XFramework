@@ -1,14 +1,13 @@
 using System;
 using UnityEngine;
-using XFramework;
 
-namespace XFrameworkUnity
+namespace XFramework.Unity
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/EventManager")]
     public sealed class EventManager : BaseManager
     {
-        private readonly IEventSystem _eventSystem = XFrameworkGlobal.GetSystem<IEventSystem>();
+        private readonly IEventModule _eventSystem = XFrameworkGlobal.GetModule<IEventModule>();
 
         protected override void Awake()
         {

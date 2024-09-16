@@ -1,9 +1,9 @@
 namespace XFramework
 {
     /// <summary>
-    /// 所有核心系统的基本接口
+    /// 所有核心模块的基本接口
     /// </summary>
-    public interface ISystem
+    public interface IModule
     {
     }
 }

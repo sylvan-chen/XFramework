@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace XFramework
 {
-    internal sealed partial class EventSystem : BaseSystem, IEventSystem
+    internal sealed partial class EventModule : BaseModule, IEventModule
     {
         /// <summary>
         /// 事件字典

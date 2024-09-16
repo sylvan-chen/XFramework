@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace XFrameworkUnity
+namespace XFramework.Unity
 {
     /// <summary>
     /// 所有管理器的基类

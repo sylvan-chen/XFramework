@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace XFrameworkUnity
+namespace XFramework.Unity
 {
     /// <summary>
     /// 日志工具类
