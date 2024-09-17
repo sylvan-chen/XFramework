@@ -42,8 +42,7 @@ namespace XFramework.Unity
             Type registeredType = manager.GetType();
             if (_managerDict.ContainsKey(registeredType))
             {
-                XLog.Error($"[XFramework] [GlobalManager] Manager {manager.GetType().Name} is registered multiple times, please check");
-                return;
+                throw new Exception($"Manager {registeredType.Name} registered multiple times, check if there are duplicate managers in your project");
             }
             _managerDict.Add(registeredType, manager);
         }
@@ -73,6 +72,7 @@ namespace XFramework.Unity
 #endif
                     break;
                 case ShutdownMode.Restart:
+                    XLog.Info("[XFramework] [GlobalManager] Restarting game...");
                     SceneManager.LoadScene(0);
                     break;
                 case ShutdownMode.OnlyFramework:

@@ -22,11 +22,6 @@ namespace XFramework
                 get { return _handlers.Count; }
             }
 
-            public void Clear()
-            {
-                _handlers.Clear();
-            }
-
             public void AddHandler(Action<IEventArgs> handler)
             {
                 _handlers.AddLast(handler);

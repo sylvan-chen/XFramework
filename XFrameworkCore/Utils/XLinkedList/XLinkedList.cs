@@ -112,8 +112,12 @@ namespace XFramework
             _linkedList.Clear();
         }
 
-        public void ClearCache()
+        /// <summary>
+        /// 包括节点池缓存在内的完全清除
+        /// </summary>
+        public void ClearEntirely()
         {
+            Clear();
             _nodePool.Clear();
         }
 

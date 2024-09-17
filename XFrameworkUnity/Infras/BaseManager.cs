@@ -19,10 +19,15 @@ namespace XFramework.Unity
         /// <summary>
         /// 关闭管理器，销毁自己
         /// </summary>
-        public virtual void Shutdown()
+        public void Shutdown()
         {
             XLog.Debug($"Shutting down manager {GetType().Name}");
             Destroy(gameObject);
         }
+
+        /// <summary>
+        /// 各管理器在自己的 OnDestroy 中处理游戏关闭时的清理工作
+        /// </summary>
+        protected abstract void OnDestroy();
     }
 }

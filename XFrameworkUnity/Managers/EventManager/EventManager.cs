@@ -7,16 +7,22 @@ namespace XFramework.Unity
     [AddComponentMenu("XFramework/EventManager")]
     public sealed class EventManager : BaseManager
     {
-        private readonly IEventModule _eventModule = XFrameworkCore.GetModule<IEventModule>();
+        private IEventModule _eventModule;
 
         protected override void Awake()
         {
             base.Awake();
+            _eventModule = XFrameworkCore.GetModule<IEventModule>();
             if (_eventModule == null)
             {
-                XLog.Fatal("[XFramework] [EventManager] EventSystem is not found, please check if it is registered in XFrameworkGlobal");
+                XLog.Fatal("[XFramework] [EventManager] EventModule is not found, please check if it is registered in XFrameworkCore");
                 Global.Shutdown();
             }
+        }
+
+        protected override void OnDestroy()
+        {
+            XLog.Debug("EventManager OnShutdown");
         }
 
         /// <summary>

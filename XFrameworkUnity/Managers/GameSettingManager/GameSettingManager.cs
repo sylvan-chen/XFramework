@@ -81,7 +81,7 @@ namespace XFramework.Unity
             Time.timeScale = _gameSpeed;
             Screen.sleepTimeout = _neverSleep ? SleepTimeout.NeverSleep : SleepTimeout.SystemSetting;
 #else
-            XLog.Error("XFrameworkUnity just support Unity 5.3 or later");
+            XLog.Fatal("XFrameworkUnity just support Unity 5.3 or later");
             Global.Shutdown();
 #endif
 #if UNITY_5_6_OR_NEWER
@@ -89,8 +89,9 @@ namespace XFramework.Unity
 #endif
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            XLog.Debug("GameSettingManager OnShudown");
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory -= OnLowMemory;
 #endif

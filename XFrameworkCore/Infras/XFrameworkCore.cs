@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using XFramework.Unity;
 
 namespace XFramework
 {
@@ -25,16 +26,16 @@ namespace XFramework
         }
 
         /// <summary>
-        /// 终止并清理所有模块
+        /// 关闭游戏框架，清理所有模块
         /// </summary>
         public static void Shutdown()
         {
-            // 按优先级倒序遍历，确保先终止高优先级的模块
+            // 按优先级倒序遍历，先清理高优先级的模块
             foreach (BaseModule module in _modules.Reverse())
             {
-                module.Shutdown();
+                module.OnShutdown();
             }
-            _modules.Clear();
+            _modules.ClearEntirely();
         }
 
         /// <summary>

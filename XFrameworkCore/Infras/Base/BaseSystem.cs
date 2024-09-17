@@ -26,8 +26,8 @@ namespace XFramework
         internal abstract void Update(float logicSeconds, float realSeconds);
 
         /// <summary>
-        /// 终止模块
+        /// 各模块在关闭游戏框架时执行的清理操作
         /// </summary>
-        internal abstract void Shutdown();
+        internal abstract void OnShutdown();
     }
 }
