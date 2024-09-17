@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace XFramework.Unity
 {
@@ -70,6 +71,9 @@ namespace XFramework.Unity
 #if UNITY_EDITOR
                     UnityEditor.EditorApplication.isPlaying = false;
 #endif
+                    break;
+                case ShutdownMode.Restart:
+                    SceneManager.LoadScene(0);
                     break;
                 case ShutdownMode.OnlyFramework:
                     break;

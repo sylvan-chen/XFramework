@@ -12,6 +12,7 @@ namespace XFramework.Unity
         /// </summary>
         protected virtual void Awake()
         {
+            XLog.Debug($"Registering manager {GetType().Name} to Global");
             Global.RegisterManager(this);
         }
 
@@ -20,6 +21,7 @@ namespace XFramework.Unity
         /// </summary>
         public virtual void Shutdown()
         {
+            XLog.Debug($"Shutting down manager {GetType().Name}");
             Destroy(gameObject);
         }
     }
