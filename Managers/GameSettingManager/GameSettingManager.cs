@@ -89,9 +89,9 @@ namespace XFramework.Unity
 #endif
         }
 
-        protected override void OnDestroy()
+        protected override void OnShutdown()
         {
-            XLog.Debug("GameSettingManager OnShudown");
+            XLog.Debug("GameSettingManager OnShutdown");
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory -= OnLowMemory;
 #endif

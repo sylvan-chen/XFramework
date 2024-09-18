@@ -1,8 +1,8 @@
 using System;
 
-namespace XFramework
+namespace XFramework.Unity
 {
-    internal sealed partial class EventModule
+    public sealed partial class EventManager
     {
         /// <summary>
         /// 事件委托链

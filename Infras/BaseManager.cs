@@ -22,12 +22,13 @@ namespace XFramework.Unity
         public void Shutdown()
         {
             XLog.Debug($"Shutting down manager {GetType().Name}");
+            OnShutdown();
             Destroy(gameObject);
         }
 
         /// <summary>
-        /// 各管理器在自己的 OnDestroy 中处理游戏关闭时的清理工作
+        /// 管理器关闭时的收尾工作
         /// </summary>
-        protected abstract void OnDestroy();
+        protected abstract void OnShutdown();
     }
 }

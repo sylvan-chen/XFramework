@@ -1,6 +1,6 @@
-namespace XFramework
+namespace XFramework.Unity
 {
-    internal sealed partial class EventModule
+    public sealed partial class EventManager
     {
         /// <summary>
         /// 延迟事件包装类

@@ -12,15 +12,9 @@ namespace XFramework.Unity
     [AddComponentMenu("XFramework/CoreManager")]
     public sealed class CoreManager : BaseManager
     {
-        private void Update()
-        {
-            XFrameworkCore.Update(Time.deltaTime, Time.unscaledDeltaTime);
-        }
-
-        protected override void OnDestroy()
+        protected override void OnShutdown()
         {
             XLog.Debug("CoreManager OnShutdown");
-            XFrameworkCore.Shutdown();
             StopAllCoroutines();
         }
     }

@@ -48,7 +48,7 @@ namespace XFramework.Unity
         }
 
         /// <summary>
-        /// 游戏关闭
+        /// 关闭游戏
         /// </summary>
         /// <param name="mode">关闭模式，默认为关闭游戏框架并退出游戏</param>
         /// <remarks>
