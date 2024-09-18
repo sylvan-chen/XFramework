@@ -50,50 +50,39 @@ namespace XFramework.Unity
         /// <summary>
         /// 关闭游戏
         /// </summary>
-        /// <param name="mode">关闭模式，默认为关闭游戏框架并退出游戏</param>
-        /// <remarks>
-        /// 通过该方法安全关闭游戏而非直接调用 Application.Quit()，避免因管理器未正常关闭导致的异常。
-        /// 除了直接关闭游戏外，还提供了其他模式，如重启游戏、仅关闭游戏框架等。
-        /// </remarks>
-        public static void Shutdown(ShutdownMode mode = ShutdownMode.Default)
+        public static void QuitGame()
         {
-            XLog.Info($"[XFramework] [GlobalManager] Shutdown XFramework ({mode})...");
+            XLog.Info("[XFramework] [GlobalManager] Quit game...");
+            Application.Quit();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#endif
+        }
+
+        /// <summary>
+        /// 重启游戏
+        /// </summary>
+        public static void RestartGame()
+        {
+            ShutdownFramework();
+            XLog.Info("[XFramework] [GlobalManager] Restarting game...");
+            SceneManager.LoadScene(0);
+        }
+
+        /// <summary>
+        /// 关闭框架
+        /// </summary>
+        /// <remarks>
+        /// 清理所有管理器，并销毁框架。
+        /// </remarks>
+        public static void ShutdownFramework()
+        {
+            XLog.Info("[XFramework] [GlobalManager] Shutdown XFramework...");
             foreach (BaseManager manager in _managerDict.Values)
             {
                 manager.Shutdown();
             }
             _managerDict.Clear();
-            switch (mode)
-            {
-                case ShutdownMode.Default:
-                    Application.Quit();
-#if UNITY_EDITOR
-                    UnityEditor.EditorApplication.isPlaying = false;
-#endif
-                    break;
-                case ShutdownMode.Restart:
-                    XLog.Info("[XFramework] [GlobalManager] Restarting game...");
-                    SceneManager.LoadScene(0);
-                    break;
-                case ShutdownMode.OnlyFramework:
-                    break;
-            }
-        }
-
-        public enum ShutdownMode
-        {
-            /// <summary>
-            /// 关闭游戏框架并退出游戏
-            /// </summary>
-            Default,
-            /// <summary>
-            /// 重启游戏
-            /// </summary>
-            Restart,
-            /// <summary>
-            /// 仅关闭游戏框架，不关闭游戏
-            /// </summary>
-            OnlyFramework,
         }
     }
 }

@@ -17,5 +17,13 @@ namespace XFramework.Unity
             XLog.Debug("CoreManager OnShutdown");
             StopAllCoroutines();
         }
+
+        /// <summary>
+        /// 在应用程序退出时，先关闭游戏框架，保证安全退出
+        /// </summary>
+        private void OnApplicationQuit()
+        {
+            Global.ShutdownFramework();
+        }
     }
 }
