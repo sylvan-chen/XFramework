@@ -28,6 +28,6 @@ namespace XFramework
         /// <summary>
         /// 各模块在关闭游戏框架时执行的清理操作
         /// </summary>
-        internal abstract void OnShutdown();
+        internal abstract void Shutdown();
     }
 }

@@ -33,7 +33,7 @@ namespace XFramework
             // 按优先级倒序遍历，先清理高优先级的模块
             foreach (BaseModule module in _modules.Reverse())
             {
-                module.OnShutdown();
+                module.Shutdown();
             }
             _modules.ClearEntirely();
         }

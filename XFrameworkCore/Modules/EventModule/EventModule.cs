@@ -107,10 +107,8 @@ namespace XFramework
             }
         }
 
-        internal override void OnShutdown()
+        internal override void Shutdown()
         {
-            // ? 这里要不要先遍历 _events 清空每个 EventHandlerChain 里的 handler 列表？
-            // TODO: 学习 GC 相关知识
             _events.Clear();
             _delayedEvents.ClearEntirely();
         }

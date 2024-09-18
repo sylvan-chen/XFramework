@@ -6,7 +6,7 @@ namespace XFramework.Unity
     /// 核心管理器
     /// </summary>
     /// <remarks>
-    /// 维护整个框架和游戏系统的运转和关闭。
+    /// 维护整个框架和游戏系统的生命周期。
     /// </remarks>
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/CoreManager")]
