@@ -11,6 +11,11 @@ namespace XFramework
         private static IEventManager _eventManager;
         private static IGameSettingManager _gameSettingManager;
 
+        public static ICoreManager CoreManager
+        {
+            get { return _coreManager ?? throw new NullReferenceException("ICoreManager not registered."); }
+        }
+
         public static IEventManager EventManager
         {
             get { return _eventManager ?? throw new NullReferenceException("IEventManager not registered."); }
@@ -54,53 +59,6 @@ namespace XFramework
                     XLog.Error($"[XFramework] [Global] Register {manger.GetType().Name} of generic type {typeof(T).Name} failed. {typeof(T).Name} is not supported bt XFramework yet.");
                     break;
             }
-        }
-
-        /// <summary>
-        /// 关闭游戏
-        /// </summary>
-        public static void QuitGame()
-        {
-            if (CheckDriverRegistered())
-            {
-                _coreManager.QuitGame();
-            }
-        }
-
-        /// <summary>
-        /// 重启游戏
-        /// </summary>
-        public static void RestartGame()
-        {
-            if (CheckDriverRegistered())
-            {
-                _coreManager.RestartGame();
-            }
-        }
-
-        /// <summary>
-        /// 关闭框架
-        /// </summary>
-        /// <remarks>
-        /// 清理所有管理器，并销毁框架。
-        /// </remarks>
-        public static void ShutdownFramework()
-        {
-            if (CheckDriverRegistered())
-            {
-                _coreManager.ShutdownFramework();
-            }
-            _coreManager = null;
-        }
-
-        private static bool CheckDriverRegistered()
-        {
-            if (_coreManager == null)
-            {
-                XLog.Fatal("[XFramework] [Global] No FrameworkDriver registered.");
-                return false;
-            }
-            return true;
         }
     }
 }

@@ -1,10 +1,10 @@
 namespace XFramework
 {
     /// <summary>
-    /// 核心框架
+    /// 核心管理器
     /// </summary>
     /// <remarks>
-    /// 游戏程序的起点，第一个实例化的对象，负责管理框架和整个游戏的生命周期。
+    /// 游戏程序的起点，第一个实例化的管理器，负责管理框架和整个游戏的生命周期。
     /// </remarks>
     public interface ICoreManager : IManager
     {

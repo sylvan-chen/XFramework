@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 
 namespace XFramework.Unity
 {
-    public class UnityFrameworkBooter : MonoBehaviour, ICoreManager
+    public class CoreManager : MonoBehaviour, ICoreManager
     {
         private void Awake()
         {
