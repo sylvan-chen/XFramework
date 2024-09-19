@@ -38,9 +38,12 @@ namespace XFramework
                 XLog.Error($"[XFramework] [Global] Register manager of generic type {typeof(T).Name} failed. The manager is null.");
                 return;
             }
-            XLog.Debug($"[XFramework] [Global] Register {manger.GetType().Name} of generic type {typeof(T).Name}.");
+            // XLog.Debug($"[XFramework] [Global] Register {manger.GetType().Name} of generic type {typeof(T).Name}.");
             switch (typeof(T).Name)
             {
+                case "ICoreManager":
+                    _coreManager = manger as ICoreManager;
+                    break;
                 case "IEventManager":
                     _eventManager = manger as IEventManager;
                     break;
