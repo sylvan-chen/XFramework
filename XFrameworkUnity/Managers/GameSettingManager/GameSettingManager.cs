@@ -5,27 +5,19 @@ namespace XFramework.Unity
     /// <summary>
     /// 游戏设置管理器
     /// </summary>
-    [DisallowMultipleComponent]
-    [AddComponentMenu("XFramework/GameSettingManager")]
-    public sealed class GameSettingManager : BaseManager
+    public sealed class GameSettingManager : IModule
     {
-        [Header("帧率设置（FPS）")]
-        [SerializeField]
-        private int _frameRate = 30;
+        private int _frameRate = 30;                  // 帧率
+        private float _gameSpeed = 1f;                // 游戏速度
+        private bool _allowRunInBackground = true;    // 允许后台运行
+        private bool _neverSleep = false;             // 保持屏幕常亮
 
-        [Header("游戏速度")]
-        [SerializeField]
-        private float _gameSpeed = 1f;
+        private float _gameSpeedBeforePause = 1f;     // 游戏暂停前的游戏速度
 
-        [Header("允许后台运行")]
-        [SerializeField]
-        private bool _allowRunInBackground = true;
-
-        [Header("保持屏幕常亮")]
-        [SerializeField]
-        private bool _neverSleep = false;
-
-        private float _gameSpeedBeforePause = 1f;  // 游戏暂停前的游戏速度
+        public int Priority
+        {
+            get { return 0; }
+        }
 
         /// <summary>
         /// 帧率
@@ -72,9 +64,8 @@ namespace XFramework.Unity
             get { return Time.timeScale == 0f; }
         }
 
-        protected override void Awake()
+        public void Init()
         {
-            base.Awake();
 #if UNITY_5_3_OR_NEWER
             Application.targetFrameRate = _frameRate;
             Application.runInBackground = _allowRunInBackground;
@@ -89,9 +80,12 @@ namespace XFramework.Unity
 #endif
         }
 
-        protected override void OnShutdown()
+        public void Update(float deltaTime, float realTime)
         {
-            XLog.Debug("GameSettingManager OnShutdown");
+        }
+
+        public void Shutdown()
+        {
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory -= OnLowMemory;
 #endif

@@ -1,21 +1,40 @@
 using System.Diagnostics;
 
-namespace XFramework.Unity
+namespace XFramework
 {
     /// <summary>
     /// 日志工具类
     /// </summary>
     public static class XLog
     {
+        private static ILogDriver _logDriver;
+
+        public static void RegisterDriver(ILogDriver driver)
+        {
+            _logDriver = driver;
+        }
+
+        private static bool CheckDriverRegistered()
+        {
+            if (_logDriver == null)
+            {
+                return false;
+            }
+            return true;
+        }
+
         /// <summary>
         /// 打印 Debug 级别日志
         /// </summary>
         /// <param name="message"></param>
         [Conditional("LOG_LEVEL_ALL")]
         [Conditional("LOG_LEVEL_DEBUG")]
-        public static void Debug(object message)
+        public static void Debug(string message)
         {
-            UnityEngine.Debug.Log("[Debug]" + message);
+            if (CheckDriverRegistered())
+            {
+                _logDriver.Debug(message);
+            }
         }
 
         /// <summary>
@@ -25,9 +44,12 @@ namespace XFramework.Unity
         [Conditional("LOG_LEVEL_ALL")]
         [Conditional("LOG_LEVEL_DEBUG")]
         [Conditional("LOG_LEVEL_INFO")]
-        public static void Info(object message)
+        public static void Info(string message)
         {
-            UnityEngine.Debug.Log(message);
+            if (CheckDriverRegistered())
+            {
+                _logDriver.Info(message);
+            }
         }
 
         /// <summary>
@@ -38,9 +60,12 @@ namespace XFramework.Unity
         [Conditional("LOG_LEVEL_DEBUG")]
         [Conditional("LOG_LEVEL_INFO")]
         [Conditional("LOG_LEVEL_WARNING")]
-        public static void Warning(object message)
+        public static void Warning(string message)
         {
-            UnityEngine.Debug.LogWarning(message);
+            if (CheckDriverRegistered())
+            {
+                _logDriver.Warning(message);
+            }
         }
 
         /// <summary>
@@ -52,9 +77,12 @@ namespace XFramework.Unity
         [Conditional("LOG_LEVEL_INFO")]
         [Conditional("LOG_LEVEL_WARNING")]
         [Conditional("LOG_LEVEL_ERROR")]
-        public static void Error(object message)
+        public static void Error(string message)
         {
-            UnityEngine.Debug.LogError(message);
+            if (CheckDriverRegistered())
+            {
+                _logDriver.Error(message);
+            }
         }
 
         /// <summary>
@@ -70,25 +98,12 @@ namespace XFramework.Unity
         [Conditional("LOG_LEVEL_WARNING")]
         [Conditional("LOG_LEVEL_ERROR")]
         [Conditional("LOG_LEVEL_FATAL")]
-        public static void Fatal(object message)
+        public static void Fatal(string message)
         {
-            UnityEngine.Debug.LogError("[Fatal]" + message);
-        }
-
-
-        /// <summary>
-        /// 打印 Exception
-        /// </summary>
-        /// <param name="exception"></param>
-        [Conditional("LOG_LEVEL_ALL")]
-        [Conditional("LOG_LEVEL_DEBUG")]
-        [Conditional("LOG_LEVEL_INFO")]
-        [Conditional("LOG_LEVEL_WARNING")]
-        [Conditional("LOG_LEVEL_ERROR")]
-        [Conditional("LOG_LEVEL_FATAL")]
-        public static void Exception(System.Exception exception)
-        {
-            UnityEngine.Debug.LogException(exception);
+            if (CheckDriverRegistered())
+            {
+                _logDriver.Fatal(message);
+            }
         }
     }
 }

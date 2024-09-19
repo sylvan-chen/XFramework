@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace XFramework.Unity
+namespace XFramework
 {
-    [DisallowMultipleComponent]
-    [AddComponentMenu("XFramework/EventManager")]
-    public sealed partial class EventManager : BaseManager
+    public sealed partial class EventManager : IModule
     {
         /// <summary>
         /// 事件字典
@@ -21,7 +18,16 @@ namespace XFramework.Unity
         /// </summary>
         private readonly XLinkedList<DelayEventWrapper> _delayedEvents = new();
 
-        private void Update()
+        public int Priority
+        {
+            get { return 0; }
+        }
+
+        public void Init()
+        {
+        }
+
+        public void Update(float logicTime, float realTime)
         {
             lock (_delayedEvents)
             {
@@ -40,9 +46,8 @@ namespace XFramework.Unity
             }
         }
 
-        protected override void OnShutdown()
+        public void Shutdown()
         {
-            XLog.Debug("EventManager OnShutdown");
         }
 
         /// <summary>

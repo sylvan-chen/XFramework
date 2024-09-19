@@ -1,4 +1,4 @@
-namespace XFramework.Unity
+namespace XFramework
 {
     public sealed partial class EventManager
     {

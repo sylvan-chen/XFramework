@@ -1,4 +1,4 @@
-namespace XFramework.Unity
+namespace XFramework
 {
     /// <summary>
     /// 事件参数接口
