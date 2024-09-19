@@ -3,10 +3,11 @@ using UnityEngine.SceneManagement;
 
 namespace XFramework.Unity
 {
-    public class CoreManager : MonoBehaviour, ICoreManager
+    public class UnityFrameworkBooter : MonoBehaviour, ICoreManager
     {
         private void Awake()
         {
+            LoadDrivers();
             Global.RegisterManager<ICoreManager>(this);
         }
 
@@ -32,12 +33,6 @@ namespace XFramework.Unity
             SceneManager.LoadScene(0);
         }
 
-        public void BootFramework()
-        {
-            XLog.Info("[XFramework.Unity] [CoreManager] Boot XFramework...");
-            LoadDrivers();
-        }
-
         public void ShutdownFramework()
         {
             XLog.Info("[XFramework.Unity] [CoreManager] Shutdown XFramework...");
@@ -49,7 +44,6 @@ namespace XFramework.Unity
         /// </summary>
         private void LoadDrivers()
         {
-            XLog.Info("[XFramework.Unity] [CoreManager] [BootFramework] Load drivers...");
             var logDriver = new LogDriver();
             XLog.RegisterDriver(logDriver);
         }
