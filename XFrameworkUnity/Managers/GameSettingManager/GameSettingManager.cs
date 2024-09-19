@@ -5,7 +5,7 @@ namespace XFramework.Unity
     /// <summary>
     /// 游戏设置管理器
     /// </summary>
-    public sealed class GameSettingManager : IModule
+    public sealed class GameSettingManager : MonoBehaviour, IGameSettingManager
     {
         private int _frameRate = 30;                  // 帧率
         private float _gameSpeed = 1f;                // 游戏速度
@@ -13,11 +13,6 @@ namespace XFramework.Unity
         private bool _neverSleep = false;             // 保持屏幕常亮
 
         private float _gameSpeedBeforePause = 1f;     // 游戏暂停前的游戏速度
-
-        public int Priority
-        {
-            get { return 0; }
-        }
 
         /// <summary>
         /// 帧率
@@ -64,8 +59,9 @@ namespace XFramework.Unity
             get { return Time.timeScale == 0f; }
         }
 
-        public void Init()
+        public void Awake()
         {
+            Global.RegisterManager<IGameSettingManager>(this);
 #if UNITY_5_3_OR_NEWER
             Application.targetFrameRate = _frameRate;
             Application.runInBackground = _allowRunInBackground;
@@ -80,11 +76,7 @@ namespace XFramework.Unity
 #endif
         }
 
-        public void Update(float deltaTime, float realTime)
-        {
-        }
-
-        public void Shutdown()
+        public void OnDestroy()
         {
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory -= OnLowMemory;

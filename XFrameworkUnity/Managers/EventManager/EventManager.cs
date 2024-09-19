@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
-namespace XFramework
+namespace XFramework.Unity
 {
-    public sealed partial class EventManager : IModule
+    public sealed partial class EventManager : MonoBehaviour, IEventManager
     {
         /// <summary>
         /// 事件字典
@@ -18,16 +19,12 @@ namespace XFramework
         /// </summary>
         private readonly XLinkedList<DelayEventWrapper> _delayedEvents = new();
 
-        public int Priority
+        private void Awake()
         {
-            get { return 0; }
+            Global.RegisterManager<IEventManager>(this);
         }
 
-        public void Init()
-        {
-        }
-
-        public void Update(float logicTime, float realTime)
+        private void Update()
         {
             lock (_delayedEvents)
             {
@@ -46,14 +43,6 @@ namespace XFramework
             }
         }
 
-        public void Shutdown()
-        {
-        }
-
-        /// <summary>
-        /// 查询对应 ID 事件的委托数量
-        /// </summary>
-        /// <param name="id">要查询的事件 ID</param>
         public int EventHandlerCount(int id)
         {
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
@@ -66,11 +55,6 @@ namespace XFramework
             }
         }
 
-        /// <summary>
-        /// 订阅事件
-        /// </summary>
-        /// <param name="id">要订阅的事件 ID</param>
-        /// <param name="handler">事件委托</param>
         public void Subscribe(int id, Action<IEventArgs> handler)
         {
             if (handler == null)
@@ -88,11 +72,6 @@ namespace XFramework
             }
         }
 
-        /// <summary>
-        /// 取消订阅事件
-        /// </summary>
-        /// <param name="id">要取消订阅的事件 ID</param>
-        /// <param name="handler">事件委托</param>
         public void Unsubscribe(int id, Action<IEventArgs> handler)
         {
             if (handler == null)
@@ -113,11 +92,6 @@ namespace XFramework
             }
         }
 
-        /// <summary>
-        /// 发布事件
-        /// </summary>
-        /// <param name="id">要发布的事件 ID</param>
-        /// <param name="args">事件参数</param>
         public void Publish(int id, IEventArgs args)
         {
             if (args == null)
@@ -134,12 +108,6 @@ namespace XFramework
             }
         }
 
-        /// <summary>
-        /// 延迟发布事件
-        /// </summary>
-        /// <param name="id">要发布的事件 ID</param>
-        /// <param name="args">事件参数</param>
-        /// <param name="delayFrame">延迟帧数</param>
         public void PublishLater(int id, IEventArgs args, int delayFrame = 1)
         {
             if (args == null)
@@ -157,6 +125,11 @@ namespace XFramework
                     throw new ArgumentException($"Event (id: {id}) does not exist.");
                 }
             }
+        }
+
+        public void RemoveAllSubscribe()
+        {
+            _eventDict.Clear();
         }
     }
 }

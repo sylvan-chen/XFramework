@@ -1,14 +1,7 @@
-using UnityEngine;
-
 namespace XFramework.Unity
 {
-    public class UnityLogDriver : MonoBehaviour, ILogDriver
+    public class LogDriver : ILogDriver
     {
-        private void Awake()
-        {
-            XLog.RegisterDriver(this);
-        }
-
         public void Debug(string message)
         {
             UnityEngine.Debug.Log("[Debug] " + message);

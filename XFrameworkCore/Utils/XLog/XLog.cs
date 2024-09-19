@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 
 namespace XFramework
@@ -18,7 +19,7 @@ namespace XFramework
         {
             if (_logDriver == null)
             {
-                return false;
+                throw new NullReferenceException("No LogDriver registered.");
             }
             return true;
         }
