@@ -17,14 +17,13 @@ namespace XFramework.Unity
         protected override void OnApplicationQuit()
         {
             base.OnApplicationQuit();
+            XLog.Info("[XFramework.Unity] [GameController] Force quit game!");
             ShutdownFramework();
         }
 
-        private void BootGame()
-        {
-            XLog.Info("[XFramework.Unity] [GameController] Boot game...");
-        }
-
+        /// <summary>
+        /// 关闭游戏
+        /// </summary>
         public void ShutdownGame()
         {
             XLog.Info("[XFramework.Unity] [GameController] Quit game...");
@@ -35,7 +34,12 @@ namespace XFramework.Unity
 #endif
         }
 
-        public void ShutdownFramework()
+        private void BootGame()
+        {
+            XLog.Info("[XFramework.Unity] [GameController] Boot game...");
+        }
+
+        private void ShutdownFramework()
         {
             XLog.Info("[XFramework.Unity] [GameController] Shutdown XFramework...");
             Destroy(gameObject);

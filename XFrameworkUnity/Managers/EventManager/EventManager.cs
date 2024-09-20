@@ -21,6 +21,7 @@ namespace XFramework.Unity
 
         private void Awake()
         {
+            XLog.Debug("[XFramework.Unity] [EventManager] Registering EventManager...");
             GlobalManager.Register<IEventManager>(this);
         }
 
