@@ -21,7 +21,7 @@ namespace XFramework.Unity
 
         private void Awake()
         {
-            Global.RegisterManager<IEventManager>(this);
+            GlobalManager.Register<IEventManager>(this);
         }
 
         private void Update()

@@ -8,22 +8,6 @@ namespace XFramework
     /// </summary>
     public static class XLog
     {
-        private static ILogDriver _logDriver;
-
-        public static void RegisterDriver(ILogDriver driver)
-        {
-            _logDriver = driver;
-        }
-
-        private static bool CheckDriverRegistered()
-        {
-            if (_logDriver == null)
-            {
-                throw new NullReferenceException("No LogDriver registered.");
-            }
-            return true;
-        }
-
         /// <summary>
         /// 打印 Debug 级别日志
         /// </summary>
@@ -32,10 +16,7 @@ namespace XFramework
         [Conditional("LOG_LEVEL_DEBUG")]
         public static void Debug(string message)
         {
-            if (CheckDriverRegistered())
-            {
-                _logDriver.Debug(message);
-            }
+            UnityEngine.Debug.Log("[Debug] " + message);
         }
 
         /// <summary>
@@ -47,10 +28,7 @@ namespace XFramework
         [Conditional("LOG_LEVEL_INFO")]
         public static void Info(string message)
         {
-            if (CheckDriverRegistered())
-            {
-                _logDriver.Info(message);
-            }
+            UnityEngine.Debug.Log(message);
         }
 
         /// <summary>
@@ -63,10 +41,7 @@ namespace XFramework
         [Conditional("LOG_LEVEL_WARNING")]
         public static void Warning(string message)
         {
-            if (CheckDriverRegistered())
-            {
-                _logDriver.Warning(message);
-            }
+            UnityEngine.Debug.LogWarning(message);
         }
 
         /// <summary>
@@ -80,10 +55,7 @@ namespace XFramework
         [Conditional("LOG_LEVEL_ERROR")]
         public static void Error(string message)
         {
-            if (CheckDriverRegistered())
-            {
-                _logDriver.Error(message);
-            }
+            UnityEngine.Debug.LogError(message);
         }
 
         /// <summary>
@@ -101,10 +73,7 @@ namespace XFramework
         [Conditional("LOG_LEVEL_FATAL")]
         public static void Fatal(string message)
         {
-            if (CheckDriverRegistered())
-            {
-                _logDriver.Fatal(message);
-            }
+            UnityEngine.Debug.LogError("[Fatal] " + message);
         }
     }
 }

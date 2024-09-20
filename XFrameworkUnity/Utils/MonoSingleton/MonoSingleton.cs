@@ -45,7 +45,10 @@ namespace XFramework.Unity
         protected override void Awake()
         {
             base.Awake();
-            DontDestroyOnLoad(gameObject);
+            if (gameObject != null)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
         }
     }
 }
