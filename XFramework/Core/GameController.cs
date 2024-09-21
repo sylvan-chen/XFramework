@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace XFramework.Unity
+namespace XFramework
 {
     public class GameController : MonoSingletonPersistent<GameController>
     {

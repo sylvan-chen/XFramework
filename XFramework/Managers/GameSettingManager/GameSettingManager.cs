@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace XFramework.Unity
+namespace XFramework
 {
     /// <summary>
     /// 游戏设置管理器

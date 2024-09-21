@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace XFramework.Unity
+namespace XFramework
 {
     public sealed partial class EventManager : MonoBehaviour, IEventManager
     {
