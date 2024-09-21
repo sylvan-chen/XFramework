@@ -35,6 +35,7 @@ namespace XFramework
             {
                 throw new NullReferenceException($"[XFramework] [Global] Register manager of generic type {typeof(T).Name} failed. The manager is null.");
             }
+            XLog.Debug($"[XFramework] [Global] {typeof(T).Name} implemented by {manager.GetType().Name} registered.");
             switch (typeof(T).Name)
             {
                 case "IEventManager":
@@ -44,7 +45,7 @@ namespace XFramework
                     _gameSettingManager = manager as IGameSettingManager;
                     break;
                 default:
-                    throw new NotSupportedException($"[XFramework] [Global] Register {manager.GetType().Name} of generic type {typeof(T).Name} failed. {typeof(T).Name} is not supported bt XFramework yet.");
+                    throw new NotSupportedException($"[XFramework] [Global] Register {manager.GetType().Name} implementing {typeof(T).Name} failed. {typeof(T).Name} is not supported bt XFramework yet.");
             }
         }
     }

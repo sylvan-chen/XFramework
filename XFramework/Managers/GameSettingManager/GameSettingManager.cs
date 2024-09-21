@@ -61,7 +61,6 @@ namespace XFramework
 
         public void Awake()
         {
-            XLog.Debug("[XFramework] [GameSettingManager] Registering GameSettingManager...");
             GlobalManager.Register<IGameSettingManager>(this);
 #if UNITY_5_3_OR_NEWER
             Application.targetFrameRate = _frameRate;
@@ -70,7 +69,7 @@ namespace XFramework
             Screen.sleepTimeout = _neverSleep ? SleepTimeout.NeverSleep : SleepTimeout.SystemSetting;
 #else
             XLog.Fatal("XFrameworkUnity just support Unity 5.3 or later");
-            Global.QuitGame();
+            Application.Quit();
 #endif
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory += OnLowMemory;

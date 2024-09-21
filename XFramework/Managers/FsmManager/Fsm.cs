@@ -6,7 +6,7 @@ namespace XFramework
     public sealed class Fsm<T> : IFsm<T> where T : class
     {
         private string _id;
-        private Dictionary<Type, IFsmState<T>> _stateDict;
+        private readonly Dictionary<Type, IFsmState<T>> _stateDict;
         private T _target;
         private IFsmState<T> _currentState;
         private float _currentStateTime;

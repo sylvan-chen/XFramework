@@ -21,7 +21,6 @@ namespace XFramework
 
         private void Awake()
         {
-            XLog.Debug("[XFramework.Unity] [EventManager] Registering EventManager...");
             GlobalManager.Register<IEventManager>(this);
         }
 
@@ -52,7 +51,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Event (id: {id}) does not exist.");
+                throw new ArgumentException($"[XFramework] [EventManager] Event (id: {id}) does not exist.");
             }
         }
 
@@ -60,7 +59,7 @@ namespace XFramework
         {
             if (handler == null)
             {
-                throw new ArgumentNullException("handler", "Handler cannot be null.");
+                throw new ArgumentNullException("handler", "[XFramework] [EventManager] Subscribe(): Handler cannot be null.");
             }
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChian))
             {
@@ -77,7 +76,7 @@ namespace XFramework
         {
             if (handler == null)
             {
-                throw new ArgumentNullException("handler", "Handler cannot be null.");
+                throw new ArgumentNullException("handler", "[XFramework] [EventManager] Unsubscribe(): Handler cannot be null.");
             }
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
             {
@@ -89,7 +88,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Event (id: {id}) does not exist.");
+                throw new ArgumentException($"[XFramework] [EventManager] Event (id: {id}) does not exist.");
             }
         }
 
@@ -97,7 +96,7 @@ namespace XFramework
         {
             if (args == null)
             {
-                throw new ArgumentNullException("args", "EventArgs cannot be null.");
+                throw new ArgumentNullException("args", "[XFramework] [EventManager] EventArgs cannot be null.");
             }
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
             {
@@ -105,7 +104,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Event (id: {id}) does not exist.");
+                throw new ArgumentException($"[XFramework] [EventManager] Event (id: {id}) does not exist.");
             }
         }
 
@@ -113,7 +112,7 @@ namespace XFramework
         {
             if (args == null)
             {
-                throw new ArgumentNullException("args", "EventArgs cannot be null.");
+                throw new ArgumentNullException("args", "[XFramework] [EventManager] EventArgs cannot be null.");
             }
             lock (_delayedEvents)
             {
@@ -123,7 +122,7 @@ namespace XFramework
                 }
                 else
                 {
-                    throw new ArgumentException($"Event (id: {id}) does not exist.");
+                    throw new ArgumentException($"[XFramework] [EventManager] Event (id: {id}) does not exist.");
                 }
             }
         }
