@@ -14,9 +14,9 @@ namespace XFramework
         string Key { get; }
 
         /// <summary>
-        /// 被管理的目标对象
+        /// 拥有状态的对象
         /// </summary>
-        T Target { get; }
+        T Owner { get; }
 
         /// <summary>
         /// 状态数量

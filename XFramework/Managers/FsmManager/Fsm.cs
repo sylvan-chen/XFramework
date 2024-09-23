@@ -7,18 +7,18 @@ namespace XFramework
     {
         private string _id;
         private readonly Dictionary<Type, IFsmState<T>> _stateDict;
-        private T _target;
+        private T _owner;
         private IFsmState<T> _currentState;
         private float _currentStateTime;
 
-        public Fsm(string id, T target, params IFsmState<T>[] states)
+        public Fsm(string id, T owner, params IFsmState<T>[] states)
         {
             if (states == null || states.Length < 1)
             {
                 throw new ArgumentException("[XFramework] [Fsm] At least one state is required.", "states");
             }
             _id = id ?? throw new ArgumentException("[XFramework] [Fsm] Key cannot be null or empty.", "name");
-            _target = target ?? throw new ArgumentException("[XFramework] [Fsm] Target cannot be null.", "owner");
+            _owner = owner ?? throw new ArgumentException("[XFramework] [Fsm] Target cannot be null.", "owner");
             _stateDict = new Dictionary<Type, IFsmState<T>>();
             foreach (IFsmState<T> state in states)
             {
@@ -43,10 +43,10 @@ namespace XFramework
             private set { _id = value ?? string.Empty; }
         }
 
-        public T Target
+        public T Owner
         {
-            get { return _target; }
-            private set { _target = value; }
+            get { return _owner; }
+            private set { _owner = value; }
         }
 
         public int StateCount
