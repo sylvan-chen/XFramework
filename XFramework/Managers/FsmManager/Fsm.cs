@@ -13,11 +13,16 @@ namespace XFramework
 
         public Fsm(string id, T owner, params IFsmState<T>[] states)
         {
+            if (string.IsNullOrEmpty(id))
+            {
+                throw new ArgumentException("[XFramework] [Fsm] ID cannot be null or empty.", "id");
+            }
             if (states == null || states.Length < 1)
             {
                 throw new ArgumentException("[XFramework] [Fsm] At least one state is required.", "states");
             }
-            _id = id ?? throw new ArgumentException("[XFramework] [Fsm] Key cannot be null or empty.", "name");
+
+            _id = id;
             _owner = owner ?? throw new ArgumentException("[XFramework] [Fsm] Target cannot be null.", "owner");
             _stateDict = new Dictionary<Type, IFsmState<T>>();
             foreach (IFsmState<T> state in states)
@@ -28,7 +33,7 @@ namespace XFramework
                 }
                 if (_stateDict.ContainsKey(state.GetType()))
                 {
-                    throw new ArgumentException($"[XFramework] [Fsm] Duplicate state type {state.GetType().FullName} found in FSM({Key}).", "states");
+                    throw new ArgumentException($"[XFramework] [Fsm] Duplicate state type {state.GetType().FullName} found in FSM({Id}).", "states");
                 }
                 _stateDict.Add(state.GetType(), state);
                 state.OnInit(this);
@@ -37,7 +42,19 @@ namespace XFramework
             _currentStateTime = 0;
         }
 
-        public string Key
+        public Fsm(string id, T owner, List<IFsmState<T>> states) : this(id, owner, states.ToArray())
+        {
+        }
+
+        public Fsm(T owner, params IFsmState<T>[] states) : this(string.Empty, owner, states)
+        {
+        }
+
+        public Fsm(T owner, List<IFsmState<T>> states) : this(string.Empty, owner, states.ToArray())
+        {
+        }
+
+        public string Id
         {
             get { return _id; }
             private set { _id = value ?? string.Empty; }
@@ -78,7 +95,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Key}).", "TState");
+                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Id}).", "TState");
             }
         }
 
@@ -111,7 +128,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Key}).", "TState");
+                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Id}).", "TState");
             }
         }
 
