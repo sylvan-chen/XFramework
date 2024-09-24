@@ -5,15 +5,15 @@ namespace XFramework
 {
     public sealed class Fsm<T> : IFsm<T> where T : class
     {
-        private string _id;
-        private readonly Dictionary<Type, IFsmState<T>> _stateDict;
+        private string _name;
         private T _owner;
+        private readonly Dictionary<Type, IFsmState<T>> _stateDict;
         private IFsmState<T> _currentState;
         private float _currentStateTime;
 
-        public Fsm(string id, T owner, params IFsmState<T>[] states)
+        public Fsm(string name, T owner, params IFsmState<T>[] states)
         {
-            if (string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(name))
             {
                 throw new ArgumentException("[XFramework] [Fsm] ID cannot be null or empty.", "id");
             }
@@ -22,7 +22,7 @@ namespace XFramework
                 throw new ArgumentException("[XFramework] [Fsm] At least one state is required.", "states");
             }
 
-            _id = id;
+            _name = name;
             _owner = owner ?? throw new ArgumentException("[XFramework] [Fsm] Target cannot be null.", "owner");
             _stateDict = new Dictionary<Type, IFsmState<T>>();
             foreach (IFsmState<T> state in states)
@@ -33,7 +33,7 @@ namespace XFramework
                 }
                 if (_stateDict.ContainsKey(state.GetType()))
                 {
-                    throw new ArgumentException($"[XFramework] [Fsm] Duplicate state type {state.GetType().FullName} found in FSM({Id}).", "states");
+                    throw new ArgumentException($"[XFramework] [Fsm] Duplicate state type {state.GetType().FullName} found in FSM({Name}).", "states");
                 }
                 _stateDict.Add(state.GetType(), state);
                 state.OnInit(this);
@@ -42,7 +42,7 @@ namespace XFramework
             _currentStateTime = 0;
         }
 
-        public Fsm(string id, T owner, List<IFsmState<T>> states) : this(id, owner, states.ToArray())
+        public Fsm(string name, T owner, List<IFsmState<T>> states) : this(name, owner, states.ToArray())
         {
         }
 
@@ -54,10 +54,10 @@ namespace XFramework
         {
         }
 
-        public string Id
+        public string Name
         {
-            get { return _id; }
-            private set { _id = value ?? string.Empty; }
+            get { return _name; }
+            private set { _name = value ?? string.Empty; }
         }
 
         public T Owner
@@ -83,9 +83,9 @@ namespace XFramework
 
         public void Start<TState>() where TState : class, IFsmState<T>
         {
-            if (_currentState != null)
+            if (CheckStarted())
             {
-                throw new InvalidOperationException("[XFramework] [Fsm] FSM is already running, don't start it again.");
+                throw new InvalidOperationException("[XFramework] [Fsm] FSM has already been started, don't start it again.");
             }
             if (_stateDict.TryGetValue(typeof(TState), out IFsmState<T> state))
             {
@@ -95,7 +95,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Id}).", "TState");
+                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Name}).", "TState");
             }
         }
 
@@ -115,9 +115,9 @@ namespace XFramework
 
         public void ChangeState<TState>() where TState : class, IFsmState<T>
         {
-            if (_currentState == null)
+            if (!CheckStarted())
             {
-                throw new InvalidOperationException("[XFramework] [Fsm] FSM is not running, cannot change state.");
+                throw new InvalidOperationException("[XFramework] [Fsm] FSM didn't start yet, cannot change state.");
             }
             if (_stateDict.TryGetValue(typeof(TState), out IFsmState<T> state))
             {
@@ -128,7 +128,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Id}).", "TState");
+                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Name}).", "TState");
             }
         }
 
@@ -139,9 +139,14 @@ namespace XFramework
             return result;
         }
 
+        /// <summary>
+        /// 更新状态机
+        /// </summary>
+        /// <param name="logicSeconds">逻辑时间</param>
+        /// <param name="realSeconds">真实时间</param>
         public void Update(float logicSeconds, float realSeconds)
         {
-            if (_currentState == null)
+            if (!CheckStarted())
             {
                 return;
             }
@@ -149,13 +154,21 @@ namespace XFramework
             _currentState.OnUpdate(this, logicSeconds, realSeconds);
         }
 
-        public void Shutdown()
+        /// <summary>
+        /// 销毁状态机
+        /// </summary>
+        public void Destroy()
         {
             _currentState?.OnExit(this);
             foreach (IFsmState<T> state in _stateDict.Values)
             {
                 state.OnDestroy(this);
             }
+        }
+
+        private bool CheckStarted()
+        {
+            return _currentState != null;
         }
     }
 }

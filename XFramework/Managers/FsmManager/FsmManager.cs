@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,48 +6,98 @@ namespace XFramework
 {
     public class FsmManager : MonoBehaviour, IFsmManager
     {
-        private readonly Dictionary<string, IFsm> _fsms = new();
+        private readonly Dictionary<int, IFsm> _fsms = new();
 
-        private const string DEFAULT_FSM_ID = "default";
+        private const string DEFAULT_FSM_NAME = "default";
 
-        public IFsm<T> CreateFsm<T>(T owner, IFsmState<T> states) where T : class
+        private void Update()
         {
-            return CreateFsm(DEFAULT_FSM_ID, owner, states);
+
         }
 
-        public IFsm<T> CreateFsm<T>(string id, T owner, IFsmState<T> states) where T : class
+        public IFsm<T> CreateFsm<T>(T owner, IFsmState<T>[] states) where T : class
         {
-            string creatingId = typeof(T).Name + "_" + id;
-            if (_fsms.ContainsKey(creatingId))
+            return CreateFsm(DEFAULT_FSM_NAME, owner, states);
+        }
+
+        public IFsm<T> CreateFsm<T>(string name, T owner, IFsmState<T>[] states) where T : class
+        {
+            if (name == null)
             {
-                XLog.Error("FSM with id " + creatingId + " already exists!");
+                throw new ArgumentNullException(nameof(name), "[XFramework] [FsmManager] FSM name cannot be null.");
+            }
+            if (owner == null)
+            {
+                throw new ArgumentNullException(nameof(owner), "[XFramework] [FsmManager] Owner cannot be null.");
+            }
+            if (states == null || states.Length == 0)
+            {
+                throw new ArgumentNullException(nameof(states), "[XFramework] [FsmManager] States cannot be null or empty.");
+            }
+            int id = GetId(typeof(T), name);
+            if (_fsms.ContainsKey(id))
+            {
+                XLog.Error($"[XFramework] [FsmManager] FSM ({id}) already exists.");
                 return null;
             }
 
-            var fsm = new Fsm<T>(creatingId, owner, states);
-            _fsms.Add(creatingId, fsm);
+            var fsm = new Fsm<T>(name, owner, states);
+            _fsms.Add(id, fsm);
             return fsm;
+        }
+
+        public IFsm<T> CreateFsm<T>(T owner, List<IFsmState<T>> states) where T : class
+        {
+            return CreateFsm(DEFAULT_FSM_NAME, owner, states.ToArray());
+        }
+
+        public IFsm<T> CreateFsm<T>(string name, T owner, List<IFsmState<T>> states) where T : class
+        {
+            return CreateFsm(name, owner, states.ToArray());
         }
 
 
         public IFsm<T> GetFsm<T>() where T : class
         {
-            throw new System.NotImplementedException();
+            return GetFsm<T>(DEFAULT_FSM_NAME);
         }
 
-        public IFsm<T> GetFsm<T>(string id) where T : class
+        public IFsm<T> GetFsm<T>(string name) where T : class
         {
-            throw new System.NotImplementedException();
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name), "[XFramework] [FsmManager] FSM name cannot be null.");
+            }
+            int id = GetId(typeof(T), name);
+            if (_fsms.TryGetValue(id, out IFsm fsm))
+            {
+                return fsm as IFsm<T>;
+            }
+            return null;
         }
 
         public void DestroyFsm<T>() where T : class
         {
-            throw new System.NotImplementedException();
+            DestroyFsm<T>(DEFAULT_FSM_NAME);
         }
 
-        public void DestroyFsm<T>(string id) where T : class
+        public void DestroyFsm<T>(string name) where T : class
         {
-            throw new System.NotImplementedException();
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name), "[XFramework] [FsmManager] FSM name cannot be null.");
+            }
+            int id = GetId(typeof(T), name);
+            if (_fsms.TryGetValue(id, out IFsm fsm))
+            {
+                (fsm as Fsm<T>).Destroy();
+                _fsms.Remove(id);
+            }
+        }
+
+        private int GetId(Type type, string name)
+        {
+            return (type.Name + name).GetHashCode();
         }
     }
 }
