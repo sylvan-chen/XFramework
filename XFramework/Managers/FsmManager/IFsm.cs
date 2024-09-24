@@ -6,7 +6,7 @@ namespace XFramework
     public interface IFsm
     {
         /// <summary>
-        /// 状态机的 ID
+        /// 状态机的名字
         /// </summary>
         public string Name { get; }
 
