@@ -10,6 +10,7 @@ namespace XFramework
         private readonly Dictionary<Type, IFsmState<T>> _stateDict;
         private IFsmState<T> _currentState;
         private float _currentStateTime;
+        private bool _isDestroyed;
 
         public Fsm(string name, T owner, params IFsmState<T>[] states)
         {
@@ -40,6 +41,7 @@ namespace XFramework
             }
             _currentState = null;
             _currentStateTime = 0;
+            _isDestroyed = false;
         }
 
         public Fsm(string name, T owner, List<IFsmState<T>> states) : this(name, owner, states.ToArray())
@@ -81,8 +83,17 @@ namespace XFramework
             get { return _currentStateTime; }
         }
 
+        public bool IsDestroyed
+        {
+            get { return _isDestroyed; }
+        }
+
         public void Start<TState>() where TState : class, IFsmState<T>
         {
+            if (_isDestroyed)
+            {
+                throw new InvalidOperationException("[XFramework] [Fsm] FSM has already been destroyed, but you're trying to start it.");
+            }
             if (CheckStarted())
             {
                 throw new InvalidOperationException("[XFramework] [Fsm] FSM has already been started, don't start it again.");
@@ -115,6 +126,10 @@ namespace XFramework
 
         public void ChangeState<TState>() where TState : class, IFsmState<T>
         {
+            if (_isDestroyed)
+            {
+                throw new InvalidOperationException("[XFramework] [Fsm] FSM has already been destroyed, but you're trying to change state.");
+            }
             if (!CheckStarted())
             {
                 throw new InvalidOperationException("[XFramework] [Fsm] FSM didn't start yet, cannot change state.");
@@ -139,14 +154,9 @@ namespace XFramework
             return result;
         }
 
-        /// <summary>
-        /// 更新状态机
-        /// </summary>
-        /// <param name="logicSeconds">逻辑时间</param>
-        /// <param name="realSeconds">真实时间</param>
         public void Update(float logicSeconds, float realSeconds)
         {
-            if (!CheckStarted())
+            if (!CheckStarted() || _isDestroyed)
             {
                 return;
             }
@@ -154,9 +164,6 @@ namespace XFramework
             _currentState.OnUpdate(this, logicSeconds, realSeconds);
         }
 
-        /// <summary>
-        /// 销毁状态机
-        /// </summary>
         public void Destroy()
         {
             _currentState?.OnExit(this);
@@ -164,6 +171,7 @@ namespace XFramework
             {
                 state.OnDestroy(this);
             }
+            _isDestroyed = true;
         }
 
         private bool CheckStarted()

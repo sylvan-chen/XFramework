@@ -1,5 +1,8 @@
 namespace XFramework
 {
+    /// <summary>
+    /// 有限状态机（泛型无关）
+    /// </summary>
     public interface IFsm
     {
         /// <summary>
@@ -8,9 +11,16 @@ namespace XFramework
         public string Name { get; }
 
         /// <summary>
-        /// 状态数量
+        /// 更新状态机
         /// </summary>
-        public int StateCount { get; }
+        /// <param name="logicSeconds">逻辑时间</param>
+        /// <param name="realSeconds">真实时间</param>
+        public void Update(float logicSeconds, float realSeconds);
+
+        /// <summary>
+        /// 销毁状态机
+        /// </summary>
+        public void Destroy();
     }
 
     /// <summary>
@@ -23,6 +33,11 @@ namespace XFramework
         /// 拥有状态的对象
         /// </summary>
         public T Owner { get; }
+
+        /// <summary>
+        /// 状态数量
+        /// </summary>
+        public int StateCount { get; }
 
         /// <summary>
         /// 状态机的当前状态

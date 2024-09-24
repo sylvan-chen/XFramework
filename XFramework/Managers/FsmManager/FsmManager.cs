@@ -12,7 +12,19 @@ namespace XFramework
 
         private void Update()
         {
+            foreach (IFsm fsm in _fsms.Values)
+            {
+                fsm.Update(Time.deltaTime, Time.unscaledDeltaTime);
+            }
+        }
 
+        private void OnDestroy()
+        {
+            foreach (IFsm fsm in _fsms.Values)
+            {
+                fsm.Destroy();
+            }
+            _fsms.Clear();
         }
 
         public IFsm<T> CreateFsm<T>(T owner, IFsmState<T>[] states) where T : class
@@ -90,7 +102,7 @@ namespace XFramework
             int id = GetId(typeof(T), name);
             if (_fsms.TryGetValue(id, out IFsm fsm))
             {
-                (fsm as Fsm<T>).Destroy();
+                fsm.Destroy();
                 _fsms.Remove(id);
             }
         }
