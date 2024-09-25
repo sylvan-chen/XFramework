@@ -16,25 +16,25 @@ namespace XFramework
         {
             if (string.IsNullOrEmpty(name))
             {
-                throw new ArgumentException("[XFramework] [Fsm] ID cannot be null or empty.", "id");
+                throw new ArgumentException($"Construct FSM failed. Initial states cannot be null or empty.", nameof(name));
             }
             if (states == null || states.Length < 1)
             {
-                throw new ArgumentException("[XFramework] [Fsm] At least one state is required.", "states");
+                throw new ArgumentException("Construct FSM failed. At least one state is required in initial states.", nameof(states));
             }
 
             _name = name;
-            _owner = owner ?? throw new ArgumentException("[XFramework] [Fsm] Target cannot be null.", "owner");
+            _owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Construct FSM failed. Initial states cannot be null.");
             _stateDict = new Dictionary<Type, IFsmState<T>>();
             foreach (IFsmState<T> state in states)
             {
                 if (state == null)
                 {
-                    throw new ArgumentException("[XFramework] [Fsm] State cannot be null.", "states");
+                    throw new ArgumentNullException(nameof(states), $"Construct FSM failed. The state in initial states cannot be null.");
                 }
                 if (_stateDict.ContainsKey(state.GetType()))
                 {
-                    throw new ArgumentException($"[XFramework] [Fsm] Duplicate state type {state.GetType().FullName} found in FSM({Name}).", "states");
+                    throw new ArgumentException($"Construct FSM failed. Duplicate state in initial states is not allowed, type {state.GetType().FullName} is already found.", nameof(states));
                 }
                 _stateDict.Add(state.GetType(), state);
                 state.OnInit(this);
@@ -92,11 +92,11 @@ namespace XFramework
         {
             if (_isDestroyed)
             {
-                throw new InvalidOperationException("[XFramework] [Fsm] FSM has already been destroyed, but you're trying to start it.");
+                throw new InvalidOperationException($"Start FSM {Name} failed. It has already been destroyed.");
             }
             if (CheckStarted())
             {
-                throw new InvalidOperationException("[XFramework] [Fsm] FSM has already been started, don't start it again.");
+                throw new InvalidOperationException($"Start FSM {Name} failed. It has already been started, don't start it again.");
             }
             if (_stateDict.TryGetValue(typeof(TState), out IFsmState<T> state))
             {
@@ -106,7 +106,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Name}).", "TState");
+                throw new ArgumentException($"Start FSM {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
             }
         }
 
@@ -128,11 +128,11 @@ namespace XFramework
         {
             if (_isDestroyed)
             {
-                throw new InvalidOperationException("[XFramework] [Fsm] FSM has already been destroyed, but you're trying to change state.");
+                throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM has already been destroyed.");
             }
             if (!CheckStarted())
             {
-                throw new InvalidOperationException("[XFramework] [Fsm] FSM didn't start yet, cannot change state.");
+                throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM didn't start yet.");
             }
             if (_stateDict.TryGetValue(typeof(TState), out IFsmState<T> state))
             {
@@ -143,12 +143,20 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [Fsm] State {typeof(TState).FullName} not found in FSM({Name}).", "TState");
+                throw new ArgumentException($"Change state of FSM {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
             }
         }
 
         public IFsmState<T>[] GetAllStates()
         {
+            if (_isDestroyed)
+            {
+                throw new InvalidOperationException($"Get all states of FSM {Name} failed. The FSM has already been destroyed.");
+            }
+            if (_stateDict.Count == 0)
+            {
+                return new IFsmState<T>[0];
+            }
             var result = new IFsmState<T>[_stateDict.Count];
             _stateDict.Values.CopyTo(result, 0);
             return result;

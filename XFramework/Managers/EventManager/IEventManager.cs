@@ -8,7 +8,7 @@ namespace XFramework
         /// 查询对应 ID 事件的委托数量
         /// </summary>
         /// <param name="id">要查询的事件 ID</param>
-        public int EventHandlerCount(int id);
+        public int GetEventHandlerCount(int id);
 
         /// <summary>
         /// 订阅事件

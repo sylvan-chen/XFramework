@@ -43,7 +43,7 @@ namespace XFramework
             }
         }
 
-        public int EventHandlerCount(int id)
+        public int GetEventHandlerCount(int id)
         {
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
             {
@@ -51,7 +51,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [EventManager] Event (id: {id}) does not exist.");
+                throw new ArgumentException($"GetEventHandlerCount failed, event id {id} does not exist.", nameof(id));
             }
         }
 
@@ -59,7 +59,7 @@ namespace XFramework
         {
             if (handler == null)
             {
-                throw new ArgumentNullException("handler", "[XFramework] [EventManager] Subscribe(): Handler cannot be null.");
+                throw new ArgumentNullException(nameof(handler), "Subscribe failed, handler cannot be null.");
             }
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChian))
             {
@@ -76,7 +76,7 @@ namespace XFramework
         {
             if (handler == null)
             {
-                throw new ArgumentNullException("handler", "[XFramework] [EventManager] Unsubscribe(): Handler cannot be null.");
+                throw new ArgumentNullException(nameof(handler), "Unsubscribe failed, handler cannot be null.");
             }
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
             {
@@ -88,7 +88,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [EventManager] Event (id: {id}) does not exist.");
+                throw new ArgumentException($"Unsubscribe failed, event id {id} does not exist.", nameof(id));
             }
         }
 
@@ -96,7 +96,7 @@ namespace XFramework
         {
             if (args == null)
             {
-                throw new ArgumentNullException("args", "[XFramework] [EventManager] EventArgs cannot be null.");
+                throw new ArgumentNullException(nameof(args), "Publish failed, event arguments cannot be null.");
             }
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
             {
@@ -104,7 +104,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"[XFramework] [EventManager] Event (id: {id}) does not exist.");
+                throw new ArgumentException($"Publish failed, event id {id} does not exist.", nameof(id));
             }
         }
 
@@ -112,7 +112,7 @@ namespace XFramework
         {
             if (args == null)
             {
-                throw new ArgumentNullException("args", "[XFramework] [EventManager] EventArgs cannot be null.");
+                throw new ArgumentNullException(nameof(args), "PublishLater failed, event arguments cannot be null.");
             }
             lock (_delayedEvents)
             {
@@ -122,7 +122,7 @@ namespace XFramework
                 }
                 else
                 {
-                    throw new ArgumentException($"[XFramework] [EventManager] Event (id: {id}) does not exist.");
+                    throw new ArgumentException($"PublishLater failed, event id {id} does not exist.", nameof(id));
                 }
             }
         }
