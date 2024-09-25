@@ -14,17 +14,12 @@ namespace XFramework
 
         public Fsm(string name, T owner, params IFsmState<T>[] states)
         {
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new ArgumentException($"Construct FSM failed. Initial states cannot be null or empty.", nameof(name));
-            }
             if (states == null || states.Length < 1)
             {
                 throw new ArgumentException("Construct FSM failed. At least one state is required in initial states.", nameof(states));
             }
-
-            _name = name;
-            _owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Construct FSM failed. Initial states cannot be null.");
+            _name = name ?? throw new ArgumentNullException(nameof(name), $"Construct FSM failed. Name cannot be null.");
+            _owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Construct FSM failed. Owner cannot be null.");
             _stateDict = new Dictionary<Type, IFsmState<T>>();
             foreach (IFsmState<T> state in states)
             {
