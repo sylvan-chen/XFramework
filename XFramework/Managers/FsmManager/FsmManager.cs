@@ -41,21 +41,20 @@ namespace XFramework
         {
             if (name == null)
             {
-                throw new ArgumentNullException(nameof(name), "[XFramework] [FsmManager] FSM name cannot be null.");
+                throw new ArgumentNullException(nameof(name), "Create FSM failed. Name cannot be null.");
             }
             if (owner == null)
             {
-                throw new ArgumentNullException(nameof(owner), "[XFramework] [FsmManager] Owner cannot be null.");
+                throw new ArgumentNullException(nameof(owner), "Create FSM failed. Owner cannot be null.");
             }
             if (states == null || states.Length == 0)
             {
-                throw new ArgumentNullException(nameof(states), "[XFramework] [FsmManager] States cannot be null or empty.");
+                throw new ArgumentNullException(nameof(states), "Create FSM failed. Initial states cannot be null or empty.");
             }
             int id = GetId(typeof(T), name);
             if (_fsms.ContainsKey(id))
             {
-                XLog.Error($"[XFramework] [FsmManager] FSM ({id}) already exists.");
-                return null;
+                throw new InvalidOperationException($"Create FSM failed. FSM with the same name ({name}) and same owner type ({typeof(T).Name}) already exists.");
             }
 
             var fsm = new Fsm<T>(name, owner, states);
@@ -73,7 +72,6 @@ namespace XFramework
             return CreateFsm(name, owner, states.ToArray());
         }
 
-
         public IFsm<T> GetFsm<T>() where T : class
         {
             return GetFsm<T>(DEFAULT_FSM_NAME);
@@ -83,7 +81,7 @@ namespace XFramework
         {
             if (name == null)
             {
-                throw new ArgumentNullException(nameof(name), "[XFramework] [FsmManager] FSM name cannot be null.");
+                throw new ArgumentNullException(nameof(name), "Get FSM failed. Name cannot be null.");
             }
             int id = GetId(typeof(T), name);
             if (_fsms.TryGetValue(id, out IFsm fsm))
@@ -102,7 +100,7 @@ namespace XFramework
         {
             if (name == null)
             {
-                throw new ArgumentNullException(nameof(name), "[XFramework] [FsmManager] FSM name cannot be null.");
+                throw new ArgumentNullException(nameof(name), "Destroy FSM failed. Name cannot be null.");
             }
             int id = GetId(typeof(T), name);
             if (_fsms.TryGetValue(id, out IFsm fsm))
