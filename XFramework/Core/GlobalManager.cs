@@ -9,15 +9,21 @@ namespace XFramework
     {
         private static IEventManager _eventManager;
         private static IGameSettingManager _gameSettingManager;
+        private static IFsmManager _fsmManager;
 
         public static IEventManager Event
         {
-            get { return _eventManager ?? throw new NullReferenceException("[XFramework] [Global] IEventManager not registered."); }
+            get => _eventManager ?? throw new NullReferenceException("[XFramework] [Global] IEventManager not registered.");
         }
 
         public static IGameSettingManager GameSetting
         {
-            get { return _gameSettingManager ?? throw new NullReferenceException("[XFramework] [Global] IGameSettingManager not registered."); }
+            get => _gameSettingManager ?? throw new NullReferenceException("[XFramework] [Global] IGameSettingManager not registered.");
+        }
+
+        public static IFsmManager Fsm
+        {
+            get => _fsmManager ?? throw new NullReferenceException("[XFramework] [Global] IFsmManager not registered.");
         }
 
         /// <summary>
