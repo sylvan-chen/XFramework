@@ -10,11 +10,6 @@ namespace XFramework
 
         private const string DEFAULT_FSM_NAME = "default";
 
-        private void Awake()
-        {
-            GlobalManager.Register<IFsmManager>(this);
-        }
-
         private void Update()
         {
             foreach (IFsm fsm in _fsms.Values)

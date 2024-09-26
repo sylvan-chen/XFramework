@@ -19,11 +19,6 @@ namespace XFramework
         /// </summary>
         private readonly XLinkedList<DelayEventWrapper> _delayedEvents = new();
 
-        private void Awake()
-        {
-            GlobalManager.Register<IEventManager>(this);
-        }
-
         private void Update()
         {
             lock (_delayedEvents)

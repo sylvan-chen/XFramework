@@ -61,7 +61,6 @@ namespace XFramework
 
         public void Awake()
         {
-            GlobalManager.Register<IGameSettingManager>(this);
 #if UNITY_5_3_OR_NEWER
             Application.targetFrameRate = _frameRate;
             Application.runInBackground = _allowRunInBackground;

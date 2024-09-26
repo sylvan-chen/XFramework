@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace XFramework
@@ -26,7 +25,7 @@ namespace XFramework
             // 注册所有流程为状态
             foreach (string typeName in _procedureTypeNames)
             {
-
+                Type type = Type.GetType(typeName);
             }
             // _fsmManager = GlobalManager.Fsm.CreateFsm<ProcedureManager>(this, );
         }
