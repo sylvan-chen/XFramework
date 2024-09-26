@@ -1,11 +1,11 @@
 namespace XFramework
 {
     /// <summary>
-    /// 用于状态机的目标对象类型的状态
+    /// 状态机拥有者的状态
     /// </summary>
-    /// <typeparam name="T">目标对象类型</typeparam>
+    /// <typeparam name="T">状态机拥有者的类型</typeparam>
     /// <remarks>
-    /// 所有状态都必须继承自此基类，可自由选择实现哪些方法。
+    /// 所有状态都必须继承此接口。
     /// </remarks>
     public interface IFsmState<T> where T : class
     {

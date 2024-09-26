@@ -12,17 +12,18 @@ namespace XFramework
         [SerializeField]
         private string _startupProcedureTypeName;
 
-        private IFsmManager _fsmManager;
+        private IFsm<ProcedureManager> _procedureFsm;
 
         public BaseProcedure CurrentProcedure
         {
-            get;
+            get => _procedureFsm.CurrentState as BaseProcedure;
         }
 
         public float CurrentProcedureTime => throw new System.NotImplementedException();
 
         private void Start()
         {
+            // 注册所有流程为状态
             foreach (string typeName in _procedureTypeNames)
             {
 
