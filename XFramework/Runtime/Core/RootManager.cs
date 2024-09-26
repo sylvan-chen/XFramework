@@ -31,7 +31,7 @@ namespace XFramework
         protected override void OnApplicationQuit()
         {
             base.OnApplicationQuit();
-            XLog.Info("[XFramework] [GameController] Force quit game!");
+            Log.Info("[XFramework] [GameController] Force quit game!");
             ShutdownFramework();
         }
 
@@ -57,7 +57,7 @@ namespace XFramework
         /// </summary>
         public void ShutdownGame()
         {
-            XLog.Info("[XFramework] [GameController] Quit game...");
+            Log.Info("[XFramework] [GameController] Quit game...");
             ShutdownFramework();
             Application.Quit();
 #if UNITY_EDITOR
@@ -75,12 +75,12 @@ namespace XFramework
                 return;
             }
             _isBooted = true;
-            XLog.Info("[XFramework] [GameController] Boot game...");
+            Log.Info("[XFramework] [GameController] Boot game...");
         }
 
         private void ShutdownFramework()
         {
-            XLog.Info("[XFramework] [GameController] Shutdown XFramework...");
+            Log.Info("[XFramework] [GameController] Shutdown XFramework...");
             Destroy(gameObject);
         }
     }

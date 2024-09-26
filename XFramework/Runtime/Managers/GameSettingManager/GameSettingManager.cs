@@ -121,7 +121,7 @@ namespace XFramework
         /// </summary>
         private void OnLowMemory()
         {
-            XLog.Warning("[XFramework] [GlobalManager] Low memory reported...");
+            Log.Warning("[XFramework] [GlobalManager] Low memory reported...");
             // TODO: 处理内存不足的情况
         }
     }

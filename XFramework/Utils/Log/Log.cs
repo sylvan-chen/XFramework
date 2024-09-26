@@ -5,7 +5,7 @@ namespace XFramework.Utils
     /// <summary>
     /// 日志工具类
     /// </summary>
-    public static class XLog
+    public static class Log
     {
         /// <summary>
         /// 打印 Debug 级别日志
