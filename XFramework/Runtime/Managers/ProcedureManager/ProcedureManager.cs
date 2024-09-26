@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace XFramework
@@ -9,7 +10,7 @@ namespace XFramework
         private string[] _procedureTypeNames;
 
         [SerializeField]
-        private string _startupProcedureTypeName;
+        private string _firstProcedureTypeName;
 
         private IFsm<ProcedureManager> _procedureFsm;
 

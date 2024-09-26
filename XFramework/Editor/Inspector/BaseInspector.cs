@@ -1,18 +1,38 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using UnityEditor;
+using UnityEngine.UIElements;
 
-public class BaseInspector : MonoBehaviour
+namespace XFramework.Editor
 {
-    // Start is called before the first frame update
-    void Start()
+    public abstract class BaseInspector : UnityEditor.Editor
     {
-        
-    }
+        private bool _isCompileStart = false;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        public override void OnInspectorGUI()
+        {
+            if (!_isCompileStart && EditorApplication.isCompiling)
+            {
+                _isCompileStart = true;
+                OnCompileStart();
+            }
+            else if (_isCompileStart && !EditorApplication.isCompiling)
+            {
+                _isCompileStart = false;
+                OnCompileFinish();
+            }
+        }
+
+        /// <summary>
+        /// 编译开始事件
+        /// </summary>
+        protected virtual void OnCompileStart()
+        {
+        }
+
+        /// <summary>
+        /// 编译结束事件
+        /// </summary>
+        protected virtual void OnCompileFinish()
+        {
+        }
     }
 }
