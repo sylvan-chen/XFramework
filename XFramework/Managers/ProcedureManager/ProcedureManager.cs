@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,7 +23,11 @@ namespace XFramework
 
         private void Start()
         {
-            // _fsmManager = GlobalManager.
+            foreach (string typeName in _procedureTypeNames)
+            {
+
+            }
+            // _fsmManager = GlobalManager.Fsm.CreateFsm<ProcedureManager>(this, );
         }
 
         public T GetProcedure<T>() where T : BaseProcedure

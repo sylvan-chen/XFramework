@@ -32,12 +32,7 @@ namespace XFramework
             _fsms.Clear();
         }
 
-        public IFsm<T> CreateFsm<T>(T owner, IFsmState<T>[] states) where T : class
-        {
-            return CreateFsm(DEFAULT_FSM_NAME, owner, states);
-        }
-
-        public IFsm<T> CreateFsm<T>(string name, T owner, IFsmState<T>[] states) where T : class
+        public IFsm<T> CreateFsm<T>(string name, T owner, params IFsmState<T>[] states) where T : class
         {
             if (name == null)
             {
@@ -60,6 +55,11 @@ namespace XFramework
             var fsm = new Fsm<T>(name, owner, states);
             _fsms.Add(id, fsm);
             return fsm;
+        }
+
+        public IFsm<T> CreateFsm<T>(T owner, params IFsmState<T>[] states) where T : class
+        {
+            return CreateFsm(DEFAULT_FSM_NAME, owner, states);
         }
 
         public IFsm<T> CreateFsm<T>(T owner, List<IFsmState<T>> states) where T : class
