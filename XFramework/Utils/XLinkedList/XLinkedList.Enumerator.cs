@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace XFramework
+namespace XFramework.Utils
 {
     public sealed partial class XLinkedList<T> : ICollection<T>, ICollection
     {

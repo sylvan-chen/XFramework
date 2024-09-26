@@ -1,7 +1,6 @@
-using System;
 using System.Diagnostics;
 
-namespace XFramework
+namespace XFramework.Utils
 {
     /// <summary>
     /// 日志工具类
