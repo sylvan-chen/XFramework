@@ -6,7 +6,7 @@ namespace XFramework
     /// <summary>
     /// 游戏设置管理器
     /// </summary>
-    public sealed class GameSettingManager : MonoBehaviour, IGameSettingManager
+    public sealed class GameSettingManager : Manager
     {
         private int _frameRate = 30;                  // 帧率
         private float _gameSpeed = 1f;                // 游戏速度

@@ -10,7 +10,7 @@ namespace XFramework
         /// </summary>
         private class EventHandlerChain
         {
-            // 约束上最好禁止单个 Action 的多播行为。
+            // 用链表实现事件委托链而不是直接用 +=
             private readonly XLinkedList<Action<IEventArgs>> _handlers;
 
             public EventHandlerChain()

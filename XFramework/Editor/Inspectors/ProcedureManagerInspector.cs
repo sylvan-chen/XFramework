@@ -4,7 +4,7 @@ using UnityEditor;
 namespace XFramework.Editor
 {
     [CustomEditor(typeof(ProcedureManager))]
-    internal sealed class ProcedureManagerInspector : BaseInspector
+    internal sealed class ProcedureManagerInspector : Inspector
     {
         private SerializedProperty _propertyProcedureTypeNames;
         private SerializedProperty _propertyFirstProcedureTypeName;

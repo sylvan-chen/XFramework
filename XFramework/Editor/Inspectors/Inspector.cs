@@ -1,9 +1,8 @@
 using UnityEditor;
-using UnityEngine.UIElements;
 
 namespace XFramework.Editor
 {
-    public abstract class BaseInspector : UnityEditor.Editor
+    public abstract class Inspector : UnityEditor.Editor
     {
         private bool _isCompileStart = false;
 

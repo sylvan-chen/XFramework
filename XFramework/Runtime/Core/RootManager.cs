@@ -38,16 +38,12 @@ namespace XFramework
         /// <summary>
         /// 获取管理器
         /// </summary>
-        /// <typeparam name="T">管理器类型（接口）</typeparam>
+        /// <typeparam name="T">管理器类型</typeparam>
         /// <returns>要获取的管理器实例</returns>
         /// <exception cref="ArgumentException">T 必须是接口类型</exception>
         /// <exception cref="ArgumentException">找不到管理器</exception>
-        public T GetManager<T>() where T : IManager
+        public T GetManager<T>() where T : Manager
         {
-            if (!typeof(T).IsInterface)
-            {
-                throw new ArgumentException("GetManager faild. T must be an interface.", nameof(T));
-            }
             T manager = GetComponentInChildren<T>() ?? throw new ArgumentException($"Can not find manager: {nameof(T)}", nameof(T));
             return manager;
         }

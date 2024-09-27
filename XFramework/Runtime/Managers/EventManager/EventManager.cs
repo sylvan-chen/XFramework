@@ -5,7 +5,7 @@ using XFramework.Utils;
 
 namespace XFramework
 {
-    public sealed partial class EventManager : MonoBehaviour, IEventManager
+    public sealed partial class EventManager : Manager
     {
         /// <summary>
         /// 事件字典
@@ -39,6 +39,10 @@ namespace XFramework
             }
         }
 
+        /// <summary>
+        /// 获取事件的委托数量
+        /// </summary>
+        /// <param name="id">要查询的事件 ID</param>
         public int GetEventHandlerCount(int id)
         {
             if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
@@ -123,7 +127,10 @@ namespace XFramework
             }
         }
 
-        public void RemoveAllSubscribe()
+        /// <summary>
+        /// 移除所有订阅
+        /// </summary>
+        public void RemoveAllSubscriptions()
         {
             _eventDict.Clear();
         }

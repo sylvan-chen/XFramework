@@ -3,16 +3,26 @@ using System.Collections.Generic;
 
 namespace XFramework
 {
-    public sealed class Fsm<T> : IFsm<T> where T : class
+    public abstract class Fsm
+    {
+        internal abstract void Update(float logicSeconds, float realSeconds);
+        internal abstract void Destroy();
+    }
+
+    /// <summary>
+    /// 有限状态机
+    /// </summary>
+    /// <typeparam name="T">有限状态机的所有者类型</typeparam>
+    public sealed class Fsm<T> : Fsm where T : class
     {
         private string _name;
         private T _owner;
-        private readonly Dictionary<Type, IFsmState<T>> _stateDict;
-        private IFsmState<T> _currentState;
+        private readonly Dictionary<Type, FsmState<T>> _stateDict;
+        private FsmState<T> _currentState;
         private float _currentStateTime;
         private bool _isDestroyed;
 
-        public Fsm(string name, T owner, params IFsmState<T>[] states)
+        public Fsm(string name, T owner, params FsmState<T>[] states)
         {
             if (states == null || states.Length == 0)
             {
@@ -20,8 +30,8 @@ namespace XFramework
             }
             _name = name ?? throw new ArgumentNullException(nameof(name), $"Construct FSM failed. Name cannot be null.");
             _owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Construct FSM failed. Owner cannot be null.");
-            _stateDict = new Dictionary<Type, IFsmState<T>>();
-            foreach (IFsmState<T> state in states)
+            _stateDict = new Dictionary<Type, FsmState<T>>();
+            foreach (FsmState<T> state in states)
             {
                 if (state == null)
                 {
@@ -39,40 +49,58 @@ namespace XFramework
             _isDestroyed = false;
         }
 
-        public Fsm(string name, T owner, List<IFsmState<T>> states) : this(name, owner, states.ToArray())
+        public Fsm(string name, T owner, List<FsmState<T>> states) : this(name, owner, states.ToArray())
         {
         }
 
-        public Fsm(T owner, params IFsmState<T>[] states) : this(string.Empty, owner, states)
+        public Fsm(T owner, params FsmState<T>[] states) : this(string.Empty, owner, states)
         {
         }
 
-        public Fsm(T owner, List<IFsmState<T>> states) : this(string.Empty, owner, states.ToArray())
+        public Fsm(T owner, List<FsmState<T>> states) : this(string.Empty, owner, states.ToArray())
         {
         }
 
+        /// <summary>
+        /// 状态机名称
+        /// </summary>
         public string Name
         {
             get { return _name; }
             private set { _name = value ?? string.Empty; }
         }
 
+        /// <summary>
+        /// 状态机所有者
+        /// </summary>
         public T Owner
         {
             get { return _owner; }
             private set { _owner = value; }
         }
 
+        /// <summary>
+        /// 状态机的状态数量
+        /// </summary>
         public int StateCount
         {
             get { return _stateDict.Count; }
         }
 
-        public IFsmState<T> CurrentState
+        /// <summary>
+        /// 当前状态
+        /// </summary>
+        public FsmState<T> CurrentState
         {
             get { return _currentState; }
         }
 
+        /// <summary>
+        /// 当前状态已持续时间
+        /// </summary>
+        /// <remarks>
+        /// 单位：秒，切换时重置为 0。
+        /// </remarks>
         public float CurrentStateTime
         {
             get { return _currentStateTime; }
@@ -83,7 +111,31 @@ namespace XFramework
             get { return _isDestroyed; }
         }
 
-        public void Start<TState>() where TState : class, IFsmState<T>
+        internal override void Update(float logicSeconds, float realSeconds)
+        {
+            if (!CheckStarted() || _isDestroyed)
+            {
+                return;
+            }
+            _currentStateTime += realSeconds;
+            _currentState.OnUpdate(this, logicSeconds, realSeconds);
+        }
+
+        internal override void Destroy()
+        {
+            _currentState?.OnExit(this);
+            foreach (FsmState<T> state in _stateDict.Values)
+            {
+                state.OnDestroy(this);
+            }
+            _isDestroyed = true;
+        }
+
+        /// <summary>
+        /// 启动状态机
+        /// </summary>
+        /// <typeparam name="TState">状态机的初始状态类型</typeparam>
+        public void Start<TState>() where TState : FsmState<T>
         {
             if (_isDestroyed)
             {
@@ -93,7 +145,7 @@ namespace XFramework
             {
                 throw new InvalidOperationException($"Start FSM {Name} failed. It has already been started, don't start it again.");
             }
-            if (_stateDict.TryGetValue(typeof(TState), out IFsmState<T> state))
+            if (_stateDict.TryGetValue(typeof(TState), out FsmState<T> state))
             {
                 _currentState = state;
                 _currentStateTime = 0;
@@ -105,21 +157,21 @@ namespace XFramework
             }
         }
 
-        public TState GetState<TState>() where TState : class, IFsmState<T>
+        public TState GetState<TState>() where TState : FsmState<T>
         {
-            if (_stateDict.TryGetValue(typeof(TState), out IFsmState<T> state))
+            if (_stateDict.TryGetValue(typeof(TState), out FsmState<T> state))
             {
                 return (TState)state;
             }
             return null;
         }
 
-        public bool HasState<TState>() where TState : class, IFsmState<T>
+        public bool HasState<TState>() where TState : FsmState<T>
         {
             return _stateDict.ContainsKey(typeof(TState));
         }
 
-        public void ChangeState<TState>() where TState : class, IFsmState<T>
+        public void ChangeState<TState>() where TState : FsmState<T>
         {
             if (_isDestroyed)
             {
@@ -129,7 +181,7 @@ namespace XFramework
             {
                 throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM didn't start yet.");
             }
-            if (_stateDict.TryGetValue(typeof(TState), out IFsmState<T> state))
+            if (_stateDict.TryGetValue(typeof(TState), out FsmState<T> state))
             {
                 _currentState.OnExit(this);
                 _currentState = state;
@@ -142,7 +194,7 @@ namespace XFramework
             }
         }
 
-        public IFsmState<T>[] GetAllStates()
+        public FsmState<T>[] GetAllStates()
         {
             if (_isDestroyed)
             {
@@ -150,31 +202,11 @@ namespace XFramework
             }
             if (_stateDict.Count == 0)
             {
-                return new IFsmState<T>[0];
+                return new FsmState<T>[0];
             }
-            var result = new IFsmState<T>[_stateDict.Count];
+            var result = new FsmState<T>[_stateDict.Count];
             _stateDict.Values.CopyTo(result, 0);
             return result;
-        }
-
-        public void Update(float logicSeconds, float realSeconds)
-        {
-            if (!CheckStarted() || _isDestroyed)
-            {
-                return;
-            }
-            _currentStateTime += realSeconds;
-            _currentState.OnUpdate(this, logicSeconds, realSeconds);
-        }
-
-        public void Destroy()
-        {
-            _currentState?.OnExit(this);
-            foreach (IFsmState<T> state in _stateDict.Values)
-            {
-                state.OnDestroy(this);
-            }
-            _isDestroyed = true;
         }
 
         private bool CheckStarted()

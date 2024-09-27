@@ -1,10 +1,12 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace XFramework
 {
-    public class ProcedureManager : MonoBehaviour, IProcedureManager
+    /// <summary>
+    /// 流程管理器
+    /// </summary>
+    public class ProcedureManager : Manager
     {
         [SerializeField]
         private string[] _procedureTypeNames;
@@ -12,11 +14,11 @@ namespace XFramework
         [SerializeField]
         private string _firstProcedureTypeName;
 
-        private IFsm<ProcedureManager> _procedureFsm;
+        private Fsm<ProcedureManager> _procedureFsm;
 
-        public BaseProcedure CurrentProcedure
+        public Procedure CurrentProcedure
         {
-            get => _procedureFsm.CurrentState as BaseProcedure;
+            get => _procedureFsm.CurrentState as Procedure;
         }
 
         public float CurrentProcedureTime => throw new System.NotImplementedException();
@@ -31,17 +33,17 @@ namespace XFramework
             // _fsmManager = GlobalManager.Fsm.CreateFsm<ProcedureManager>(this, );
         }
 
-        public T GetProcedure<T>() where T : BaseProcedure
+        public T GetProcedure<T>() where T : Procedure
         {
             throw new System.NotImplementedException();
         }
 
-        public bool HasProcedure<T>() where T : BaseProcedure
+        public bool HasProcedure<T>() where T : Procedure
         {
             throw new System.NotImplementedException();
         }
 
-        public void StartProcedure<T>() where T : BaseProcedure
+        public void StartProcedure<T>() where T : Procedure
         {
             throw new System.NotImplementedException();
         }

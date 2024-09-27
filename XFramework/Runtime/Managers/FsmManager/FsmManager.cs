@@ -4,15 +4,18 @@ using UnityEngine;
 
 namespace XFramework
 {
-    public class FsmManager : MonoBehaviour, IFsmManager
+    /// <summary>
+    /// 有限状态机管理器
+    /// </summary>
+    public class FsmManager : Manager
     {
-        private readonly Dictionary<int, IFsm> _fsms = new();
+        private readonly Dictionary<int, Fsm> _fsms = new();
 
         private const string DEFAULT_FSM_NAME = "default";
 
         private void Update()
         {
-            foreach (IFsm fsm in _fsms.Values)
+            foreach (Fsm fsm in _fsms.Values)
             {
                 fsm.Update(Time.deltaTime, Time.unscaledDeltaTime);
             }
@@ -20,14 +23,14 @@ namespace XFramework
 
         private void OnDestroy()
         {
-            foreach (IFsm fsm in _fsms.Values)
+            foreach (Fsm fsm in _fsms.Values)
             {
                 fsm.Destroy();
             }
             _fsms.Clear();
         }
 
-        public IFsm<T> CreateFsm<T>(string name, T owner, params IFsmState<T>[] states) where T : class
+        public Fsm<T> CreateFsm<T>(string name, T owner, params FsmState<T>[] states) where T : class
         {
             if (name == null)
             {
@@ -52,36 +55,36 @@ namespace XFramework
             return fsm;
         }
 
-        public IFsm<T> CreateFsm<T>(T owner, params IFsmState<T>[] states) where T : class
+        public Fsm<T> CreateFsm<T>(T owner, params FsmState<T>[] states) where T : class
         {
             return CreateFsm(DEFAULT_FSM_NAME, owner, states);
         }
 
-        public IFsm<T> CreateFsm<T>(T owner, List<IFsmState<T>> states) where T : class
+        public Fsm<T> CreateFsm<T>(T owner, List<FsmState<T>> states) where T : class
         {
             return CreateFsm(DEFAULT_FSM_NAME, owner, states.ToArray());
         }
 
-        public IFsm<T> CreateFsm<T>(string name, T owner, List<IFsmState<T>> states) where T : class
+        public Fsm<T> CreateFsm<T>(string name, T owner, List<FsmState<T>> states) where T : class
         {
             return CreateFsm(name, owner, states.ToArray());
         }
 
-        public IFsm<T> GetFsm<T>() where T : class
+        public Fsm<T> GetFsm<T>() where T : class
         {
             return GetFsm<T>(DEFAULT_FSM_NAME);
         }
 
-        public IFsm<T> GetFsm<T>(string name) where T : class
+        public Fsm<T> GetFsm<T>(string name) where T : class
         {
             if (name == null)
             {
                 throw new ArgumentNullException(nameof(name), "Get FSM failed. Name cannot be null.");
             }
             int id = GetId(typeof(T), name);
-            if (_fsms.TryGetValue(id, out IFsm fsm))
+            if (_fsms.TryGetValue(id, out Fsm fsm))
             {
-                return fsm as IFsm<T>;
+                return fsm as Fsm<T>;
             }
             return null;
         }
@@ -98,7 +101,7 @@ namespace XFramework
                 throw new ArgumentNullException(nameof(name), "Destroy FSM failed. Name cannot be null.");
             }
             int id = GetId(typeof(T), name);
-            if (_fsms.TryGetValue(id, out IFsm fsm))
+            if (_fsms.TryGetValue(id, out Fsm fsm))
             {
                 fsm.Destroy();
                 _fsms.Remove(id);
