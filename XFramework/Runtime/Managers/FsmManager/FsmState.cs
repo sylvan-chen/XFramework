@@ -1,3 +1,5 @@
+using System;
+
 namespace XFramework
 {
     /// <summary>
@@ -15,6 +17,10 @@ namespace XFramework
         /// <param name="fsm">所属状态机实例</param>
         public virtual void OnInit(Fsm<T> fsm)
         {
+            if (fsm == null)
+            {
+                throw new ArgumentNullException(nameof(fsm), "OnInit failed. FSM is null.");
+            }
         }
 
         /// <summary>
@@ -23,6 +29,10 @@ namespace XFramework
         /// <param name="fsm">所属状态机实例</param>
         public virtual void OnEnter(Fsm<T> fsm)
         {
+            if (fsm == null)
+            {
+                throw new ArgumentNullException(nameof(fsm), "OnEnter failed. FSM is null.");
+            }
         }
 
         /// <summary>
@@ -31,24 +41,50 @@ namespace XFramework
         /// <param name="fsm">所属状态机实例</param>
         public virtual void OnExit(Fsm<T> fsm)
         {
+            if (fsm == null)
+            {
+                throw new ArgumentNullException(nameof(fsm), "OnExit failed. FSM is null.");
+            }
         }
 
         /// <summary>
         /// 更新状态时
         /// </summary>
         /// <param name="fsm">所属状态机实例</param>
-        /// <param name="logicSeconds">逻辑时间</param>
-        /// <param name="realSeconds">真实时间</param>
-        public virtual void OnUpdate(Fsm<T> fsm, float logicSeconds, float realSeconds)
+        /// <param name="deltaTime">两帧之间的间隔时间</param>
+        /// <param name="unscaledDeltaTime">不受时间缩放影响的两帧之间的间隔时间</param>
+        public virtual void OnUpdate(Fsm<T> fsm, float deltaTime, float unscaledDeltaTime)
         {
+            if (fsm == null)
+            {
+                throw new ArgumentNullException(nameof(fsm), "OnUpdate failed. FSM is null.");
+            }
         }
 
         /// <summary>
-        /// 状态销毁时
+        /// 状态机销毁时
         /// </summary>
         /// <param name="fsm">所属状态机实例</param>
-        public virtual void OnDestroy(Fsm<T> fsm)
+        public virtual void OnFsmDestroy(Fsm<T> fsm)
         {
+            if (fsm == null)
+            {
+                throw new ArgumentNullException(nameof(fsm), "OnDestroy failed. FSM is null.");
+            }
+        }
+
+        /// <summary>
+        /// 切换状态
+        /// </summary>
+        /// <typeparam name="TState">目标状态类型</typeparam>
+        /// <param name="fsm">所属状态机实例</param>
+        protected virtual void ChangeState<TState>(Fsm<T> fsm) where TState : FsmState<T>
+        {
+            if (fsm == null)
+            {
+                throw new ArgumentNullException(nameof(fsm), "ChangeState failed. FSM is null.");
+            }
+            fsm.ChangeState<TState>();
         }
     }
 }

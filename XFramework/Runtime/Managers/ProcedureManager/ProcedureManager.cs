@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace XFramework
@@ -15,37 +16,64 @@ namespace XFramework
         private string _startupProcedureTypeName;
 
         private Fsm<ProcedureManager> _procedureFsm;
+        private Procedure _startupProcedure;
 
         public Procedure CurrentProcedure
         {
-            get => _procedureFsm.CurrentState as Procedure;
+            get => _procedureFsm?.CurrentState as Procedure;
         }
 
-        public float CurrentProcedureTime => throw new System.NotImplementedException();
+        public float CurrentProcedureTime
+        {
+            get => _procedureFsm == null ? 0 : _procedureFsm.CurrentStateTime;
+        }
 
         private void Start()
         {
+            Procedure[] procedures = new Procedure[_availableProcedureTypeNames.Length];
             // 注册所有流程为状态
-            foreach (string typeName in _availableProcedureTypeNames)
+            for (int i = 0; i < _availableProcedureTypeNames.Length; i++)
             {
-                Type type = Type.GetType(typeName);
+                string typeName = _availableProcedureTypeNames[i];
+                Type type = TypeHelper.GetType(typeName);
+                if (type == null)
+                {
+                    Debug.LogError($"Can not find type {typeName}");
+                    continue;
+                }
+                procedures[i] = Activator.CreateInstance(type) as Procedure ?? throw new InvalidOperationException($"Crate instance of procedure {typeName} failed.");
+                if (typeName == _startupProcedureTypeName)
+                {
+                    _startupProcedure = procedures[i];
+                }
             }
-            // _fsmManager = GlobalManager.Fsm.CreateFsm<ProcedureManager>(this, );
+
+            if (_startupProcedure == null)
+            {
+                throw new InvalidOperationException("ProcedureManager init failed. Startup procedure is null.");
+            }
+
+            _procedureFsm = Global.FsmManager.CreateFsm(this, procedures);
+            StartCoroutine(StartProcedureFsm());
         }
 
         public T GetProcedure<T>() where T : Procedure
         {
-            throw new System.NotImplementedException();
+            return _procedureFsm.GetState<T>();
         }
 
         public bool HasProcedure<T>() where T : Procedure
         {
-            throw new System.NotImplementedException();
+            return _procedureFsm.HasState<T>();
         }
 
-        public void StartProcedure<T>() where T : Procedure
+        /// <summary>
+        /// 启动流程状态机
+        /// </summary>
+        private IEnumerator StartProcedureFsm()
         {
-            throw new System.NotImplementedException();
+            yield return new WaitForEndOfFrame();
+            _procedureFsm.Start(_startupProcedure.GetType());
         }
     }
 }

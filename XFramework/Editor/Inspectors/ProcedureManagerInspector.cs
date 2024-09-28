@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using XFramework.Utils;
 
 namespace XFramework.Editor
 {
@@ -38,13 +39,17 @@ namespace XFramework.Editor
 
             var procedureManager = target as ProcedureManager;
 
+            // 游戏运行时，显示当前 Procedure
             if (EditorApplication.isPlaying)
             {
                 EditorGUILayout.LabelField("Current Procedure", procedureManager.CurrentProcedure == null ? "None" : procedureManager.CurrentProcedure.GetType().Name);
+                EditorGUILayout.LabelField("Current Procedure Time", procedureManager.CurrentProcedureTime.ToString("N2"));
+                EditorGUILayout.Separator();
             }
             else if (string.IsNullOrEmpty(_startupProcedureTypeName.stringValue))
             {
                 EditorGUILayout.HelpBox("First procedure invalid.", MessageType.Error);
+                EditorGUILayout.Separator();
             }
 
             using (new EditorGUI.DisabledGroupScope(EditorApplication.isPlaying))

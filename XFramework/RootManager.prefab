@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5290019072366894118}
   - component: {fileID: 3524826269241529290}
   m_Layer: 0
-  m_Name: GameController
+  m_Name: RootManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,6 +32,7 @@ Transform:
   m_Children:
   - {fileID: 6125165520137693512}
   - {fileID: 7431465082254177704}
+  - {fileID: 6475741385483587223}
   - {fileID: 3126938588236288463}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -89,6 +90,50 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 11534048a3abdc044b74de45f5607ba8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &4887999123752521599
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6475741385483587223}
+  - component: {fileID: 5645155376014226659}
+  m_Layer: 0
+  m_Name: FsmManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6475741385483587223
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4887999123752521599}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5290019072366894118}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5645155376014226659
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4887999123752521599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30c78c30a976d604c8a1de50d9b7c640, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &5601995760275359817
@@ -180,5 +225,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _availableProcedureTypeNames:
+  - ProcedureSplash
   - ProcedureStartup
   _startupProcedureTypeName: ProcedureStartup

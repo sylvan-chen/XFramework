@@ -7,7 +7,7 @@ namespace XFramework
     /// <summary>
     /// 有限状态机管理器
     /// </summary>
-    public class FsmManager : Manager
+    public sealed class FsmManager : Manager
     {
         private readonly Dictionary<int, Fsm> _fsms = new();
 

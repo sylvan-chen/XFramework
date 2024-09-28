@@ -5,7 +5,7 @@ namespace XFramework
 {
     public abstract class Fsm
     {
-        internal abstract void Update(float logicSeconds, float realSeconds);
+        internal abstract void Update(float deltaTime, float unscaleDeltaTime);
         internal abstract void Destroy();
     }
 
@@ -111,14 +111,14 @@ namespace XFramework
             get { return _isDestroyed; }
         }
 
-        internal override void Update(float logicSeconds, float realSeconds)
+        internal override void Update(float deltaTime, float unscaledeltaTime)
         {
             if (!CheckStarted() || _isDestroyed)
             {
                 return;
             }
-            _currentStateTime += realSeconds;
-            _currentState.OnUpdate(this, logicSeconds, realSeconds);
+            _currentStateTime += unscaledeltaTime;
+            _currentState.OnUpdate(this, deltaTime, unscaledeltaTime);
         }
 
         internal override void Destroy()
@@ -126,7 +126,7 @@ namespace XFramework
             _currentState?.OnExit(this);
             foreach (FsmState<T> state in _stateDict.Values)
             {
-                state.OnDestroy(this);
+                state.OnFsmDestroy(this);
             }
             _isDestroyed = true;
         }
@@ -134,7 +134,7 @@ namespace XFramework
         /// <summary>
         /// 启动状态机
         /// </summary>
-        /// <typeparam name="TState">状态机的初始状态类型</typeparam>
+        /// <typeparam name="TState">启动时的状态类型</typeparam>
         public void Start<TState>() where TState : FsmState<T>
         {
             if (_isDestroyed)
@@ -145,6 +145,7 @@ namespace XFramework
             {
                 throw new InvalidOperationException($"Start FSM {Name} failed. It has already been started, don't start it again.");
             }
+
             if (_stateDict.TryGetValue(typeof(TState), out FsmState<T> state))
             {
                 _currentState = state;
@@ -153,7 +154,38 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Start FSM {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
+                throw new ArgumentException($"Launch FSM {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
+            }
+        }
+
+        public void Start(Type startStateType)
+        {
+            if (_isDestroyed)
+            {
+                throw new InvalidOperationException($"Start FSM {Name} failed. It has already been destroyed.");
+            }
+            if (CheckStarted())
+            {
+                throw new InvalidOperationException($"Start FSM {Name} failed. It has already been started, don't start it again.");
+            }
+            if (startStateType == null)
+            {
+                throw new ArgumentNullException(nameof(startStateType), $"Start FSM {Name} failed. Start state type cannot be null.");
+            }
+            if (!typeof(FsmState<T>).IsAssignableFrom(startStateType))
+            {
+                throw new ArgumentException($"Start FSM {Name} failed. Start state type {startStateType.FullName} must be a subclass of {typeof(FsmState<T>).Name}.", nameof(startStateType));
+            }
+
+            if (_stateDict.TryGetValue(startStateType, out FsmState<T> state))
+            {
+                _currentState = state;
+                _currentStateTime = 0;
+                _currentState.OnEnter(this);
+            }
+            else
+            {
+                throw new ArgumentException($"Launch FSM {Name} failed. State of type {startStateType.FullName} not found.", nameof(startStateType));
             }
         }
 

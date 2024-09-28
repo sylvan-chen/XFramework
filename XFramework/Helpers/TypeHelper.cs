@@ -7,15 +7,47 @@ namespace XFramework
 {
     public static class TypeHelper
     {
-        private static readonly string[] RuntimeAssemblyNames =
+        public static readonly string[] RuntimeAssemblyNames =
         {
             "Assembly-CSharp",
         };
 
-        private static readonly string[] EditorAssemblyNames =
+        public static readonly string[] EditorAssemblyNames =
         {
             "Assembly-CSharp-Editor",
         };
+
+        public static readonly Assembly[] AllAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+        /// <summary>
+        /// 从所有程序集中获取类型
+        /// </summary>
+        /// <param name="typeName">类型名称</param>
+        /// <returns>获取到的类型</returns>
+        public static Type GetType(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+            {
+                throw new ArgumentException("Type name cannot be null or empty.", nameof(typeName));
+            }
+
+            Type type = Type.GetType(typeName);
+            if (type != null)
+            {
+                return type;
+            }
+
+            foreach (Assembly assembly in AllAssemblies)
+            {
+                type = assembly.GetType(typeName);
+                if (type != null)
+                {
+                    return type;
+                }
+            }
+
+            return null;
+        }
 
         public static string[] GetRuntimeSubtypeNames(Type baseType)
         {
