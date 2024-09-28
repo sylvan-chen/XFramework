@@ -9,10 +9,10 @@ namespace XFramework
     public class ProcedureManager : Manager
     {
         [SerializeField]
-        private string[] _procedureTypeNames;
+        private string[] _availableProcedureTypeNames;
 
         [SerializeField]
-        private string _firstProcedureTypeName;
+        private string _startupProcedureTypeName;
 
         private Fsm<ProcedureManager> _procedureFsm;
 
@@ -26,7 +26,7 @@ namespace XFramework
         private void Start()
         {
             // 注册所有流程为状态
-            foreach (string typeName in _procedureTypeNames)
+            foreach (string typeName in _availableProcedureTypeNames)
             {
                 Type type = Type.GetType(typeName);
             }

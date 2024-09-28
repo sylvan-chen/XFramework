@@ -44,7 +44,7 @@ namespace XFramework
             {
                 throw new ArgumentNullException(nameof(states), "Create FSM failed. Initial states cannot be null or empty.");
             }
-            int id = GetId(typeof(T), name);
+            int id = GetID(typeof(T), name);
             if (_fsms.ContainsKey(id))
             {
                 throw new InvalidOperationException($"Create FSM failed. FSM with the same name ({name}) and same owner type ({typeof(T).Name}) already exists.");
@@ -81,7 +81,7 @@ namespace XFramework
             {
                 throw new ArgumentNullException(nameof(name), "Get FSM failed. Name cannot be null.");
             }
-            int id = GetId(typeof(T), name);
+            int id = GetID(typeof(T), name);
             if (_fsms.TryGetValue(id, out Fsm fsm))
             {
                 return fsm as Fsm<T>;
@@ -100,7 +100,7 @@ namespace XFramework
             {
                 throw new ArgumentNullException(nameof(name), "Destroy FSM failed. Name cannot be null.");
             }
-            int id = GetId(typeof(T), name);
+            int id = GetID(typeof(T), name);
             if (_fsms.TryGetValue(id, out Fsm fsm))
             {
                 fsm.Destroy();
@@ -108,7 +108,7 @@ namespace XFramework
             }
         }
 
-        private int GetId(Type type, string name)
+        private int GetID(Type type, string name)
         {
             return (type.Name + name).GetHashCode();
         }
