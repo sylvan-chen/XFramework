@@ -7,7 +7,7 @@ namespace XFramework
     /// <summary>
     /// 流程管理器
     /// </summary>
-    public class ProcedureManager : Manager
+    public sealed class ProcedureManager : Manager
     {
         [SerializeField]
         private string[] _availableProcedureTypeNames;

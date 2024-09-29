@@ -18,9 +18,9 @@ namespace XFramework
         private string _name;
         private T _owner;
         private readonly Dictionary<Type, FsmState<T>> _stateDict;
-        private FsmState<T> _currentState;
-        private float _currentStateTime;
-        private bool _isDestroyed;
+        private FsmState<T> _currentState = null;
+        private float _currentStateTime = 0f;
+        private bool _isDestroyed = false;
 
         public Fsm(string name, T owner, params FsmState<T>[] states)
         {
@@ -44,9 +44,6 @@ namespace XFramework
                 _stateDict.Add(state.GetType(), state);
                 state.OnInit(this);
             }
-            _currentState = null;
-            _currentStateTime = 0;
-            _isDestroyed = false;
         }
 
         public Fsm(string name, T owner, List<FsmState<T>> states) : this(name, owner, states.ToArray())

@@ -10,7 +10,7 @@ namespace XFramework
     /// <remarks>
     /// 管理各个管理器，并提供安全关闭游戏的方法。
     /// </remarks>
-    public class RootManager : MonoSingletonPersistent<RootManager>
+    public sealed class RootManager : MonoSingletonPersistent<RootManager>
     {
         protected override void Awake()
         {

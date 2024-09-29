@@ -11,12 +11,7 @@ namespace XFramework
         private class EventHandlerChain
         {
             // 用链表实现事件委托链而不是直接用 +=
-            private readonly XLinkedList<Action<IEventArgs>> _handlers;
-
-            public EventHandlerChain()
-            {
-                _handlers = new XLinkedList<Action<IEventArgs>>();
-            }
+            private readonly XLinkedList<Action<IEventArgs>> _handlers = new();
 
             public int Count
             {
