@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using XFramework.Utils;
 
 namespace XFramework
 {
@@ -13,49 +14,35 @@ namespace XFramework
     /// 有限状态机
     /// </summary>
     /// <typeparam name="T">有限状态机的所有者类型</typeparam>
-    public sealed class Fsm<T> : Fsm where T : class
+    public sealed class Fsm<T> : Fsm, IReference where T : class
     {
+        private readonly Dictionary<Type, FsmState<T>> _stateDict = new();
         private string _name;
         private T _owner;
-        private readonly Dictionary<Type, FsmState<T>> _stateDict;
         private FsmState<T> _currentState = null;
         private float _currentStateTime = 0f;
         private bool _isDestroyed = false;
 
-        public Fsm(string name, T owner, params FsmState<T>[] states)
+        public static Fsm<T> Spawn(string name, T owner, params FsmState<T>[] states)
         {
-            if (states == null || states.Length == 0)
-            {
-                throw new ArgumentException("Construct FSM failed. Initial states cannot be null or empty.", nameof(states));
-            }
-            _name = name ?? throw new ArgumentNullException(nameof(name), $"Construct FSM failed. Name cannot be null.");
-            _owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Construct FSM failed. Owner cannot be null.");
-            _stateDict = new Dictionary<Type, FsmState<T>>();
+            var fsm = ReferencePool.Spawn<Fsm<T>>();
+            fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Spawn FSM failed. Name cannot be null.");
+            fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Spawn FSM failed. Owner cannot be null.");
             foreach (FsmState<T> state in states)
             {
                 if (state == null)
                 {
-                    throw new ArgumentNullException(nameof(states), $"Construct FSM failed. The state in initial states cannot be null.");
+                    throw new ArgumentNullException(nameof(states), $"Spawn FSM failed. The state in initial states cannot be null.");
                 }
-                if (_stateDict.ContainsKey(state.GetType()))
+                if (fsm._stateDict.ContainsKey(state.GetType()))
                 {
-                    throw new ArgumentException($"Construct FSM failed. Duplicate state in initial states is not allowed, type {state.GetType().FullName} is already found.", nameof(states));
+                    throw new ArgumentException($"Spawn FSM failed. Duplicate state in initial states is not allowed, type {state.GetType().FullName} is already found.", nameof(states));
                 }
-                _stateDict.Add(state.GetType(), state);
-                state.OnInit(this);
+                fsm._stateDict.Add(state.GetType(), state);
+                state.OnInit(fsm);
             }
-        }
-
-        public Fsm(string name, T owner, List<FsmState<T>> states) : this(name, owner, states.ToArray())
-        {
-        }
-
-        public Fsm(T owner, params FsmState<T>[] states) : this(string.Empty, owner, states)
-        {
-        }
-
-        public Fsm(T owner, List<FsmState<T>> states) : this(string.Empty, owner, states.ToArray())
-        {
+            fsm._isDestroyed = false;
+            return fsm;
         }
 
         /// <summary>
@@ -126,6 +113,7 @@ namespace XFramework
                 state.OnFsmDestroy(this);
             }
             _isDestroyed = true;
+            ReferencePool.Release(this);
         }
 
         /// <summary>
@@ -276,6 +264,15 @@ namespace XFramework
             var result = new FsmState<T>[_stateDict.Count];
             _stateDict.Values.CopyTo(result, 0);
             return result;
+        }
+
+        public void Clear()
+        {
+            _stateDict.Clear();
+            _name = null;
+            _owner = null;
+            _currentState = null;
+            _currentStateTime = 0f;
         }
 
         private bool CheckStarted()

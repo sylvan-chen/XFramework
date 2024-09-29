@@ -52,7 +52,7 @@ namespace XFramework.Utils
                     throw new InvalidOperationException("Release reference failed. Reference already released.");
                 }
 
-                reference.OnRelease();
+                reference.Clear();
                 lock (_references)
                 {
                     _references.Enqueue(reference);

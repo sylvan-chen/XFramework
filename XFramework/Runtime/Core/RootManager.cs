@@ -38,6 +38,7 @@ namespace XFramework
         {
             Log.Info("[XFramework] [RootManager] Quit game...");
             ShutdownFramework();
+            ReferencePool.Clear();
             Application.Quit();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;

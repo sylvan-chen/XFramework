@@ -6,11 +6,8 @@ namespace XFramework.Utils
     public interface IReference
     {
         /// <summary>
-        /// 回收时的处理
+        /// 清空引用对象，以便回收到引用池
         /// </summary>
-        /// <remarks>
-        /// 一般用于清理脏数据，保证下次使用时可以正常初始化。
-        /// </remarks>
-        public void OnRelease();
+        public void Clear();
     }
 }
