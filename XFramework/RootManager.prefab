@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5290019072366894118}
-  - component: {fileID: 3524826269241529290}
+  - component: {fileID: 8661608586557417116}
   m_Layer: 0
   m_Name: RootManager
   m_TagString: Untagged
@@ -36,7 +36,7 @@ Transform:
   - {fileID: 3126938588236288463}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3524826269241529290
+--- !u!114 &8661608586557417116
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -45,7 +45,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 377896662865898680}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e51a37fe92054f54fa476b4f782ca4e1, type: 3}
+  m_Script: {fileID: 11500000, guid: 9c11e10980a88764aab1c8a64a044a9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &705697484051902147
@@ -57,7 +57,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7431465082254177704}
-  - component: {fileID: 3391466249816243609}
+  - component: {fileID: 3423261546243245015}
   m_Layer: 0
   m_Name: GameSettingManager
   m_TagString: Untagged
@@ -80,7 +80,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5290019072366894118}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3391466249816243609
+--- !u!114 &3423261546243245015
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -89,7 +89,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 705697484051902147}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11534048a3abdc044b74de45f5607ba8, type: 3}
+  m_Script: {fileID: 11500000, guid: db189e8a9c7bc03428208b553c381328, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &4887999123752521599
@@ -133,7 +133,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4887999123752521599}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30c78c30a976d604c8a1de50d9b7c640, type: 3}
+  m_Script: {fileID: 11500000, guid: e1b79b30b8dddac4e8d2a60c174d0f00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &5601995760275359817
@@ -145,7 +145,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6125165520137693512}
-  - component: {fileID: 5438135202722589514}
+  - component: {fileID: 4103745911481731886}
   m_Layer: 0
   m_Name: EventManager
   m_TagString: Untagged
@@ -168,7 +168,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5290019072366894118}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5438135202722589514
+--- !u!114 &4103745911481731886
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -177,7 +177,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5601995760275359817}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a3342645dd2d8340a736ae743fa1416, type: 3}
+  m_Script: {fileID: 11500000, guid: d0d1aa8dd0afcf6408f235aa74767610, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &6499482441898522271
@@ -221,10 +221,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6499482441898522271}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14adf6409d9d89c41a438eb8687ee378, type: 3}
+  m_Script: {fileID: 11500000, guid: 53e8eb92e29c3054abf45d282ae4db85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _availableProcedureTypeNames:
-  - ProcedureSplash
   - ProcedureStartup
   _startupProcedureTypeName: ProcedureStartup
