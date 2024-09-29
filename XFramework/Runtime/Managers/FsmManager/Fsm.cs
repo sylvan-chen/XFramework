@@ -155,6 +155,10 @@ namespace XFramework
             }
         }
 
+        /// <summary>
+        /// 启动状态机
+        /// </summary>
+        /// <param name="startStateType">启动时的状态类型</param>
         public void Start(Type startStateType)
         {
             if (_isDestroyed)
@@ -165,14 +169,7 @@ namespace XFramework
             {
                 throw new InvalidOperationException($"Start FSM {Name} failed. It has already been started, don't start it again.");
             }
-            if (startStateType == null)
-            {
-                throw new ArgumentNullException(nameof(startStateType), $"Start FSM {Name} failed. Start state type cannot be null.");
-            }
-            if (!typeof(FsmState<T>).IsAssignableFrom(startStateType))
-            {
-                throw new ArgumentException($"Start FSM {Name} failed. Start state type {startStateType.FullName} must be a subclass of {typeof(FsmState<T>).Name}.", nameof(startStateType));
-            }
+            CheckTypeCompilance(startStateType);
 
             if (_stateDict.TryGetValue(startStateType, out FsmState<T> state))
             {
@@ -190,7 +187,18 @@ namespace XFramework
         {
             if (_stateDict.TryGetValue(typeof(TState), out FsmState<T> state))
             {
-                return (TState)state;
+                return state as TState;
+            }
+            return null;
+        }
+
+        public FsmState<T> GetState(Type stateType)
+        {
+            CheckTypeCompilance(stateType);
+
+            if (_stateDict.TryGetValue(stateType, out FsmState<T> state))
+            {
+                return state;
             }
             return null;
         }
@@ -198,6 +206,13 @@ namespace XFramework
         public bool HasState<TState>() where TState : FsmState<T>
         {
             return _stateDict.ContainsKey(typeof(TState));
+        }
+
+        public bool HasState(Type stateType)
+        {
+            CheckTypeCompilance(stateType);
+
+            return _stateDict.ContainsKey(stateType);
         }
 
         public void ChangeState<TState>() where TState : FsmState<T>
@@ -223,6 +238,31 @@ namespace XFramework
             }
         }
 
+        public void ChangeState(Type stateType)
+        {
+            if (_isDestroyed)
+            {
+                throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM has already been destroyed.");
+            }
+            if (!CheckStarted())
+            {
+                throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM didn't start yet.");
+            }
+            CheckTypeCompilance(stateType);
+
+            if (_stateDict.TryGetValue(stateType, out FsmState<T> state))
+            {
+                _currentState.OnExit(this);
+                _currentState = state;
+                _currentStateTime = 0;
+                _currentState.OnEnter(this);
+            }
+            else
+            {
+                throw new ArgumentException($"Change state of FSM {Name} failed. State of type {stateType.FullName} not found.", nameof(stateType));
+            }
+        }
+
         public FsmState<T>[] GetAllStates()
         {
             if (_isDestroyed)
@@ -241,6 +281,22 @@ namespace XFramework
         private bool CheckStarted()
         {
             return _currentState != null;
+        }
+
+        private void CheckTypeCompilance(Type type)
+        {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type), $"Check type complience of FSM {Name} failed. State type cannot be null.");
+            }
+            if (!type.IsClass || type.IsAbstract)
+            {
+                throw new ArgumentException($"Check type complience of FSM {Name} failed. State type {type.FullName} must be a non-abstract class.", nameof(type));
+            }
+            if (!typeof(FsmState<T>).IsAssignableFrom(type))
+            {
+                throw new ArgumentException($"Check type complience of FSM {Name} failed. State type {type.FullName} must be a subclass of {typeof(FsmState<T>).Name}.", nameof(type));
+            }
         }
     }
 }
