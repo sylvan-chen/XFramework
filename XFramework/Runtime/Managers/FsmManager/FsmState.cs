@@ -9,13 +9,13 @@ namespace XFramework
     /// <remarks>
     /// 每一个状态类型代表状态机所有者的一种状态。
     /// </remarks>
-    public abstract class FsmState<T> where T : class
+    public abstract class FSMState<T> where T : class
     {
         /// <summary>
         /// 初始化状态时
         /// </summary>
         /// <param name="fsm">所属状态机实例</param>
-        public virtual void OnInit(Fsm<T> fsm)
+        public virtual void OnInit(FSM<T> fsm)
         {
             if (fsm == null)
             {
@@ -27,7 +27,7 @@ namespace XFramework
         /// 进入状态时
         /// </summary>
         /// <param name="fsm">所属状态机实例</param>
-        public virtual void OnEnter(Fsm<T> fsm)
+        public virtual void OnEnter(FSM<T> fsm)
         {
             if (fsm == null)
             {
@@ -39,7 +39,7 @@ namespace XFramework
         /// 退出状态时
         /// </summary>
         /// <param name="fsm">所属状态机实例</param>
-        public virtual void OnExit(Fsm<T> fsm)
+        public virtual void OnExit(FSM<T> fsm)
         {
             if (fsm == null)
             {
@@ -53,7 +53,7 @@ namespace XFramework
         /// <param name="fsm">所属状态机实例</param>
         /// <param name="deltaTime">两帧之间的间隔时间</param>
         /// <param name="unscaledDeltaTime">不受时间缩放影响的两帧之间的间隔时间</param>
-        public virtual void OnUpdate(Fsm<T> fsm, float deltaTime, float unscaledDeltaTime)
+        public virtual void OnUpdate(FSM<T> fsm, float deltaTime, float unscaledDeltaTime)
         {
             if (fsm == null)
             {
@@ -65,7 +65,7 @@ namespace XFramework
         /// 状态机销毁时
         /// </summary>
         /// <param name="fsm">所属状态机实例</param>
-        public virtual void OnFsmDestroy(Fsm<T> fsm)
+        public virtual void OnFsmDestroy(FSM<T> fsm)
         {
             if (fsm == null)
             {
@@ -78,7 +78,7 @@ namespace XFramework
         /// </summary>
         /// <typeparam name="TState">目标状态类型</typeparam>
         /// <param name="fsm">所属状态机实例</param>
-        protected virtual void ChangeState<TState>(Fsm<T> fsm) where TState : FsmState<T>
+        protected virtual void ChangeState<TState>(FSM<T> fsm) where TState : FSMState<T>
         {
             if (fsm == null)
             {

@@ -7,15 +7,15 @@ namespace XFramework
     /// <summary>
     /// 有限状态机管理器
     /// </summary>
-    public sealed class FsmManager : Manager
+    public sealed class FSMManager : Manager
     {
-        private readonly Dictionary<int, Fsm> _fsms = new();
+        private readonly Dictionary<int, FSM> _fsms = new();
 
         private const string DEFAULT_FSM_NAME = "default";
 
         private void Update()
         {
-            foreach (Fsm fsm in _fsms.Values)
+            foreach (FSM fsm in _fsms.Values)
             {
                 fsm.Update(Time.deltaTime, Time.unscaledDeltaTime);
             }
@@ -23,14 +23,14 @@ namespace XFramework
 
         private void OnDestroy()
         {
-            foreach (Fsm fsm in _fsms.Values)
+            foreach (FSM fsm in _fsms.Values)
             {
                 fsm.Destroy();
             }
             _fsms.Clear();
         }
 
-        public Fsm<T> CreateFsm<T>(string name, T owner, params FsmState<T>[] states) where T : class
+        public FSM<T> CreateFSM<T>(string name, T owner, params FSMState<T>[] states) where T : class
         {
             if (name == null)
             {
@@ -50,58 +50,58 @@ namespace XFramework
                 throw new InvalidOperationException($"Create FSM failed. FSM with the same name ({name}) and same owner type ({typeof(T).Name}) already exists.");
             }
 
-            var fsm = Fsm<T>.Create(name, owner, states);
+            var fsm = FSM<T>.Create(name, owner, states);
             _fsms.Add(id, fsm);
             return fsm;
         }
 
-        public Fsm<T> CreateFsm<T>(T owner, params FsmState<T>[] states) where T : class
+        public FSM<T> CreateFSM<T>(T owner, params FSMState<T>[] states) where T : class
         {
-            return CreateFsm(DEFAULT_FSM_NAME, owner, states);
+            return CreateFSM(DEFAULT_FSM_NAME, owner, states);
         }
 
-        public Fsm<T> CreateFsm<T>(T owner, List<FsmState<T>> states) where T : class
+        public FSM<T> CreateFSM<T>(T owner, List<FSMState<T>> states) where T : class
         {
-            return CreateFsm(DEFAULT_FSM_NAME, owner, states.ToArray());
+            return CreateFSM(DEFAULT_FSM_NAME, owner, states.ToArray());
         }
 
-        public Fsm<T> CreateFsm<T>(string name, T owner, List<FsmState<T>> states) where T : class
+        public FSM<T> CreateFSM<T>(string name, T owner, List<FSMState<T>> states) where T : class
         {
-            return CreateFsm(name, owner, states.ToArray());
+            return CreateFSM(name, owner, states.ToArray());
         }
 
-        public Fsm<T> GetFsm<T>() where T : class
+        public FSM<T> GetFSM<T>() where T : class
         {
-            return GetFsm<T>(DEFAULT_FSM_NAME);
+            return GetFSM<T>(DEFAULT_FSM_NAME);
         }
 
-        public Fsm<T> GetFsm<T>(string name) where T : class
+        public FSM<T> GetFSM<T>(string name) where T : class
         {
             if (name == null)
             {
                 throw new ArgumentNullException(nameof(name), "Get FSM failed. Name cannot be null.");
             }
             int id = GetID(typeof(T), name);
-            if (_fsms.TryGetValue(id, out Fsm fsm))
+            if (_fsms.TryGetValue(id, out FSM fsm))
             {
-                return fsm as Fsm<T>;
+                return fsm as FSM<T>;
             }
             return null;
         }
 
-        public void DestroyFsm<T>() where T : class
+        public void DestroyFSM<T>() where T : class
         {
-            DestroyFsm<T>(DEFAULT_FSM_NAME);
+            DestroyFSM<T>(DEFAULT_FSM_NAME);
         }
 
-        public void DestroyFsm<T>(string name) where T : class
+        public void DestroyFSM<T>(string name) where T : class
         {
             if (name == null)
             {
                 throw new ArgumentNullException(nameof(name), "Destroy FSM failed. Name cannot be null.");
             }
             int id = GetID(typeof(T), name);
-            if (_fsms.TryGetValue(id, out Fsm fsm))
+            if (_fsms.TryGetValue(id, out FSM fsm))
             {
                 fsm.Destroy();
                 _fsms.Remove(id);

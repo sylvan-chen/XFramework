@@ -15,17 +15,17 @@ namespace XFramework
         [SerializeField]
         private string _startupProcedureTypeName;
 
-        private Fsm<ProcedureManager> _procedureFsm;
+        private FSM<ProcedureManager> _procedureFSM;
         private Procedure _startupProcedure;
 
         public Procedure CurrentProcedure
         {
-            get => _procedureFsm?.CurrentState as Procedure;
+            get => _procedureFSM?.CurrentState as Procedure;
         }
 
         public float CurrentProcedureTime
         {
-            get => _procedureFsm == null ? 0 : _procedureFsm.CurrentStateTime;
+            get => _procedureFSM == null ? 0 : _procedureFSM.CurrentStateTime;
         }
 
         private void Start()
@@ -53,27 +53,27 @@ namespace XFramework
                 throw new InvalidOperationException("ProcedureManager init failed. Startup procedure is null.");
             }
 
-            _procedureFsm = Global.FsmManager.CreateFsm(this, procedures);
-            StartCoroutine(StartProcedureFsm());
+            _procedureFSM = Global.FSMManager.CreateFSM(this, procedures);
+            StartCoroutine(StartProcedureFSM());
         }
 
         public T GetProcedure<T>() where T : Procedure
         {
-            return _procedureFsm.GetState<T>();
+            return _procedureFSM.GetState<T>();
         }
 
         public bool HasProcedure<T>() where T : Procedure
         {
-            return _procedureFsm.HasState<T>();
+            return _procedureFSM.HasState<T>();
         }
 
         /// <summary>
         /// 启动流程状态机
         /// </summary>
-        private IEnumerator StartProcedureFsm()
+        private IEnumerator StartProcedureFSM()
         {
             yield return new WaitForEndOfFrame();
-            _procedureFsm.Start(_startupProcedure.GetType());
+            _procedureFSM.Start(_startupProcedure.GetType());
         }
     }
 }
