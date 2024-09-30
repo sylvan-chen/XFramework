@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace XFramework.Utils
 {
@@ -106,6 +107,7 @@ namespace XFramework.Utils
 
         private static void CheckTypeCompilance(Type type)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type), "Check type compilance failed. Type is null.");
@@ -118,6 +120,7 @@ namespace XFramework.Utils
             {
                 throw new ArgumentException("Check type compilance failed. Type is not a IReference type.", nameof(type));
             }
+#endif
         }
 
         private static ReferenceCollection GetReferenceCollection(Type type)

@@ -280,6 +280,7 @@ namespace XFramework
 
         private void CheckTypeCompilance(Type type)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type), $"Check type complience of FSM {Name} failed. State type cannot be null.");
@@ -292,6 +293,7 @@ namespace XFramework
             {
                 throw new ArgumentException($"Check type complience of FSM {Name} failed. State type {type.FullName} must be a subclass of {typeof(FsmState<T>).Name}.", nameof(type));
             }
+#endif
         }
     }
 }
