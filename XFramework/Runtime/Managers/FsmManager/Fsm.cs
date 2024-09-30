@@ -7,7 +7,7 @@ namespace XFramework
     public abstract class Fsm
     {
         internal abstract void Update(float deltaTime, float unscaleDeltaTime);
-        internal abstract void Destroy();
+        public abstract void Destroy();
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ namespace XFramework
             _currentState.OnUpdate(this, deltaTime, unscaledeltaTime);
         }
 
-        internal override void Destroy()
+        public override void Destroy()
         {
             _currentState?.OnExit(this);
             foreach (FsmState<T> state in _stateDict.Values)
