@@ -5,7 +5,7 @@ namespace XFramework
         /// <summary>
         /// 延迟事件包装类
         /// </summary>
-        private class DelayEventWrapper
+        private struct DelayEventWrapper
         {
 
             public IEventArgs Args;
