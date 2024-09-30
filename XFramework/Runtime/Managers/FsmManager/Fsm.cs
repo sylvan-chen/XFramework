@@ -173,7 +173,7 @@ namespace XFramework
         {
             if (_stateDict.TryGetValue(typeof(TState), out FSMState<T> state))
             {
-                return state as TState;
+                return state as TState ?? throw new InvalidOperationException($"Get state of FSM {Name} failed.");
             }
             return null;
         }

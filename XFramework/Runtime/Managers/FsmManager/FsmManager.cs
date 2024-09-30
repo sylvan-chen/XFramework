@@ -84,7 +84,7 @@ namespace XFramework
             int id = GetID(typeof(T), name);
             if (_fsms.TryGetValue(id, out FSM fsm))
             {
-                return fsm as FSM<T>;
+                return fsm as FSM<T> ?? throw new InvalidOperationException($"Get FSM with name ({name}) and owner type ({typeof(T).Name}) failed.");
             }
             return null;
         }

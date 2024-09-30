@@ -26,7 +26,7 @@ namespace XFramework
 
         public T GetManager<T>() where T : Manager
         {
-            T manager = GetComponentInChildren<T>() ?? throw new ArgumentException($"Can not find manager: {typeof(T).Name}", nameof(T));
+            T manager = GetComponentInChildren<T>() ?? throw new InvalidOperationException($"Get manager {typeof(T).Name} failed.");
             Log.Debug($"[XFramework] [RootManager] Get manager: {manager.GetType().Name}");
             return manager;
         }

@@ -34,7 +34,7 @@ namespace XFramework.Utils
                     }
                 }
 
-                return Activator.CreateInstance(ReferenceType) as IReference;
+                return Activator.CreateInstance(ReferenceType) as IReference ?? throw new InvalidOperationException($"Spawn reference of type {ReferenceType} failed.");
             }
 
             /// <summary>

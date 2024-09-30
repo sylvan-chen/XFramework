@@ -32,7 +32,7 @@ namespace XFramework.Utils
 
         public static T Spawn<T>() where T : class, IReference, new()
         {
-            return GetReferenceCollection(typeof(T)).Spawn() as T;
+            return GetReferenceCollection(typeof(T)).Spawn() as T ?? throw new InvalidOperationException($"Spawn reference of type {typeof(T).Name} failed.");
         }
 
         public static void Recycle(IReference reference)
