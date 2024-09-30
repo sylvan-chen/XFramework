@@ -7,7 +7,7 @@ namespace XFramework
     public abstract class FSM
     {
         internal abstract void Update(float deltaTime, float unscaleDeltaTime);
-        public abstract void Destroy();
+        internal abstract void Destroy();
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ namespace XFramework
             get { return _isDestroyed; }
         }
 
-        public static FSM<T> Create(string name, T owner, params FSMState<T>[] states)
+        internal static FSM<T> Create(string name, T owner, params FSMState<T>[] states)
         {
             var fsm = ReferencePool.Spawn<FSM<T>>();
             fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Spawn FSM failed. Name cannot be null.");
@@ -103,7 +103,7 @@ namespace XFramework
             _currentState.OnUpdate(this, deltaTime, unscaledeltaTime);
         }
 
-        public override void Destroy()
+        internal override void Destroy()
         {
             _currentState?.OnExit(this);
             foreach (FSMState<T> state in _stateDict.Values)
