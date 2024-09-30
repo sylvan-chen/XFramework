@@ -19,31 +19,9 @@ namespace XFramework
         private readonly Dictionary<Type, FsmState<T>> _stateDict = new();
         private string _name;
         private T _owner;
-        private FsmState<T> _currentState = null;
+        private FsmState<T> _currentState;
         private float _currentStateTime = 0f;
         private bool _isDestroyed = false;
-
-        public static Fsm<T> Spawn(string name, T owner, params FsmState<T>[] states)
-        {
-            var fsm = ReferencePool.Spawn<Fsm<T>>();
-            fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Spawn FSM failed. Name cannot be null.");
-            fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Spawn FSM failed. Owner cannot be null.");
-            foreach (FsmState<T> state in states)
-            {
-                if (state == null)
-                {
-                    throw new ArgumentNullException(nameof(states), $"Spawn FSM failed. The state in initial states cannot be null.");
-                }
-                if (fsm._stateDict.ContainsKey(state.GetType()))
-                {
-                    throw new ArgumentException($"Spawn FSM failed. Duplicate state in initial states is not allowed, type {state.GetType().FullName} is already found.", nameof(states));
-                }
-                fsm._stateDict.Add(state.GetType(), state);
-                state.OnInit(fsm);
-            }
-            fsm._isDestroyed = false;
-            return fsm;
-        }
 
         /// <summary>
         /// 状态机名称
@@ -51,7 +29,6 @@ namespace XFramework
         public string Name
         {
             get { return _name; }
-            private set { _name = value ?? string.Empty; }
         }
 
         /// <summary>
@@ -60,7 +37,6 @@ namespace XFramework
         public T Owner
         {
             get { return _owner; }
-            private set { _owner = value; }
         }
 
         /// <summary>
@@ -93,6 +69,28 @@ namespace XFramework
         public bool IsDestroyed
         {
             get { return _isDestroyed; }
+        }
+
+        public static Fsm<T> Spawn(string name, T owner, params FsmState<T>[] states)
+        {
+            var fsm = ReferencePool.Spawn<Fsm<T>>();
+            fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Spawn FSM failed. Name cannot be null.");
+            fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Spawn FSM failed. Owner cannot be null.");
+            foreach (FsmState<T> state in states)
+            {
+                if (state == null)
+                {
+                    throw new ArgumentNullException(nameof(states), $"Spawn FSM failed. The state in initial states cannot be null.");
+                }
+                if (fsm._stateDict.ContainsKey(state.GetType()))
+                {
+                    throw new ArgumentException($"Spawn FSM failed. Duplicate state in initial states is not allowed, type {state.GetType().FullName} is already found.", nameof(states));
+                }
+                fsm._stateDict.Add(state.GetType(), state);
+                state.OnInit(fsm);
+            }
+            fsm._isDestroyed = false;
+            return fsm;
         }
 
         internal override void Update(float deltaTime, float unscaledeltaTime)

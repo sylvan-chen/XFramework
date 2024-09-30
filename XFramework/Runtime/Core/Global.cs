@@ -8,6 +8,7 @@ namespace XFramework
         private static EventManager _eventManager;
         private static GameSettingManager _gameSettingManager;
         private static FsmManager _fsmManager;
+        private static ProcedureManager _procedureManager;
 
         public static EventManager EventManager
         {
@@ -42,6 +43,18 @@ namespace XFramework
                     _fsmManager = RootManager.Instance.GetManager<FsmManager>();
                 }
                 return _fsmManager;
+            }
+        }
+
+        public static ProcedureManager ProcedureManager
+        {
+            get
+            {
+                if (_procedureManager == null)
+                {
+                    _procedureManager = RootManager.Instance.GetManager<ProcedureManager>();
+                }
+                return _procedureManager;
             }
         }
 
