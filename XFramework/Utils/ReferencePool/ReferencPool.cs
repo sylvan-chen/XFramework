@@ -35,7 +35,7 @@ namespace XFramework.Utils
             return GetReferenceCollection(typeof(T)).Spawn() as T;
         }
 
-        public static void Release(IReference reference)
+        public static void Recycle(IReference reference)
         {
             if (reference == null)
             {

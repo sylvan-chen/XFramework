@@ -26,7 +26,7 @@ namespace XFramework
 
             public void Destroy()
             {
-                ReferencePool.Release(this);
+                ReferencePool.Recycle(this);
             }
 
             public void Clear()
