@@ -32,6 +32,7 @@ namespace XFramework
                     {
                         wrapper.HandlerChain.Fire(wrapper.Args);
                         _delayedEvents.Remove(node);
+                        wrapper.Destroy();
                     }
                     node = node.Next;
                 }
@@ -117,7 +118,7 @@ namespace XFramework
             {
                 if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
                 {
-                    _delayedEvents.AddLast(new DelayEventWrapper(args, handlerChain, delayFrame));
+                    _delayedEvents.AddLast(DelayEventWrapper.Create(args, handlerChain, delayFrame));
                 }
                 else
                 {

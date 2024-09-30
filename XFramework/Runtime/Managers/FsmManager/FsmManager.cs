@@ -50,7 +50,7 @@ namespace XFramework
                 throw new InvalidOperationException($"Create FSM failed. FSM with the same name ({name}) and same owner type ({typeof(T).Name}) already exists.");
             }
 
-            var fsm = Fsm<T>.Spawn(name, owner, states);
+            var fsm = Fsm<T>.Create(name, owner, states);
             _fsms.Add(id, fsm);
             return fsm;
         }

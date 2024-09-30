@@ -71,7 +71,7 @@ namespace XFramework
             get { return _isDestroyed; }
         }
 
-        public static Fsm<T> Spawn(string name, T owner, params FsmState<T>[] states)
+        public static Fsm<T> Create(string name, T owner, params FsmState<T>[] states)
         {
             var fsm = ReferencePool.Spawn<Fsm<T>>();
             fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Spawn FSM failed. Name cannot be null.");
