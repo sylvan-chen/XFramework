@@ -58,10 +58,5 @@ namespace XFramework
         {
             base.OnUpdate(fsm, logicSeconds, realSeconds);
         }
-
-        protected void ChangeProcedure<TProcedure>(FSM<ProcedureManager> fsm) where TProcedure : Procedure
-        {
-            ChangeState<TProcedure>(fsm);
-        }
     }
 }

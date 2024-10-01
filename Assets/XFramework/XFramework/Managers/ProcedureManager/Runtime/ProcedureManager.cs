@@ -72,6 +72,7 @@ namespace XFramework
         /// </summary>
         private IEnumerator StartProcedureFSM()
         {
+            // 等到帧末，确保所有必要组件都启动完毕
             yield return new WaitForEndOfFrame();
             _procedureFSM.Start(_startupProcedure.GetType());
         }
