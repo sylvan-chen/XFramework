@@ -1,0 +1,45 @@
+{
+    "FileVersion": "2.0.0",
+    "EnableAddressable": true,
+    "LocationToLower": false,
+    "IncludeAssetGUID": false,
+    "OutputNameStyle": 0,
+    "BuildPipeline": "ScriptableBuildPipeline",
+    "PackageName": "DefaultPackage",
+    "PackageVersion": "Simulate",
+    "AssetList": [
+        {
+            "Address": "ortho1",
+            "AssetPath": "Assets/Res/ortho1.png",
+            "AssetGUID": "",
+            "AssetTags": [],
+            "BundleID": 0
+        },
+        {
+            "Address": "persp1",
+            "AssetPath": "Assets/Res/persp1.png",
+            "AssetGUID": "",
+            "AssetTags": [],
+            "BundleID": 0
+        },
+        {
+            "Address": "WorldToView",
+            "AssetPath": "Assets/Res/WorldToView.png",
+            "AssetGUID": "",
+            "AssetTags": [],
+            "BundleID": 0
+        }
+    ],
+    "BundleList": [
+        {
+            "BundleName": "assets_res.bundle",
+            "UnityCRC": 0,
+            "FileHash": "f399d3eb9a281c7005eb659c7785b7cf",
+            "FileCRC": "00000000",
+            "FileSize": 275672,
+            "Encrypted": false,
+            "Tags": [],
+            "DependIDs": []
+        }
+    ]
+}

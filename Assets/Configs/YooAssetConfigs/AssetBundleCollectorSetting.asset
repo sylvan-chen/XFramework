@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 185f6993d5150494d98da50e26cb1c25, type: 3}
   m_Name: AssetBundleCollectorSetting
   m_EditorClassIdentifier: 
-  ShowPackageView: 1
+  ShowPackageView: 0
   ShowEditorAlias: 0
-  UniqueBundleName: 1
+  UniqueBundleName: 0
   Packages:
-  - PackageName: MainPackage
+  - PackageName: DefaultPackage
     PackageDesc: 
     EnableAddressable: 1
     LocationToLower: 0
@@ -29,19 +29,11 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: 
-        CollectorGUID: 
+      - CollectPath: Assets/Res/Test
+        CollectorGUID: 2da5b628f6401054caa2dd7df891af2f
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory
         FilterRuleName: CollectAll
         AssetTags: 
         UserData: 
-  - PackageName: RawPackage
-    PackageDesc: 
-    EnableAddressable: 0
-    LocationToLower: 0
-    IncludeAssetGUID: 0
-    AutoCollectShaders: 1
-    IgnoreRuleName: RawFileIgnoreRule
-    Groups: []
