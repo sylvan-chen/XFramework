@@ -1,5 +1,4 @@
 using XFramework;
-using YooAsset;
 
 public sealed class ProcedureSplash : Procedure
 {

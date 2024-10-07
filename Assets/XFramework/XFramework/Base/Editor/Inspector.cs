@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 
 namespace XFramework.Editor
@@ -35,3 +36,4 @@ namespace XFramework.Editor
         }
     }
 }
+#endif

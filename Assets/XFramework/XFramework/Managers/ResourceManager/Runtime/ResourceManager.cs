@@ -77,7 +77,7 @@ namespace XFramework
         /// </summary>
         public bool CheckDiskSpaceEnough()
         {
-            DriveInfo driveInfo = new DriveInfo(Application.persistentDataPath);
+            DriveInfo driveInfo = new(Application.persistentDataPath);
             long freeSpace = driveInfo.AvailableFreeSpace;
             return freeSpace > _totalDownloadBytes;
         }
@@ -135,6 +135,10 @@ namespace XFramework
 
         private IEnumerator CheckUpdateInternal(Action<bool> onSucceed, Action<string> onFail)
         {
+            if (_package == null)
+            {
+                throw new InvalidOperationException("Package is null. Please initialize package first.");
+            }
             // 获取资源包版本
             // 单机模式下，直接获取本地资源包版本
             // 联机模式下，请求服务器资源包版本
@@ -142,23 +146,23 @@ namespace XFramework
             yield return requestVersionOperation;
             if (requestVersionOperation.Status != EOperationStatus.Succeed)
             {
-                Log.Error($"[XFramework] [AssetManager] Request Package Version Failed: {requestVersionOperation.Error}");
+                Log.Error($"[XFramework] [AssetManager] Request package version failed: {requestVersionOperation.Error}");
                 onFail?.Invoke(requestVersionOperation.Error);
                 yield break;
             }
             string packageVersion = requestVersionOperation.PackageVersion;
-            Log.Debug($"[XFramework] [AssetManager] Current Package Version: {packageVersion}");
+            Log.Debug($"[XFramework] [AssetManager] Current package version: {packageVersion}");
 
             // 更新资源清单到本地
             var updateManifestOperation = _package.UpdatePackageManifestAsync(packageVersion);
             yield return updateManifestOperation;
             if (updateManifestOperation.Status != EOperationStatus.Succeed)
             {
-                Log.Error($"[XFramework] [AssetManager] Update Package Manifest Failed: {updateManifestOperation.Error}");
+                Log.Error($"[XFramework] [AssetManager] Update package manifest failed: {updateManifestOperation.Error}");
                 onFail?.Invoke(updateManifestOperation.Error);
                 yield break;
             }
-            Log.Debug("[XFramework] [AssetManager] Update Package Manifest Succeed.");
+            Log.Debug("[XFramework] [AssetManager] Update package manifest succeed.");
 
             // 创建下载器，如果没有要下载的资源，说明不需要更新
             _downloader = _package.CreateResourceDownloader(_maxConcurrentDownloadCount, _failedDownloadRetryCount);
@@ -177,6 +181,10 @@ namespace XFramework
 
         private IEnumerator DownloadUpdateInternal(Action onSucceed, Action<int, int, long, long> onDownloading, Action<string> onFail)
         {
+            if (_package == null)
+            {
+                throw new InvalidOperationException("Package is null. Please initialize package first.");
+            }
             if (_downloader == null)
             {
                 onFail?.Invoke("Downloader is null. Please check update first.");

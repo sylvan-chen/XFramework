@@ -349,6 +349,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RootManager
       objectReference: {fileID: 0}
+    - target: {fileID: 532500277030432532, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
+      propertyPath: _buildMode
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5290019072366894118, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1266.6626

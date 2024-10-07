@@ -11,20 +11,17 @@ namespace XFramework.Utils
         /// 打印 Debug 级别日志
         /// </summary>
         /// <param name="message"></param>
-        [Conditional("LOG_LEVEL_ALL")]
-        [Conditional("LOG_LEVEL_DEBUG")]
         public static void Debug(string message)
         {
+#if !DISABLE_DEBUG_LOG
             UnityEngine.Debug.Log("[Debug] " + message);
+#endif
         }
 
         /// <summary>
         /// 打印 Info 级别日志
         /// </summary>
         /// <param name="message"></param>
-        [Conditional("LOG_LEVEL_ALL")]
-        [Conditional("LOG_LEVEL_DEBUG")]
-        [Conditional("LOG_LEVEL_INFO")]
         public static void Info(string message)
         {
             UnityEngine.Debug.Log(message);
@@ -34,10 +31,6 @@ namespace XFramework.Utils
         /// 打印 Warning 级别日志
         /// </summary>
         /// <param name="message"></param>
-        [Conditional("LOG_LEVEL_ALL")]
-        [Conditional("LOG_LEVEL_DEBUG")]
-        [Conditional("LOG_LEVEL_INFO")]
-        [Conditional("LOG_LEVEL_WARNING")]
         public static void Warning(string message)
         {
             UnityEngine.Debug.LogWarning(message);
@@ -47,11 +40,6 @@ namespace XFramework.Utils
         /// 打印 Error 级别日志
         /// </summary>
         /// <param name="message"></param>
-        [Conditional("LOG_LEVEL_ALL")]
-        [Conditional("LOG_LEVEL_DEBUG")]
-        [Conditional("LOG_LEVEL_INFO")]
-        [Conditional("LOG_LEVEL_WARNING")]
-        [Conditional("LOG_LEVEL_ERROR")]
         public static void Error(string message)
         {
             UnityEngine.Debug.LogError(message);
@@ -64,12 +52,6 @@ namespace XFramework.Utils
         /// <remarks>
         /// 建议在发生致命错误，即可能导致游戏崩溃的情况时调用此方法，可以尝试重启进程或游戏框架来修复。
         /// </remarks>
-        [Conditional("LOG_LEVEL_ALL")]
-        [Conditional("LOG_LEVEL_DEBUG")]
-        [Conditional("LOG_LEVEL_INFO")]
-        [Conditional("LOG_LEVEL_WARNING")]
-        [Conditional("LOG_LEVEL_ERROR")]
-        [Conditional("LOG_LEVEL_FATAL")]
         public static void Fatal(string message)
         {
             UnityEngine.Debug.LogError("[Fatal] " + message);
