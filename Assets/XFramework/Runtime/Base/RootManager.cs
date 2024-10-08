@@ -24,7 +24,7 @@ namespace XFramework
             ShutdownFramework();
         }
 
-        public T GetManager<T>() where T : Manager
+        public T GetManager<T>() where T : ManagerBase
         {
             T manager = GetComponentInChildren<T>() ?? throw new InvalidOperationException($"Get manager {typeof(T).Name} failed.");
             Log.Debug($"[XFramework] [RootManager] Get manager: {manager.GetType().Name}");

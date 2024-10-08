@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace XFramework
 {
-    public abstract class Manager : MonoBehaviour
+    public abstract class ManagerBase : MonoBehaviour
     {
     }
 }

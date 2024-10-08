@@ -2,7 +2,7 @@ using UnityEditor;
 
 namespace XFramework.Editor
 {
-    public abstract class Inspector : UnityEditor.Editor
+    public abstract class InspectorBase : UnityEditor.Editor
     {
         private bool _isCompileStart = false;
 

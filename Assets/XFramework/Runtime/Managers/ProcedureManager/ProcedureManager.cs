@@ -7,7 +7,7 @@ namespace XFramework
     /// <summary>
     /// 流程管理器
     /// </summary>
-    public sealed class ProcedureManager : Manager
+    public sealed class ProcedureManager : ManagerBase
     {
         [SerializeField]
         private string[] _availableProcedureTypeNames;
@@ -16,11 +16,11 @@ namespace XFramework
         private string _startupProcedureTypeName;
 
         private FSM<ProcedureManager> _procedureFSM;
-        private Procedure _startupProcedure;
+        private ProcedureBase _startupProcedure;
 
-        public Procedure CurrentProcedure
+        public ProcedureBase CurrentProcedure
         {
-            get => _procedureFSM?.CurrentState as Procedure;
+            get => _procedureFSM?.CurrentState as ProcedureBase;
         }
 
         public float CurrentProcedureTime
@@ -30,7 +30,7 @@ namespace XFramework
 
         private void Start()
         {
-            Procedure[] procedures = new Procedure[_availableProcedureTypeNames.Length];
+            ProcedureBase[] procedures = new ProcedureBase[_availableProcedureTypeNames.Length];
             // 注册所有流程为状态
             for (int i = 0; i < _availableProcedureTypeNames.Length; i++)
             {
@@ -41,7 +41,7 @@ namespace XFramework
                     Debug.LogError($"Can not find type {typeName}");
                     continue;
                 }
-                procedures[i] = Activator.CreateInstance(type) as Procedure ?? throw new InvalidOperationException($"Crate instance of procedure {typeName} failed.");
+                procedures[i] = Activator.CreateInstance(type) as ProcedureBase ?? throw new InvalidOperationException($"Crate instance of procedure {typeName} failed.");
                 if (typeName == _startupProcedureTypeName)
                 {
                     _startupProcedure = procedures[i];
@@ -57,12 +57,12 @@ namespace XFramework
             StartCoroutine(StartProcedureFSM());
         }
 
-        public T GetProcedure<T>() where T : Procedure
+        public T GetProcedure<T>() where T : ProcedureBase
         {
             return _procedureFSM.GetState<T>();
         }
 
-        public bool HasProcedure<T>() where T : Procedure
+        public bool HasProcedure<T>() where T : ProcedureBase
         {
             return _procedureFSM.HasState<T>();
         }

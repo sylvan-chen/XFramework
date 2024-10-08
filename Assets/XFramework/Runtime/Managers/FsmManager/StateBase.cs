@@ -9,7 +9,7 @@ namespace XFramework
     /// <remarks>
     /// 每一个状态类型代表状态机所有者的一种状态。
     /// </remarks>
-    public abstract class FSMState<T> where T : class
+    public abstract class StateBase<T> where T : class
     {
         /// <summary>
         /// 初始化状态时
@@ -78,7 +78,7 @@ namespace XFramework
         /// </summary>
         /// <typeparam name="TState">目标状态类型</typeparam>
         /// <param name="fsm">所属状态机实例</param>
-        protected virtual void ChangeState<TState>(FSM<T> fsm) where TState : FSMState<T>
+        protected virtual void ChangeState<TState>(FSM<T> fsm) where TState : StateBase<T>
         {
             if (fsm == null)
             {

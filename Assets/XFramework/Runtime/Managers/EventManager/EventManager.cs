@@ -4,7 +4,7 @@ using XFramework.Utils;
 
 namespace XFramework
 {
-    public sealed partial class EventManager : Manager
+    public sealed partial class EventManager : ManagerBase
     {
         /// <summary>
         /// 事件字典

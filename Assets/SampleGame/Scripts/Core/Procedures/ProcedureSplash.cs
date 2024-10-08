@@ -1,6 +1,6 @@
 using XFramework;
 
-public sealed class ProcedureSplash : Procedure
+public sealed class ProcedureSplash : ProcedureBase
 {
     public override void OnEnter(FSM<ProcedureManager> fsm)
     {

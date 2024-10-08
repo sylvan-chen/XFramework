@@ -8,7 +8,7 @@ namespace XFramework
     /// <remarks>
     /// 流程实际上就是一系列的状态。
     /// </remarks>
-    public abstract class Procedure : FSMState<ProcedureManager>
+    public abstract class ProcedureBase : StateBase<ProcedureManager>
     {
         /// <summary>
         /// 流程初始化时

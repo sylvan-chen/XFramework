@@ -7,7 +7,7 @@ using System.IO;
 
 namespace XFramework
 {
-    public sealed class AssetManager : Manager
+    public sealed class AssetManager : ManagerBase
     {
         [SerializeField]
         BuildMode _buildMode;

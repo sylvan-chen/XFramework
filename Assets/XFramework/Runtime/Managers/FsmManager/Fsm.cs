@@ -16,10 +16,10 @@ namespace XFramework
     /// <typeparam name="T">有限状态机的所有者类型</typeparam>
     public sealed class FSM<T> : FSM, IReference where T : class
     {
-        private readonly Dictionary<Type, FSMState<T>> _stateDict = new();
+        private readonly Dictionary<Type, StateBase<T>> _stateDict = new();
         private string _name;
         private T _owner;
-        private FSMState<T> _currentState;
+        private StateBase<T> _currentState;
         private float _currentStateTime = 0f;
         private bool _isDestroyed = false;
 
@@ -50,7 +50,7 @@ namespace XFramework
         /// <summary>
         /// 当前状态
         /// </summary>
-        public FSMState<T> CurrentState
+        public StateBase<T> CurrentState
         {
             get { return _currentState; }
         }
@@ -71,12 +71,12 @@ namespace XFramework
             get { return _isDestroyed; }
         }
 
-        internal static FSM<T> Create(string name, T owner, params FSMState<T>[] states)
+        internal static FSM<T> Create(string name, T owner, params StateBase<T>[] states)
         {
             var fsm = ReferencePool.Spawn<FSM<T>>();
             fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Spawn FSM failed. Name cannot be null.");
             fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Spawn FSM failed. Owner cannot be null.");
-            foreach (FSMState<T> state in states)
+            foreach (StateBase<T> state in states)
             {
                 if (state == null)
                 {
@@ -106,7 +106,7 @@ namespace XFramework
         internal override void Destroy()
         {
             _currentState?.OnExit(this);
-            foreach (FSMState<T> state in _stateDict.Values)
+            foreach (StateBase<T> state in _stateDict.Values)
             {
                 state.OnFsmDestroy(this);
             }
@@ -118,7 +118,7 @@ namespace XFramework
         /// 启动状态机
         /// </summary>
         /// <typeparam name="TState">启动时的状态类型</typeparam>
-        public void Start<TState>() where TState : FSMState<T>
+        public void Start<TState>() where TState : StateBase<T>
         {
             if (_isDestroyed)
             {
@@ -129,7 +129,7 @@ namespace XFramework
                 throw new InvalidOperationException($"Start FSM {Name} failed. It has already been started, don't start it again.");
             }
 
-            if (_stateDict.TryGetValue(typeof(TState), out FSMState<T> state))
+            if (_stateDict.TryGetValue(typeof(TState), out StateBase<T> state))
             {
                 _currentState = state;
                 _currentStateTime = 0;
@@ -157,7 +157,7 @@ namespace XFramework
             }
             CheckTypeCompilance(startStateType);
 
-            if (_stateDict.TryGetValue(startStateType, out FSMState<T> state))
+            if (_stateDict.TryGetValue(startStateType, out StateBase<T> state))
             {
                 _currentState = state;
                 _currentStateTime = 0;
@@ -169,27 +169,27 @@ namespace XFramework
             }
         }
 
-        public TState GetState<TState>() where TState : FSMState<T>
+        public TState GetState<TState>() where TState : StateBase<T>
         {
-            if (_stateDict.TryGetValue(typeof(TState), out FSMState<T> state))
+            if (_stateDict.TryGetValue(typeof(TState), out StateBase<T> state))
             {
                 return state as TState ?? throw new InvalidOperationException($"Get state of FSM {Name} failed.");
             }
             return null;
         }
 
-        public FSMState<T> GetState(Type stateType)
+        public StateBase<T> GetState(Type stateType)
         {
             CheckTypeCompilance(stateType);
 
-            if (_stateDict.TryGetValue(stateType, out FSMState<T> state))
+            if (_stateDict.TryGetValue(stateType, out StateBase<T> state))
             {
                 return state;
             }
             return null;
         }
 
-        public bool HasState<TState>() where TState : FSMState<T>
+        public bool HasState<TState>() where TState : StateBase<T>
         {
             return _stateDict.ContainsKey(typeof(TState));
         }
@@ -201,7 +201,7 @@ namespace XFramework
             return _stateDict.ContainsKey(stateType);
         }
 
-        public void ChangeState<TState>() where TState : FSMState<T>
+        public void ChangeState<TState>() where TState : StateBase<T>
         {
             if (_isDestroyed)
             {
@@ -211,7 +211,7 @@ namespace XFramework
             {
                 throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM didn't start yet.");
             }
-            if (_stateDict.TryGetValue(typeof(TState), out FSMState<T> state))
+            if (_stateDict.TryGetValue(typeof(TState), out StateBase<T> state))
             {
                 _currentState.OnExit(this);
                 _currentState = state;
@@ -236,7 +236,7 @@ namespace XFramework
             }
             CheckTypeCompilance(stateType);
 
-            if (_stateDict.TryGetValue(stateType, out FSMState<T> state))
+            if (_stateDict.TryGetValue(stateType, out StateBase<T> state))
             {
                 _currentState.OnExit(this);
                 _currentState = state;
@@ -249,7 +249,7 @@ namespace XFramework
             }
         }
 
-        public FSMState<T>[] GetAllStates()
+        public StateBase<T>[] GetAllStates()
         {
             if (_isDestroyed)
             {
@@ -257,9 +257,9 @@ namespace XFramework
             }
             if (_stateDict.Count == 0)
             {
-                return new FSMState<T>[0];
+                return new StateBase<T>[0];
             }
-            var result = new FSMState<T>[_stateDict.Count];
+            var result = new StateBase<T>[_stateDict.Count];
             _stateDict.Values.CopyTo(result, 0);
             return result;
         }
@@ -289,9 +289,9 @@ namespace XFramework
             {
                 throw new ArgumentException($"Check type complience of FSM {Name} failed. State type {type.FullName} must be a non-abstract class.", nameof(type));
             }
-            if (!typeof(FSMState<T>).IsAssignableFrom(type))
+            if (!typeof(StateBase<T>).IsAssignableFrom(type))
             {
-                throw new ArgumentException($"Check type complience of FSM {Name} failed. State type {type.FullName} must be a subclass of {typeof(FSMState<T>).Name}.", nameof(type));
+                throw new ArgumentException($"Check type complience of FSM {Name} failed. State type {type.FullName} must be a subclass of {typeof(StateBase<T>).Name}.", nameof(type));
             }
 #endif
         }

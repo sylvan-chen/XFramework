@@ -1,7 +1,7 @@
 using XFramework;
 using XFramework.Utils;
 
-public sealed class ProcedureDownloadUpdate : Procedure
+public sealed class ProcedureDownloadUpdate : ProcedureBase
 {
     public override void OnEnter(FSM<ProcedureManager> fsm)
     {

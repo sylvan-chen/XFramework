@@ -1,6 +1,6 @@
 using XFramework;
 
-public sealed class ProcedurePreload : Procedure
+public sealed class ProcedurePreload : ProcedureBase
 {
     public override void OnEnter(FSM<ProcedureManager> fsm)
     {

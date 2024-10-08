@@ -6,7 +6,7 @@ using UnityEditor;
 namespace XFramework.Editor
 {
     [CustomEditor(typeof(ProcedureManager))]
-    internal sealed class ProcedureManagerInspector : Inspector
+    internal sealed class ProcedureManagerInspector : InspectorBase
     {
         private SerializedProperty _availableProcedureTypeNames;
         private SerializedProperty _startupProcedureTypeName;
@@ -112,7 +112,7 @@ namespace XFramework.Editor
         /// </summary>
         private void UpdateSubtypeNames()
         {
-            _allProcedureTypeNames = TypeHelper.GetRuntimeSubtypeNames(typeof(Procedure));
+            _allProcedureTypeNames = TypeHelper.GetRuntimeSubtypeNames(typeof(ProcedureBase));
             // 读取原来属性中的可用列表，用于跟新的 _allProcedureTypeNames 进行比较
             _currentAvailableProcedureTypeNames.Clear();
             for (int i = 0; i < _availableProcedureTypeNames.arraySize; i++)

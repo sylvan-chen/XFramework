@@ -7,7 +7,7 @@ namespace XFramework
     /// <summary>
     /// 有限状态机管理器
     /// </summary>
-    public sealed class FSMManager : Manager
+    public sealed class FSMManager : ManagerBase
     {
         private readonly Dictionary<int, FSM> _fsms = new();
 
@@ -30,7 +30,7 @@ namespace XFramework
             _fsms.Clear();
         }
 
-        public FSM<T> CreateFSM<T>(string name, T owner, params FSMState<T>[] states) where T : class
+        public FSM<T> CreateFSM<T>(string name, T owner, params StateBase<T>[] states) where T : class
         {
             if (name == null)
             {
@@ -55,17 +55,17 @@ namespace XFramework
             return fsm;
         }
 
-        public FSM<T> CreateFSM<T>(T owner, params FSMState<T>[] states) where T : class
+        public FSM<T> CreateFSM<T>(T owner, params StateBase<T>[] states) where T : class
         {
             return CreateFSM(DEFAULT_FSM_NAME, owner, states);
         }
 
-        public FSM<T> CreateFSM<T>(T owner, List<FSMState<T>> states) where T : class
+        public FSM<T> CreateFSM<T>(T owner, List<StateBase<T>> states) where T : class
         {
             return CreateFSM(DEFAULT_FSM_NAME, owner, states.ToArray());
         }
 
-        public FSM<T> CreateFSM<T>(string name, T owner, List<FSMState<T>> states) where T : class
+        public FSM<T> CreateFSM<T>(string name, T owner, List<StateBase<T>> states) where T : class
         {
             return CreateFSM(name, owner, states.ToArray());
         }
