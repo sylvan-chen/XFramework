@@ -9,7 +9,7 @@ namespace XFramework
         private static GameSettingManager _gameSettingManager;
         private static FSMManager _fsmManager;
         private static ProcedureManager _procedureManager;
-        private static ResourceManager _resourceManager;
+        private static AssetManager _assetManager;
 
         public static EventManager EventManager
         {
@@ -59,15 +59,15 @@ namespace XFramework
             }
         }
 
-        public static ResourceManager ResourceManager
+        public static AssetManager AssetManager
         {
             get
             {
-                if (_resourceManager == null)
+                if (_assetManager == null)
                 {
-                    _resourceManager = RootManager.Instance.GetManager<ResourceManager>();
+                    _assetManager = RootManager.Instance.GetManager<AssetManager>();
                 }
-                return _resourceManager;
+                return _assetManager;
             }
         }
 

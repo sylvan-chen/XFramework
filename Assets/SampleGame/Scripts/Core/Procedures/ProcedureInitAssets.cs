@@ -7,7 +7,7 @@ public sealed class ProcedureInitAssets : Procedure
     {
         base.OnEnter(fsm);
 
-        Global.ResourceManager.InitAsync(
+        Global.AssetManager.InitAsync(
             onSucceed: () =>
             {
                 fsm.ChangeState<ProcedureCheckUpdate>();

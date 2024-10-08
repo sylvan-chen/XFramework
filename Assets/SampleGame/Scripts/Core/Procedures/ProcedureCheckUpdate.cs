@@ -7,7 +7,7 @@ public sealed class ProcedureCheckUpdate : Procedure
     {
         base.OnEnter(fsm);
 
-        Global.ResourceManager.CheckUpdateAsync(
+        Global.AssetManager.CheckUpdateAsync(
             onSucceed: (needUpdate) =>
             {
                 if (!needUpdate)

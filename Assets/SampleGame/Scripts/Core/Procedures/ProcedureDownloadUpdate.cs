@@ -7,7 +7,7 @@ public sealed class ProcedureDownloadUpdate : Procedure
     {
         base.OnEnter(fsm);
 
-        Global.ResourceManager.DwonloadUpdateAsync(
+        Global.AssetManager.DwonloadUpdateAsync(
             onSucceed: () =>
             {
                 fsm.ChangeState<ProcedurePreload>();
