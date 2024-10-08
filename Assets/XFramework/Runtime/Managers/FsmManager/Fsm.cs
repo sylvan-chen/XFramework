@@ -111,7 +111,7 @@ namespace XFramework
                 state.OnFsmDestroy(this);
             }
             _isDestroyed = true;
-            ReferencePool.Recycle(this);
+            ReferencePool.Unspawn(this);
         }
 
         /// <summary>

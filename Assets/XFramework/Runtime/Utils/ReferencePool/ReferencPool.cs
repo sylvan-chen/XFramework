@@ -24,18 +24,32 @@ namespace XFramework.Utils
             _referenceCollections.Clear();
         }
 
+        /// <summary>
+        /// 孵化一个指定类型的引用
+        /// </summary>
+        /// <param name="type">要孵化的引用类型</param>
+        /// <returns>孵化出的引用</returns>
         public static IReference Spawn(Type type)
         {
             CheckTypeCompilance(type);
             return GetReferenceCollection(type).Spawn();
         }
 
+        /// <summary>
+        /// 孵化一个指定类型的引用
+        /// </summary>
+        /// <typeparam name="T">要孵化的引用类型</typeparam>
+        /// <returns>孵化出的引用</returns>
         public static T Spawn<T>() where T : class, IReference, new()
         {
             return GetReferenceCollection(typeof(T)).Spawn() as T ?? throw new InvalidOperationException($"Spawn reference of type {typeof(T).Name} failed.");
         }
 
-        public static void Recycle(IReference reference)
+        /// <summary>
+        /// 回收一个引用
+        /// </summary>
+        /// <param name="reference">要回收的引用</param>
+        public static void Unspawn(IReference reference)
         {
             if (reference == null)
             {
@@ -44,7 +58,7 @@ namespace XFramework.Utils
             Type referenceType = reference.GetType();
             CheckTypeCompilance(referenceType);
 
-            GetReferenceCollection(referenceType).Release(reference);
+            GetReferenceCollection(referenceType).Unspawn(reference);
         }
 
         /// <summary>

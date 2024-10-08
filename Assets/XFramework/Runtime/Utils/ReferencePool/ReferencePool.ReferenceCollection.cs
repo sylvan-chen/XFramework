@@ -38,10 +38,10 @@ namespace XFramework.Utils
             }
 
             /// <summary>
-            /// 释放一个引用
+            /// 回收一个引用
             /// </summary>
-            /// <param name="reference">将要释放的引用</param>
-            public void Release(IReference reference)
+            /// <param name="reference">将要回收的引用</param>
+            public void Unspawn(IReference reference)
             {
                 if (reference == null)
                 {
