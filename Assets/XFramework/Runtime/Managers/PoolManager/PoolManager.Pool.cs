@@ -17,11 +17,11 @@ namespace XFramework
             private float _aliveTime = 0f;
             private List<T> _cachedDiscardingObjects = new();
 
-            public Pool(bool allowMultiReference, float autoSqueezeInterval, float expireTime, int capacity)
+            public Pool(bool allowMultiReference, float autoSqueezeInterval, float objectTTL, int capacity)
             {
                 _allowMultiReference = allowMultiReference;
                 _autoSqueezeInterval = autoSqueezeInterval;
-                _objectTTL = expireTime;
+                _objectTTL = objectTTL;
                 _capacity = capacity;
             }
 
@@ -101,12 +101,12 @@ namespace XFramework
                 return discardableObjects;
             }
 
-            private List<T> DefaultDiscardObjectFilter(List<T> candidateObjects, int discardCount, float expireTime)
+            private List<T> DefaultDiscardObjectFilter(List<T> candidateObjects, int discardCount, float objectTTL)
             {
                 _cachedDiscardingObjects.Clear();
                 for (int i = candidateObjects.Count - 1; i >= 0; i--)
                 {
-                    if (candidateObjects[i].LastUseUtcTime.AddSeconds(expireTime) < DateTime.UtcNow)
+                    if (candidateObjects[i].LastUseUtcTime.AddSeconds(objectTTL) < DateTime.UtcNow)
                     {
                         _cachedDiscardingObjects.Add(candidateObjects[i]);
                         candidateObjects.RemoveAt(i);
