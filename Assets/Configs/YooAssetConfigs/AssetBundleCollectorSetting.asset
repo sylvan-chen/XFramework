@@ -30,7 +30,7 @@ MonoBehaviour:
       ActiveRuleName: EnableGroup
       Collectors:
       - CollectPath: Assets/Res/Test
-        CollectorGUID: 2da5b628f6401054caa2dd7df891af2f
+        CollectorGUID: 323295f0c14438f4295bf889a8cfac39
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory
