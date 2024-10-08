@@ -10,18 +10,18 @@ namespace XFramework
             private readonly Dictionary<string, List<ObjectBase>> _objectsDict = new();
             private readonly Dictionary<object, ObjectBase> _objectBaseDict = new();
             private readonly bool _allowMultiReference;
-            private float _autoDicardInterval;
-            private float _expireTime;
+            private float _autoSqueezeInterval;
+            private float _objectTTL;
             private int _capacity;
 
             private float _aliveTime = 0f;
             private List<T> _cachedDiscardingObjects = new();
 
-            public Pool(bool allowMultiReference, float autoDicardInterval, float expireTime, int capacity)
+            public Pool(bool allowMultiReference, float autoSqueezeInterval, float expireTime, int capacity)
             {
                 _allowMultiReference = allowMultiReference;
-                _autoDicardInterval = autoDicardInterval;
-                _expireTime = expireTime;
+                _autoSqueezeInterval = autoSqueezeInterval;
+                _objectTTL = expireTime;
                 _capacity = capacity;
             }
 
@@ -78,7 +78,7 @@ namespace XFramework
                 }
 
                 _aliveTime = 0f;
-                List<T> discardObjects = discardObjectFilter(GetDiscardableObjects(), discardCount, _expireTime);
+                List<T> discardObjects = discardObjectFilter(GetDiscardableObjects(), discardCount, _objectTTL);
                 if (discardObjects == null || discardObjects.Count <= 0)
                 {
                     return;
@@ -95,6 +95,7 @@ namespace XFramework
                 foreach (KeyValuePair<object, ObjectBase> pair in _objectBaseDict)
                 {
                     ObjectBase obj = pair.Value;
+                    // TODO 过滤条件 IsInUse || Locked
                     // if (obj.)
                 }
                 return discardableObjects;
