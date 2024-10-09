@@ -5,17 +5,18 @@ namespace XFramework
 {
     public sealed partial class PoolManager
     {
-        private class Pool<T> where T : ObjectBase, new()
+        private class Pool<T> where T : PoolObjectBase, new()
         {
-            private readonly Dictionary<string, List<ObjectBase>> _objectsDict = new();
-            private readonly Dictionary<object, ObjectBase> _objectBaseDict = new();
+            private readonly Dictionary<string, List<PoolObjectBase>> _objectsDict = new();
+            private readonly Dictionary<object, PoolObjectBase> _objectMap = new();
             private readonly bool _allowMultiReference;
             private float _autoSqueezeInterval;
             private float _objectTTL;
             private int _capacity;
 
             private float _aliveTime = 0f;
-            private List<T> _cachedDiscardingObjects = new();
+            private readonly List<T> _cachedDiscardingObjects = new();
+            private readonly List<T> _cachedDiscardableObjects = new();
 
             public Pool(bool allowMultiReference, float autoSqueezeInterval, float objectTTL, int capacity)
             {
@@ -32,7 +33,7 @@ namespace XFramework
 
             public int ObjectCount
             {
-                get => _objectBaseDict.Count;
+                get => _objectMap.Count;
             }
 
             public int Capacity
@@ -46,6 +47,51 @@ namespace XFramework
                     }
                     _capacity = value;
                     Squeeze();
+                }
+            }
+
+            public bool Discard(T poolObject)
+            {
+                if (poolObject == null)
+                {
+                    throw new ArgumentNullException(nameof(poolObject), "PoolObject cannot be null.");
+                }
+
+                if (poolObject.IsInUse || poolObject.Locked)
+                {
+                    return false;
+                }
+
+                _objectMap.Remove(poolObject.Target);
+                _objectsDict.Remove(poolObject.Name);
+                poolObject.Destroy();
+                return true;
+            }
+
+            public bool Discard(object target)
+            {
+                if (target == null)
+                {
+                    throw new ArgumentNullException(nameof(target), "Target cannot be null.");
+                }
+                // 通过 target 反向获取对应的池对象
+                if (_objectMap.TryGetValue(target, out PoolObjectBase poolObject))
+                {
+                    return Discard(poolObject as T);
+                }
+                return false;
+            }
+
+            /// <summary>
+            /// 释放对象池中所有未使用的对象
+            /// </summary>
+            public void DiscardAllUnused()
+            {
+                _autoSqueezeInterval = 0f;
+                List<T> discardableObjects = GetDiscardableObjects();
+                foreach (T obj in discardableObjects)
+                {
+                    Discard(obj);
                 }
             }
 
@@ -78,27 +124,30 @@ namespace XFramework
                 }
 
                 _aliveTime = 0f;
-                List<T> discardObjects = discardObjectFilter(GetDiscardableObjects(), discardCount, _objectTTL);
-                if (discardObjects == null || discardObjects.Count <= 0)
+                List<T> discardingObjects = discardObjectFilter(GetDiscardableObjects(), discardCount, _objectTTL);
+                if (discardingObjects == null || discardingObjects.Count <= 0)
                 {
                     return;
                 }
-                foreach (T obj in discardObjects)
+                foreach (T obj in discardingObjects)
                 {
-                    // TODO 丢弃对象
+                    Discard(obj);
                 }
             }
 
             private List<T> GetDiscardableObjects()
             {
-                List<T> discardableObjects = new();
-                foreach (KeyValuePair<object, ObjectBase> pair in _objectBaseDict)
+                _cachedDiscardableObjects.Clear();
+                foreach (KeyValuePair<object, PoolObjectBase> pair in _objectMap)
                 {
-                    ObjectBase obj = pair.Value;
-                    // TODO 过滤条件 IsInUse || Locked
-                    // if (obj.)
+                    PoolObjectBase poolObject = pair.Value;
+                    if (poolObject.IsInUse || poolObject.Locked)
+                    {
+                        continue;
+                    }
+                    _cachedDiscardableObjects.Add(poolObject as T);
                 }
-                return discardableObjects;
+                return _cachedDiscardableObjects;
             }
 
             private List<T> DefaultDiscardObjectFilter(List<T> candidateObjects, int discardCount, float objectTTL)
