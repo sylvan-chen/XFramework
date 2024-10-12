@@ -34,7 +34,7 @@ namespace XFramework.Utils
                     }
                 }
 
-                return Activator.CreateInstance(ReferenceType) as IReference ?? throw new InvalidOperationException($"Spawn reference of type {ReferenceType} failed.");
+                return Activator.CreateInstance(ReferenceType) as IReference;
             }
 
             /// <summary>
@@ -49,7 +49,7 @@ namespace XFramework.Utils
                 }
                 if (_references.Contains(reference))
                 {
-                    throw new InvalidOperationException("Release reference failed. Reference already released.");
+                    throw new InvalidOperationException("Unspawn reference failed. Reference already unspawned.");
                 }
 
                 reference.Clear();
@@ -69,9 +69,10 @@ namespace XFramework.Utils
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        if (Activator.CreateInstance(ReferenceType) is not IReference newInstance)
+                        IReference newInstance = Activator.CreateInstance(ReferenceType) as IReference;
+                        if (newInstance == null)
                         {
-                            Log.Error("[XFramework] [ReferencePool] Reserve reference failed. Reference type is invalid.");
+                            Log.Error($"[XFramework] [ReferencePool] Reserve reference failed. Reference type {ReferenceType.Name} is invalid.");
                             continue;
                         }
                         _references.Enqueue(newInstance);

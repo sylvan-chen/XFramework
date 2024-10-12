@@ -74,17 +74,17 @@ namespace XFramework
         internal static FSM<T> Create(string name, T owner, params StateBase<T>[] states)
         {
             var fsm = ReferencePool.Spawn<FSM<T>>();
-            fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Spawn FSM failed. Name cannot be null.");
-            fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Spawn FSM failed. Owner cannot be null.");
+            fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Create FSM failed. Name cannot be null.");
+            fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Create FSM failed. Owner cannot be null.");
             foreach (StateBase<T> state in states)
             {
                 if (state == null)
                 {
-                    throw new ArgumentNullException(nameof(states), $"Spawn FSM failed. The state in initial states cannot be null.");
+                    throw new ArgumentNullException(nameof(states), $"Create FSM failed. The state in initial states cannot be null.");
                 }
                 if (fsm._stateDict.ContainsKey(state.GetType()))
                 {
-                    throw new ArgumentException($"Spawn FSM failed. Duplicate state in initial states is not allowed, type {state.GetType().FullName} is already found.", nameof(states));
+                    throw new ArgumentException($"Create FSM failed. The state of type {state.GetType().FullName} is already created.", nameof(states));
                 }
                 fsm._stateDict.Add(state.GetType(), state);
                 state.OnInit(fsm);
@@ -137,7 +137,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Launch FSM {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
+                throw new ArgumentException($"Start FSM {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
             }
         }
 
@@ -165,7 +165,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Launch FSM {Name} failed. State of type {startStateType.FullName} not found.", nameof(startStateType));
+                throw new ArgumentException($"Start FSM {Name} failed. State of type {startStateType.FullName} not found.", nameof(startStateType));
             }
         }
 

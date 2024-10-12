@@ -51,7 +51,8 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"GetEventHandlerCount failed, event id {id} does not exist.", nameof(id));
+                Log.Error($"GetEventHandlerCount failed, event id {id} does not exist.");
+                return 0;
             }
         }
 
@@ -88,7 +89,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Unsubscribe failed, event id {id} does not exist.", nameof(id));
+                Log.Error($"Unsubscribe failed, event id {id} does not exist.");
             }
         }
 
@@ -104,7 +105,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Publish failed, event id {id} does not exist.", nameof(id));
+                Log.Error($"Publish failed, event id {id} does not exist.");
             }
         }
 
@@ -122,7 +123,7 @@ namespace XFramework
                 }
                 else
                 {
-                    throw new ArgumentException($"PublishLater failed, event id {id} does not exist.", nameof(id));
+                    Log.Error($"PublishLater failed, event id {id} does not exist.");
                 }
             }
         }

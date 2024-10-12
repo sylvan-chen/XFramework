@@ -43,7 +43,7 @@ namespace XFramework
                 {
                     if (value < 0)
                     {
-                        throw new ArgumentException("Capacity must be greater than or equal to 0.", nameof(value));
+                        throw new ArgumentException("Set Capacity failed. Capacity must be greater than or equal to 0.", nameof(value));
                     }
                     _capacity = value;
                     Squeeze();

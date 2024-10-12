@@ -10,11 +10,13 @@ namespace XFramework
         public static readonly string[] RuntimeAssemblyNames =
         {
             "Assembly-CSharp",
+            "XFramework.Runtime",
         };
 
         public static readonly string[] EditorAssemblyNames =
         {
             "Assembly-CSharp-Editor",
+            "XFramework.Editor",
         };
 
         public static readonly Assembly[] AllAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -39,6 +41,7 @@ namespace XFramework
 
             foreach (Assembly assembly in AllAssemblies)
             {
+                Log.Debug($"[XFramework] [TypeHelper] Searching for type {typeName} in assembly {assembly.GetName().Name}...");
                 type = assembly.GetType(typeName);
                 if (type != null)
                 {
@@ -49,20 +52,20 @@ namespace XFramework
             return null;
         }
 
-        public static string[] GetRuntimeSubtypeNames(Type baseType)
+        public static string[] GetSubtypeNamesRuntime(Type baseType)
         {
             return FindSubtypeNames(baseType, RuntimeAssemblyNames);
         }
 
-        public static string[] GetEditorSubtypeNames(Type baseType)
+        public static string[] GetSubtypeNamesEditor(Type baseType)
         {
             return FindSubtypeNames(baseType, EditorAssemblyNames);
         }
 
-        public static string[] GetRuntimeAndEditorSubtypeNames(Type baseType)
+        public static string[] GetSubtypeNamesRuntimeAndEditor(Type baseType)
         {
-            string[] runtimeTypeNames = GetRuntimeSubtypeNames(baseType);
-            string[] editorTypeNames = GetEditorSubtypeNames(baseType);
+            string[] runtimeTypeNames = GetSubtypeNamesRuntime(baseType);
+            string[] editorTypeNames = GetSubtypeNamesEditor(baseType);
             string[] allTypeNames = new string[runtimeTypeNames.Length + editorTypeNames.Length];
             runtimeTypeNames.CopyTo(allTypeNames, 0);
             editorTypeNames.CopyTo(allTypeNames, runtimeTypeNames.Length);
@@ -80,6 +83,7 @@ namespace XFramework
             var typeNames = new List<string>();
             foreach (string assemblyName in assemblyNames)
             {
+                Log.Debug($"[XFramework] [TypeHelper] Searching for subtypes of {baseType.FullName} in assembly {assemblyName}...");
                 Assembly assembly = null;
                 try
                 {

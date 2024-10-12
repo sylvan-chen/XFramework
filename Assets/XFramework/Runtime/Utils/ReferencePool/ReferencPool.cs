@@ -42,7 +42,7 @@ namespace XFramework.Utils
         /// <returns>孵化出的引用</returns>
         public static T Spawn<T>() where T : class, IReference, new()
         {
-            return GetReferenceCollection(typeof(T)).Spawn() as T ?? throw new InvalidOperationException($"Spawn reference of type {typeof(T).Name} failed.");
+            return GetReferenceCollection(typeof(T)).Spawn() as T;
         }
 
         /// <summary>

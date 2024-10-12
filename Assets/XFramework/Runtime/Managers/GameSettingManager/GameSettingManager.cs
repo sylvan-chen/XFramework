@@ -68,7 +68,7 @@ namespace XFramework
             Time.timeScale = _gameSpeed;
             Screen.sleepTimeout = _neverSleep ? SleepTimeout.NeverSleep : SleepTimeout.SystemSetting;
 #else
-            XLog.Fatal("XFrameworkUnity just support Unity 5.3 or later");
+            Log.Fatal("XFrameworkUnity just support Unity 5.3 or later");
             Application.Quit();
 #endif
 #if UNITY_5_6_OR_NEWER

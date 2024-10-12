@@ -41,7 +41,7 @@ namespace XFramework
                     Debug.LogError($"Can not find type {typeName}");
                     continue;
                 }
-                procedures[i] = Activator.CreateInstance(type) as ProcedureBase ?? throw new InvalidOperationException($"Crate instance of procedure {typeName} failed.");
+                procedures[i] = Activator.CreateInstance(type) as ProcedureBase;
                 if (typeName == _startupProcedureTypeName)
                 {
                     _startupProcedure = procedures[i];

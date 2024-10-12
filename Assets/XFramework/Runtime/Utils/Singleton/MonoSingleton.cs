@@ -13,7 +13,7 @@ namespace XFramework.Utils
             {
                 if (_instance == null)
                 {
-                    _instance = FindObjectOfType<T>() ?? throw new InvalidOperationException($"MonoSingleton<{typeof(T).Name}> cannot be initialized because there is no instance in scene.");
+                    _instance = FindObjectOfType<T>() ?? throw new InvalidOperationException($"Can not get instance of MonoSingleton<{typeof(T).Name}> because there is no instance in scene.");
                 }
                 return _instance;
             }

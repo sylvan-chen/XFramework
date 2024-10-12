@@ -112,7 +112,7 @@ namespace XFramework.Editor
         /// </summary>
         private void UpdateSubtypeNames()
         {
-            _allProcedureTypeNames = TypeHelper.GetRuntimeSubtypeNames(typeof(ProcedureBase));
+            _allProcedureTypeNames = TypeHelper.GetSubtypeNamesRuntime(typeof(ProcedureBase));
             // 读取原来属性中的可用列表，用于跟新的 _allProcedureTypeNames 进行比较
             _currentAvailableProcedureTypeNames.Clear();
             for (int i = 0; i < _availableProcedureTypeNames.arraySize; i++)

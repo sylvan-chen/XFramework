@@ -26,7 +26,7 @@ namespace XFramework
 
         public T GetManager<T>() where T : ManagerBase
         {
-            T manager = GetComponentInChildren<T>() ?? throw new InvalidOperationException($"Get manager {typeof(T).Name} failed.");
+            T manager = GetComponentInChildren<T>() ?? throw new InvalidOperationException($"Get manager {typeof(T).Name} failed. Please check if the manager is under the RootManager game object.");
             Log.Debug($"[XFramework] [RootManager] Get manager: {manager.GetType().Name}");
             return manager;
         }
