@@ -51,7 +51,7 @@ namespace XFramework
             }
             else
             {
-                Log.Error($"GetEventHandlerCount failed, event id {id} does not exist.");
+                Log.Error($"[XFramework] [EventManager] GetEventHandlerCount failed, event id {id} does not exist.");
                 return 0;
             }
         }
@@ -89,7 +89,7 @@ namespace XFramework
             }
             else
             {
-                Log.Error($"Unsubscribe failed, event id {id} does not exist.");
+                Log.Error($"[XFramework] [EventManager] Unsubscribe failed, event id {id} does not exist.");
             }
         }
 
@@ -105,7 +105,7 @@ namespace XFramework
             }
             else
             {
-                Log.Error($"Publish failed, event id {id} does not exist.");
+                Log.Error($"[XFramework] [EventManager] Publish failed, event id {id} does not exist.");
             }
         }
 
@@ -123,7 +123,7 @@ namespace XFramework
                 }
                 else
                 {
-                    Log.Error($"PublishLater failed, event id {id} does not exist.");
+                    Log.Error($"[XFramework] [EventManager] PublishLater failed, event id {id} does not exist.");
                 }
             }
         }
