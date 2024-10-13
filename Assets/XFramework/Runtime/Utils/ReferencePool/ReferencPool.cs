@@ -17,6 +17,7 @@ namespace XFramework.Utils
         /// </summary>
         public static void Clear()
         {
+            Log.Debug("[XFramework] [ReferencePool] Clear all references.");
             foreach (ReferenceCollection referenceCollection in _referenceCollections.Values)
             {
                 referenceCollection.DiscardAll();

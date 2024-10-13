@@ -38,7 +38,6 @@ namespace XFramework
         {
             Log.Info("[XFramework] [RootManager] Quit game...");
             Application.Quit();
-            ShutdownFramework();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #endif
@@ -47,7 +46,11 @@ namespace XFramework
         private void ShutdownFramework()
         {
             Log.Info("[XFramework] [RootManager] Shutdown XFramework...");
-            Destroy(gameObject);
+            foreach (ManagerBase manager in GetComponentsInChildren<ManagerBase>())
+            {
+                DestroyImmediate(manager.gameObject);
+            }
+            DestroyImmediate(gameObject);
             ReferencePool.Clear();
         }
     }

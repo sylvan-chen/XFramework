@@ -105,6 +105,7 @@ namespace XFramework
 
         internal override void Destroy()
         {
+            Log.Debug($"[XFramework] [FSM<{typeof(T).Name}>] Destroy FSM.");
             _currentState?.OnExit(this);
             foreach (StateBase<T> state in _stateDict.Values)
             {
