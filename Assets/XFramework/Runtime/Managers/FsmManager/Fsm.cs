@@ -93,14 +93,14 @@ namespace XFramework
             return fsm;
         }
 
-        internal override void Update(float deltaTime, float unscaledeltaTime)
+        internal override void Update(float deltaTime, float unscaleDeltaTime)
         {
             if (!CheckStarted() || _isDestroyed)
             {
                 return;
             }
-            _currentStateTime += unscaledeltaTime;
-            _currentState.OnUpdate(this, deltaTime, unscaledeltaTime);
+            _currentStateTime += unscaleDeltaTime;
+            _currentState.OnUpdate(this, deltaTime, unscaleDeltaTime);
         }
 
         internal override void Destroy()

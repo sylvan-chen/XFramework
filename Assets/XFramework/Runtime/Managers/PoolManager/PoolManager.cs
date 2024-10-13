@@ -1,6 +1,6 @@
 namespace XFramework
 {
-    public sealed partial class PoolManager : ManagerBase
+    public sealed class PoolManager : ManagerBase
     {
     }
 }
