@@ -60,8 +60,9 @@ namespace XFramework
             get { return Time.timeScale == 0f; }
         }
 
-        public void Awake()
+        protected override void Awake()
         {
+            base.Awake();
 #if UNITY_5_3_OR_NEWER
             Application.targetFrameRate = _frameRate;
             Application.runInBackground = _allowRunInBackground;
@@ -76,8 +77,9 @@ namespace XFramework
 #endif
         }
 
-        public void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory -= OnLowMemory;
 #endif

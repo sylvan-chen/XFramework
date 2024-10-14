@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using XFramework.Utils;
 
 namespace XFramework
 {
@@ -21,8 +22,11 @@ namespace XFramework
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+
+            Log.Debug("[XFramework] [FSMManager] Destroy FSMManager.");
             foreach (FSMBase fsm in _fsms.Values)
             {
                 fsm.Destroy();

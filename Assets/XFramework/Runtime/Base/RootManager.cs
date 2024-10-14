@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using XFramework.Utils;
 
@@ -12,6 +13,8 @@ namespace XFramework
     /// </remarks>
     internal sealed class RootManager : MonoSingletonPersistent<RootManager>
     {
+        private readonly Dictionary<Type, ManagerBase> _managerDict = new();
+
         protected override void Awake()
         {
             base.Awake();
@@ -24,11 +27,52 @@ namespace XFramework
             ShutdownFramework();
         }
 
+        public void Register(ManagerBase manager)
+        {
+            if (manager == null)
+            {
+                throw new ArgumentNullException(nameof(manager), "Register manager failed. Manager can not be null.");
+            }
+            Type managerType = manager.GetType();
+            if (_managerDict.ContainsKey(managerType))
+            {
+                throw new InvalidOperationException($"Register manager failed. Manager of type {manager.GetType().Name} has already been registered.");
+            }
+            _managerDict.Add(managerType, manager);
+        }
+
         public T GetManager<T>() where T : ManagerBase
         {
-            T manager = GetComponentInChildren<T>() ?? throw new InvalidOperationException($"Get manager {typeof(T).Name} failed. Please check if the manager is under the RootManager game object.");
-            Log.Debug($"[XFramework] [RootManager] Get manager: {manager.GetType().Name}");
-            return manager;
+            if (_managerDict.TryGetValue(typeof(T), out ManagerBase manager))
+            {
+                return manager as T;
+            }
+            else
+            {
+                Log.Warning($"[XFramework] [RootManager] Can not find manager of type {typeof(T).Name}");
+                return null;
+            }
+        }
+
+        public ManagerBase GetManager(Type managerType)
+        {
+            if (managerType == null)
+            {
+                throw new ArgumentNullException(nameof(managerType), "Get manager failed. Manager type can not be null.");
+            }
+            if (!typeof(ManagerBase).IsAssignableFrom(managerType))
+            {
+                throw new ArgumentException($"Get manager failed. Type {managerType.Name} is not a subclass of {nameof(ManagerBase)}.", nameof(managerType));
+            }
+            if (_managerDict.TryGetValue(managerType, out ManagerBase manager))
+            {
+                return manager;
+            }
+            else
+            {
+                Log.Warning($"[XFramework] [RootManager] Can not find manager of type {managerType.Name}");
+                return null;
+            }
         }
 
         /// <summary>
@@ -46,7 +90,7 @@ namespace XFramework
         private void ShutdownFramework()
         {
             Log.Info("[XFramework] [RootManager] Shutdown XFramework...");
-            foreach (ManagerBase manager in GetComponentsInChildren<ManagerBase>())
+            foreach (ManagerBase manager in _managerDict.Values)
             {
                 DestroyImmediate(manager.gameObject);
             }

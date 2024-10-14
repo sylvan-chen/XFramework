@@ -89,7 +89,6 @@ namespace XFramework
 
         internal override void Destroy()
         {
-            Log.Debug($"[XFramework] [Pool<{typeof(T).Name}>] Destroy pool.");
             foreach (PoolObject poolObject in _poolObjectDict.Values)
             {
                 poolObject.Destroy();

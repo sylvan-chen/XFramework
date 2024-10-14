@@ -30,8 +30,10 @@ namespace XFramework
 
         private const string DEFAULT_PACKAGE_NAME = "DefaultPackage";
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             YooAssets.Initialize();
         }
 

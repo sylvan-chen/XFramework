@@ -10,6 +10,7 @@ namespace XFramework
         private static FSMManager _fsmManager;
         private static ProcedureManager _procedureManager;
         private static AssetManager _assetManager;
+        private static PoolManager _poolManager;
 
         public static EventManager EventManager
         {
@@ -68,6 +69,18 @@ namespace XFramework
                     _assetManager = RootManager.Instance.GetManager<AssetManager>();
                 }
                 return _assetManager;
+            }
+        }
+
+        public static PoolManager PoolManager
+        {
+            get
+            {
+                if (_poolManager == null)
+                {
+                    _poolManager = RootManager.Instance.GetManager<PoolManager>();
+                }
+                return _poolManager;
             }
         }
 
