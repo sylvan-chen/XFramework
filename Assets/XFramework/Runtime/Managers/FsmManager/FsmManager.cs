@@ -26,7 +26,6 @@ namespace XFramework
         {
             base.OnDestroy();
 
-            Log.Debug("[XFramework] [FSMManager] Destroy FSMManager.");
             foreach (FSMBase fsm in _fsms.Values)
             {
                 fsm.Destroy();

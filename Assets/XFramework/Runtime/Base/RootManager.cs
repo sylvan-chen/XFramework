@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using XFramework.Utils;
@@ -15,10 +16,9 @@ namespace XFramework
     {
         private readonly Dictionary<Type, ManagerBase> _managerDict = new();
 
-        protected override void OnApplicationQuit()
+        private void OnDestroy()
         {
-            base.OnApplicationQuit();
-            Log.Info("[XFramework] [RootManager] Quit application...");
+            Log.Info("[XFramework] [RootManager] Destroy RootManager...");
             ShutdownFramework();
         }
 
@@ -90,7 +90,6 @@ namespace XFramework
                 DestroyImmediate(manager.gameObject);
             }
             _managerDict.Clear();
-            DestroyImmediate(gameObject);
             ReferencePool.Clear();
         }
     }

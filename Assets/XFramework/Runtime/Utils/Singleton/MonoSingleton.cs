@@ -13,7 +13,7 @@ namespace XFramework.Utils
             {
                 if (_instance == null)
                 {
-                    _instance = FindObjectOfType<T>() ?? throw new InvalidOperationException($"Can not get instance of MonoSingleton<{typeof(T).Name}> because there is no instance in scene.");
+                    _instance = FindObjectOfType<T>();
                 }
                 return _instance;
             }
@@ -28,12 +28,6 @@ namespace XFramework.Utils
                 return;
             }
             _instance = this as T;
-        }
-
-        protected virtual void OnApplicationQuit()
-        {
-            _instance = null;
-            Destroy(gameObject);
         }
     }
 
