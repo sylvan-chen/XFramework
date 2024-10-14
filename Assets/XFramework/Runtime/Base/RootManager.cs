@@ -15,11 +15,6 @@ namespace XFramework
     {
         private readonly Dictionary<Type, ManagerBase> _managerDict = new();
 
-        protected override void Awake()
-        {
-            base.Awake();
-        }
-
         protected override void OnApplicationQuit()
         {
             base.OnApplicationQuit();
@@ -94,6 +89,7 @@ namespace XFramework
             {
                 DestroyImmediate(manager.gameObject);
             }
+            _managerDict.Clear();
             DestroyImmediate(gameObject);
             ReferencePool.Clear();
         }
