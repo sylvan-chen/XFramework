@@ -23,6 +23,11 @@ public class Test : MonoBehaviour
         });
     }
 
+    void OnDestroy()
+    {
+        Global.EventManager.Unsubscribe(TestEventArgs.Id, OnClick);
+    }
+
     void OnClick(IEventArgs args)
     {
         var testArgs = args as TestEventArgs;

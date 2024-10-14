@@ -20,7 +20,7 @@ namespace XFramework
         protected override void OnApplicationQuit()
         {
             base.OnApplicationQuit();
-            Log.Info("[XFramework] [RootManager] Force quit game!");
+            Log.Info("[XFramework] [RootManager] Quit application...");
             ShutdownFramework();
         }
 
@@ -36,7 +36,7 @@ namespace XFramework
         /// </summary>
         public void ShutdownGame()
         {
-            Log.Info("[XFramework] [RootManager] Quit game...");
+            Log.Info("[XFramework] [RootManager] Shutdown game...");
             Application.Quit();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;

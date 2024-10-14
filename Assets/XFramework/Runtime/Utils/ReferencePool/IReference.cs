@@ -10,7 +10,7 @@ namespace XFramework.Utils
     public interface IReference
     {
         /// <summary>
-        /// 清空引用对象，以便回收到引用池
+        /// 清空对象（置为初始状态）
         /// </summary>
         public void Clear();
     }

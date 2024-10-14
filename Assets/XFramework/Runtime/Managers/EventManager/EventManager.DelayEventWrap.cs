@@ -10,7 +10,6 @@ namespace XFramework
         /// </summary>
         private class DelayEventWrapper : IReference
         {
-
             public IEventArgs Args;
             public EventHandlerChain HandlerChain;
             public int DelayFrame;
