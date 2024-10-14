@@ -9,13 +9,13 @@ namespace XFramework
     /// </summary>
     public sealed class FSMManager : ManagerBase
     {
-        private readonly Dictionary<int, FSM> _fsms = new();
+        private readonly Dictionary<int, FSMBase> _fsms = new();
 
-        private const string DEFAULT_FSM_NAME = "default";
+        private const string DefaultFSMName = "default";
 
         private void Update()
         {
-            foreach (FSM fsm in _fsms.Values)
+            foreach (FSMBase fsm in _fsms.Values)
             {
                 fsm.Update(Time.deltaTime, Time.unscaledDeltaTime);
             }
@@ -23,7 +23,7 @@ namespace XFramework
 
         private void OnDestroy()
         {
-            foreach (FSM fsm in _fsms.Values)
+            foreach (FSMBase fsm in _fsms.Values)
             {
                 fsm.Destroy();
             }
@@ -57,12 +57,12 @@ namespace XFramework
 
         public FSM<T> CreateFSM<T>(T owner, params StateBase<T>[] states) where T : class
         {
-            return CreateFSM(DEFAULT_FSM_NAME, owner, states);
+            return CreateFSM(DefaultFSMName, owner, states);
         }
 
         public FSM<T> CreateFSM<T>(T owner, List<StateBase<T>> states) where T : class
         {
-            return CreateFSM(DEFAULT_FSM_NAME, owner, states.ToArray());
+            return CreateFSM(DefaultFSMName, owner, states.ToArray());
         }
 
         public FSM<T> CreateFSM<T>(string name, T owner, List<StateBase<T>> states) where T : class
@@ -72,7 +72,7 @@ namespace XFramework
 
         public FSM<T> GetFSM<T>() where T : class
         {
-            return GetFSM<T>(DEFAULT_FSM_NAME);
+            return GetFSM<T>(DefaultFSMName);
         }
 
         public FSM<T> GetFSM<T>(string name) where T : class
@@ -82,7 +82,7 @@ namespace XFramework
                 throw new ArgumentNullException(nameof(name), "Get FSM failed. Name cannot be null.");
             }
             int id = GetID(typeof(T), name);
-            if (_fsms.TryGetValue(id, out FSM fsm))
+            if (_fsms.TryGetValue(id, out FSMBase fsm))
             {
                 return fsm as FSM<T>;
             }
@@ -91,7 +91,7 @@ namespace XFramework
 
         public void DestroyFSM<T>() where T : class
         {
-            DestroyFSM<T>(DEFAULT_FSM_NAME);
+            DestroyFSM<T>(DefaultFSMName);
         }
 
         public void DestroyFSM<T>(string name) where T : class
@@ -101,7 +101,7 @@ namespace XFramework
                 throw new ArgumentNullException(nameof(name), "Destroy FSM failed. Name cannot be null.");
             }
             int id = GetID(typeof(T), name);
-            if (_fsms.TryGetValue(id, out FSM fsm))
+            if (_fsms.TryGetValue(id, out FSMBase fsm))
             {
                 fsm.Destroy();
                 _fsms.Remove(id);

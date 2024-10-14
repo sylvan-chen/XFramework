@@ -4,7 +4,16 @@ using XFramework.Utils;
 
 namespace XFramework
 {
-    public sealed class Pool<T> where T : class
+    public abstract class PoolBase
+    {
+        internal abstract void Update(float deltaTime, float unscaledDeltaTime);
+        internal abstract void Destroy();
+
+        public abstract void Squeeze();
+        public abstract void DiscardAllUnused();
+    }
+
+    public sealed class Pool<T> : PoolBase where T : class
     {
         private readonly bool _allowMultiReference;        // 是否允许多引用
         private float _autoSqueezeInterval;                // 自动收缩间隔
@@ -68,7 +77,7 @@ namespace XFramework
             }
         }
 
-        internal void Update(float deltaTime, float unscaledDeltaTime)
+        internal override void Update(float deltaTime, float unscaledDeltaTime)
         {
             _poolObjectSurvivalDuration += unscaledDeltaTime;
             if (_poolObjectSurvivalDuration >= _autoSqueezeInterval)
@@ -78,7 +87,7 @@ namespace XFramework
             }
         }
 
-        internal void Destroy()
+        internal override void Destroy()
         {
             Log.Debug($"[XFramework] [Pool<{typeof(T).Name}>] Destroy pool.");
             foreach (PoolObject poolObject in _poolObjectDict.Values)
@@ -204,7 +213,7 @@ namespace XFramework
         /// <summary>
         /// 释放对象池中所有未使用的对象
         /// </summary>
-        public void DiscardAllUnused()
+        public override void DiscardAllUnused()
         {
             _autoSqueezeInterval = 0f;
             List<PoolObject> discardablePoolObjects = GetDiscardablePoolObjects();
@@ -217,7 +226,7 @@ namespace XFramework
         /// <summary>
         /// 尝试丢弃过期对象，使得池中对象数量不要超出容量限制
         /// </summary>
-        public void Squeeze()
+        public override void Squeeze()
         {
             SqueezeInternal(Count - Capacity, DefaultDiscardObjectFilter);
         }

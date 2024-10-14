@@ -4,7 +4,7 @@ using XFramework.Utils;
 
 namespace XFramework
 {
-    public abstract class FSM
+    public abstract class FSMBase
     {
         internal abstract void Update(float deltaTime, float unscaleDeltaTime);
         internal abstract void Destroy();
@@ -14,7 +14,7 @@ namespace XFramework
     /// 有限状态机
     /// </summary>
     /// <typeparam name="T">有限状态机的所有者类型</typeparam>
-    public sealed class FSM<T> : FSM, IReference where T : class
+    public sealed class FSM<T> : FSMBase, IReference where T : class
     {
         private readonly Dictionary<Type, StateBase<T>> _stateDict = new();
         private string _name;
