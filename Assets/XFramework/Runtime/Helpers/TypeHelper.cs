@@ -41,7 +41,7 @@ namespace XFramework
 
             foreach (Assembly assembly in AllAssemblies)
             {
-                Log.Debug($"[XFramework] [TypeHelper] Searching for type {typeName} in assembly {assembly.GetName().Name}...");
+                // Log.Debug($"[XFramework] [TypeHelper] Searching for type {typeName} in assembly {assembly.GetName().Name}...");
                 type = assembly.GetType(typeName);
                 if (type != null)
                 {
@@ -83,7 +83,7 @@ namespace XFramework
             var typeNames = new List<string>();
             foreach (string assemblyName in assemblyNames)
             {
-                Log.Debug($"[XFramework] [TypeHelper] Searching for subtypes of {baseType.FullName} in assembly {assemblyName}...");
+                // Log.Debug($"[XFramework] [TypeHelper] Searching for subtypes of {baseType.FullName} in assembly {assemblyName}...");
                 Assembly assembly = null;
                 try
                 {
