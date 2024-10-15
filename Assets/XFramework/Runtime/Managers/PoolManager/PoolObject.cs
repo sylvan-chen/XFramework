@@ -77,7 +77,7 @@ namespace XFramework
             SpawnCount--;
             if (SpawnCount < 0)
             {
-                throw new InvalidOperationException("Reference count can not be negative.");
+                throw new InvalidOperationException("SpawnCount can not be negative.");
             }
         }
 
