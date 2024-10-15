@@ -37,12 +37,12 @@ namespace XFramework
             _poolDict.Clear();
         }
 
-        private Pool<T> GetPool<T>() where T : class
+        public Pool<T> GetPool<T>() where T : class
         {
             return GetPool(typeof(T)) as Pool<T>;
         }
 
-        private PoolBase GetPool(Type objectType)
+        public PoolBase GetPool(Type objectType)
         {
             if (objectType == null)
             {

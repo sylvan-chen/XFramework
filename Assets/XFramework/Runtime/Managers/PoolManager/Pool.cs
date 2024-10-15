@@ -98,16 +98,16 @@ namespace XFramework
         /// <summary>
         /// 注册一个对象到池中
         /// </summary>
-        public void Register(T target, Action onSpawn = null, Action onUnspawn = null, Action onDestroy = null)
+        public void Register(T target, Action<T> onSpawn = null, Action<T> onUnspawn = null, Action<T> onDestroy = null)
         {
             if (target == null)
             {
                 throw new ArgumentNullException(nameof(target), "TargetObject cannot be null.");
             }
             PoolObject poolObject = PoolObject.Create(target);
-            poolObject.OnSpawn = onSpawn;
-            poolObject.OnUnspawn = onUnspawn;
-            poolObject.OnDestroy = onDestroy;
+            poolObject.OnSpawn = onSpawn == null ? null : () => onSpawn?.Invoke(target);
+            poolObject.OnUnspawn = onUnspawn == null ? null : () => onUnspawn?.Invoke(target);
+            poolObject.OnDestroy = onDestroy == null ? null : () => onDestroy?.Invoke(target);
             poolObject.SpawnCount = 1;
             _poolObjectDict.Add(target, poolObject);
         }
@@ -118,7 +118,7 @@ namespace XFramework
             {
                 if (_allowMultiReference || !poolObject.IsInUse)
                 {
-                    return poolObject.Spawn() as T;
+                    return poolObject.Spawn().Target as T;
                 }
             }
             return null;

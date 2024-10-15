@@ -57,7 +57,7 @@ namespace XFramework
         }
 
         /// <summary>
-        /// 借出对象
+        /// 借出
         /// </summary>
         internal PoolObject Spawn()
         {
@@ -68,7 +68,7 @@ namespace XFramework
         }
 
         /// <summary>
-        /// 归还对象
+        /// 归还
         /// </summary>
         internal void Unspawn()
         {
