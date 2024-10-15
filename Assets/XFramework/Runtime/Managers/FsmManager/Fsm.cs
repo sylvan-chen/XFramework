@@ -14,7 +14,7 @@ namespace XFramework
     /// 有限状态机
     /// </summary>
     /// <typeparam name="T">有限状态机的所有者类型</typeparam>
-    public sealed class FSM<T> : FSMBase, IReference where T : class
+    public sealed class FSM<T> : FSMBase, ICache where T : class
     {
         private readonly Dictionary<Type, StateBase<T>> _stateDict = new();
         private string _name;
@@ -73,7 +73,7 @@ namespace XFramework
 
         internal static FSM<T> Create(string name, T owner, params StateBase<T>[] states)
         {
-            var fsm = ReferencePool.Spawn<FSM<T>>();
+            var fsm = CachePool.Spawn<FSM<T>>();
             fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Create FSM failed. Name cannot be null.");
             fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Create FSM failed. Owner cannot be null.");
             foreach (StateBase<T> state in states)
@@ -111,7 +111,7 @@ namespace XFramework
                 state.OnFsmDestroy(this);
             }
             _isDestroyed = true;
-            ReferencePool.Unspawn(this);
+            CachePool.Unspawn(this);
         }
 
         /// <summary>

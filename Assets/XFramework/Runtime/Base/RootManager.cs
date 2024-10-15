@@ -90,7 +90,7 @@ namespace XFramework
                 DestroyImmediate(manager.gameObject);
             }
             _managerDict.Clear();
-            ReferencePool.Clear();
+            CachePool.Clear();
         }
     }
 }

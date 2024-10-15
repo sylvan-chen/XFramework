@@ -9,7 +9,7 @@ namespace XFramework
     /// <remarks>
     /// 对象池不直接管理实际对象，而是管理池对象，池对象中再包含实际对象。
     /// </remarks>
-    public sealed class PoolObject : IReference
+    public sealed class PoolObject : ICache
     {
         internal Action OnSpawn;
         internal Action OnUnspawn;
@@ -48,7 +48,7 @@ namespace XFramework
 
         internal static PoolObject Create(object target, bool locked = false)
         {
-            PoolObject poolObject = ReferencePool.Spawn<PoolObject>();
+            PoolObject poolObject = CachePool.Spawn<PoolObject>();
             poolObject.Target = target ?? throw new ArgumentNullException(nameof(target), "Target can not be null.");
             poolObject.Locked = locked;
             poolObject.LastUseUtcTime = DateTime.UtcNow;
@@ -84,7 +84,7 @@ namespace XFramework
         internal void Destroy()
         {
             OnDestroy?.Invoke();
-            ReferencePool.Unspawn(this);
+            CachePool.Unspawn(this);
         }
 
         public void Clear()

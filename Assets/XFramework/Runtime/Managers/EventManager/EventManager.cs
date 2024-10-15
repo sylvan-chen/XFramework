@@ -12,12 +12,22 @@ namespace XFramework
         /// <remarks>
         /// key 为事件 ID，value 为事件委托调用链。
         /// </remarks>
-        private readonly Dictionary<int, EventHandlerChain> _eventDict = new();
+        private readonly Dictionary<int, EventHandlerChain> _handlerChainDict = new();
 
         /// <summary>
         /// 延迟发布事件列表
         /// </summary>
         private readonly XLinkedList<DelayEventWrapper> _delayedEvents = new();
+
+        public int SubscribedEventCount
+        {
+            get => _handlerChainDict.Count;
+        }
+
+        public int DelayedEventCount
+        {
+            get => _delayedEvents.Count;
+        }
 
         private void Update()
         {
@@ -30,7 +40,7 @@ namespace XFramework
                     wrapper.DelayFrame--;
                     if (wrapper.DelayFrame <= 0)
                     {
-                        wrapper.HandlerChain.Fire(wrapper.Args);
+                        wrapper.HandlerChain.Fire(wrapper.Event);
                         _delayedEvents.Remove(node);
                         wrapper.Destroy();
                     }
@@ -39,52 +49,36 @@ namespace XFramework
             }
         }
 
-        /// <summary>
-        /// 获取事件的委托数量
-        /// </summary>
-        /// <param name="id">要查询的事件 ID</param>
-        public int GetEventHandlerCount(int id)
-        {
-            if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
-            {
-                return handlerChain.Count;
-            }
-            else
-            {
-                Log.Error($"[XFramework] [EventManager] GetEventHandlerCount failed, event id {id} does not exist.");
-                return 0;
-            }
-        }
-
-        public void Subscribe(int id, Action<IEventArgs> handler)
+        public void Subscribe(int id, Action<IEvent> handler)
         {
             if (handler == null)
             {
                 throw new ArgumentNullException(nameof(handler), "Subscribe failed, handler cannot be null.");
             }
-            if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChian))
+            if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChian))
             {
                 handlerChian.AddHandler(handler);
             }
             else
             {
-                _eventDict.Add(id, new EventHandlerChain());
-                _eventDict[id].AddHandler(handler);
+                _handlerChainDict.Add(id, EventHandlerChain.Create());
+                _handlerChainDict[id].AddHandler(handler);
             }
         }
 
-        public void Unsubscribe(int id, Action<IEventArgs> handler)
+        public void Unsubscribe(int id, Action<IEvent> handler)
         {
             if (handler == null)
             {
                 throw new ArgumentNullException(nameof(handler), "Unsubscribe failed, handler cannot be null.");
             }
-            if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
+            if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChain))
             {
                 handlerChain.RemoveHandler(handler);
                 if (handlerChain.Count == 0)
                 {
-                    _eventDict.Remove(id);
+                    handlerChain.Destroy();
+                    _handlerChainDict.Remove(id);
                 }
             }
             else
@@ -93,15 +87,15 @@ namespace XFramework
             }
         }
 
-        public void Publish(int id, IEventArgs args)
+        public void Publish(int id, IEvent evt)
         {
-            if (args == null)
+            if (evt == null)
             {
-                throw new ArgumentNullException(nameof(args), "Publish failed, event arguments cannot be null.");
+                throw new ArgumentNullException(nameof(evt), "Publish failed, event arguments cannot be null.");
             }
-            if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
+            if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChain))
             {
-                handlerChain.Fire(args);
+                handlerChain.Fire(evt);
             }
             else
             {
@@ -109,17 +103,17 @@ namespace XFramework
             }
         }
 
-        public void PublishLater(int id, IEventArgs args, int delayFrame = 1)
+        public void PublishLater(int id, IEvent evt, int delayFrame = 1)
         {
-            if (args == null)
+            if (evt == null)
             {
-                throw new ArgumentNullException(nameof(args), "PublishLater failed, event arguments cannot be null.");
+                throw new ArgumentNullException(nameof(evt), "PublishLater failed, event arguments cannot be null.");
             }
             lock (_delayedEvents)
             {
-                if (_eventDict.TryGetValue(id, out EventHandlerChain handlerChain))
+                if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChain))
                 {
-                    _delayedEvents.AddLast(DelayEventWrapper.Create(args, handlerChain, delayFrame));
+                    _delayedEvents.AddLast(DelayEventWrapper.Create(evt, handlerChain, delayFrame));
                 }
                 else
                 {
@@ -133,7 +127,11 @@ namespace XFramework
         /// </summary>
         public void RemoveAllSubscriptions()
         {
-            _eventDict.Clear();
+            foreach (EventHandlerChain handlerChain in _handlerChainDict.Values)
+            {
+                handlerChain.Destroy();
+            }
+            _handlerChainDict.Clear();
         }
     }
 }

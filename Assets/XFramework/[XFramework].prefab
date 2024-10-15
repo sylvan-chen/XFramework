@@ -238,7 +238,7 @@ GameObject:
   - component: {fileID: 4994100332490608324}
   - component: {fileID: 4857643250131470312}
   m_Layer: 0
-  m_Name: ReferencePool
+  m_Name: CachePool
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

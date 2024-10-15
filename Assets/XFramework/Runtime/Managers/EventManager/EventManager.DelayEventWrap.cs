@@ -8,16 +8,16 @@ namespace XFramework
         /// <summary>
         /// 延迟事件包装类
         /// </summary>
-        private class DelayEventWrapper : IReference
+        private class DelayEventWrapper : ICache
         {
-            public IEventArgs Args;
+            public IEvent Event;
             public EventHandlerChain HandlerChain;
             public int DelayFrame;
 
-            public static DelayEventWrapper Create(IEventArgs args, EventHandlerChain handlerChain, int delayFrame)
+            public static DelayEventWrapper Create(IEvent evt, EventHandlerChain handlerChain, int delayFrame)
             {
-                var wrapper = ReferencePool.Spawn<DelayEventWrapper>();
-                wrapper.Args = args ?? throw new ArgumentNullException(nameof(args), "Spawn DelayEventWrapper failed. Args is null.");
+                var wrapper = CachePool.Spawn<DelayEventWrapper>();
+                wrapper.Event = evt ?? throw new ArgumentNullException(nameof(evt), "Spawn DelayEventWrapper failed. Args is null.");
                 wrapper.HandlerChain = handlerChain ?? throw new ArgumentNullException(nameof(handlerChain), "Spawn DelayEventWrapper failed. HandlerChain is null.");
                 wrapper.DelayFrame = delayFrame;
                 return wrapper;
@@ -25,12 +25,12 @@ namespace XFramework
 
             public void Destroy()
             {
-                ReferencePool.Unspawn(this);
+                CachePool.Unspawn(this);
             }
 
             public void Clear()
             {
-                Args = null;
+                Event = null;
                 HandlerChain = null;
                 DelayFrame = 0;
             }

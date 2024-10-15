@@ -12,10 +12,10 @@ public class Test : MonoBehaviour
 
     void Start()
     {
-        Global.EventManager.Subscribe(TestEventArgs.Id, OnClick);
+        Global.EventManager.Subscribe(TestEvent.ID, OnClick);
         _eventBtn.onClick.AddListener(() =>
         {
-            Global.EventManager.Publish(TestEventArgs.Id, new TestEventArgs("Hello, world!"));
+            Global.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 60);
         });
         _quitBtn.onClick.AddListener(() =>
         {
@@ -25,12 +25,12 @@ public class Test : MonoBehaviour
 
     void OnDestroy()
     {
-        Global.EventManager.Unsubscribe(TestEventArgs.Id, OnClick);
+        Global.EventManager.Unsubscribe(TestEvent.ID, OnClick);
     }
 
-    void OnClick(IEventArgs args)
+    void OnClick(IEvent args)
     {
-        var testArgs = args as TestEventArgs;
+        var testArgs = args as TestEvent;
         Log.Info(testArgs.Message);
     }
 }
