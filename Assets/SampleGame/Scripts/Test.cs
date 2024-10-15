@@ -43,7 +43,6 @@ public class Test : MonoBehaviour
         int index = 0;
         _spawnBtn.onClick.AddListener(() =>
         {
-            Log.Debug($"imagePool.Count: {imagePool.Count}");
             _lastImg = imagePool.Spawn();
             if (_lastImg == null)
             {
@@ -51,7 +50,7 @@ public class Test : MonoBehaviour
                 _lastImg.gameObject.SetActive(true);
                 _lastImg.transform.SetParent(_targetImgParent);
                 _lastImg.name = $"Image_{index++}";
-                Log.Debug($"Create: {_lastImg.name} from pool {imagePool.Capacity}");
+                Log.Debug($"Create: {_lastImg.name}");
                 imagePool.Register(_lastImg, (target) => { target.gameObject.SetActive(true); }, (target) => { target.gameObject.SetActive(false); });
             }
             else
