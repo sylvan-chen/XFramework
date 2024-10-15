@@ -12,20 +12,37 @@ namespace XFramework.Utils
             public CacheCollection(Type cacheType)
             {
                 CacheType = cacheType;
+                UsingCount = 0;
+                SpawnedCount = 0;
+                UnspawnedCount = 0;
+                CreatedCount = 0;
+                DiscardedCount = 0;
             }
 
             public Type CacheType { get; private set; }
 
-            public int Count
+            public int UnusedCount
             {
                 get { return _cache.Count; }
             }
+
+            public int UsingCount { get; private set; }
+
+            public int SpawnedCount { get; private set; }
+
+            public int UnspawnedCount { get; private set; }
+
+            public int CreatedCount { get; private set; }
+
+            public int DiscardedCount { get; private set; }
 
             /// <summary>
             /// 从池中拿出一个缓存，如果池中没有则创建一个新的缓存
             /// </summary>
             public ICache Spawn()
             {
+                SpawnedCount++;
+                UsingCount++;
                 lock (_cache)
                 {
                     if (_cache.Count > 0)
@@ -33,7 +50,7 @@ namespace XFramework.Utils
                         return _cache.Dequeue();
                     }
                 }
-
+                CreatedCount++;
                 return Activator.CreateInstance(CacheType) as ICache;
             }
 
@@ -49,7 +66,7 @@ namespace XFramework.Utils
                 }
                 if (_cache.Contains(cache))
                 {
-                    throw new InvalidOperationException("Unspawn reference failed. Reference already unspawned.");
+                    throw new InvalidOperationException("Unspawn cache failed. Cache already unspawned.");
                 }
 
                 cache.Clear();
@@ -57,6 +74,8 @@ namespace XFramework.Utils
                 {
                     _cache.Enqueue(cache);
                 }
+                UnspawnedCount++;
+                UsingCount--;
             }
 
             /// <summary>
@@ -75,6 +94,7 @@ namespace XFramework.Utils
                             Log.Error($"[XFramework] [ReferencePool] Reserve reference failed. Reference type {CacheType.Name} is invalid.");
                             continue;
                         }
+                        CreatedCount++;
                         _cache.Enqueue(newInstance);
                     }
                 }
@@ -96,6 +116,7 @@ namespace XFramework.Utils
                     for (int i = 0; i < count; i++)
                     {
                         _cache.Dequeue();
+                        DiscardedCount++;
                     }
                 }
             }
@@ -107,6 +128,7 @@ namespace XFramework.Utils
             {
                 lock (_cache)
                 {
+                    DiscardedCount += _cache.Count;
                     _cache.Clear();
                 }
             }

@@ -30,6 +30,7 @@ namespace XFramework
 
             public void Clear()
             {
+                Event.Destroy();
                 Event = null;
                 HandlerChain = null;
                 DelayFrame = 0;

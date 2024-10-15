@@ -36,13 +36,13 @@ namespace XFramework.Editor
 
             serializedObject.Update();
 
-            var procedureManager = target as ProcedureManager;
+            var targetObject = target as ProcedureManager;
 
             // 游戏运行时，显示当前 Procedure
             if (EditorApplication.isPlaying)
             {
-                EditorGUILayout.LabelField("Current Procedure", procedureManager.CurrentProcedure == null ? "None" : procedureManager.CurrentProcedure.GetType().Name);
-                EditorGUILayout.LabelField("Current Procedure Time", procedureManager.CurrentProcedureTime.ToString("N2"));
+                EditorGUILayout.LabelField("Current Procedure", targetObject.CurrentProcedure == null ? "None" : targetObject.CurrentProcedure.GetType().Name);
+                EditorGUILayout.LabelField("Current Procedure Time", targetObject.CurrentProcedureTime.ToString("N2"));
                 EditorGUILayout.Separator();
             }
             else if (string.IsNullOrEmpty(_startupProcedureTypeName.stringValue))

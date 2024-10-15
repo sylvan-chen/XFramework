@@ -25,6 +25,27 @@ namespace XFramework.Utils
             _cacheCollections.Clear();
         }
 
+        public static CacheCollectionInfo[] GetAllCacheCollectionInfos()
+        {
+            CacheCollectionInfo[] infos = new CacheCollectionInfo[_cacheCollections.Count];
+            int index = 0;
+            foreach (CacheCollection cacheCollection in _cacheCollections.Values)
+            {
+                infos[index] = new CacheCollectionInfo
+                (
+                    cacheCollection.CacheType,
+                    cacheCollection.UnusedCount,
+                    cacheCollection.UsingCount,
+                    cacheCollection.SpawnedCount,
+                    cacheCollection.UnspawnedCount,
+                    cacheCollection.CreatedCount,
+                    cacheCollection.DiscardedCount
+                );
+                index++;
+            }
+            return infos;
+        }
+
         /// <summary>
         /// 获取一个指定类型的缓存
         /// </summary>

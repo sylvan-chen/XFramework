@@ -11,13 +11,13 @@ namespace XFramework.Editor
 
             if (!EditorApplication.isPlaying)
             {
-                EditorGUILayout.HelpBox("Available in play mode.", MessageType.Info);
+                EditorGUILayout.HelpBox("Available in play mode only.", MessageType.Info);
                 return;
             }
 
-            EventManager eventManager = target as EventManager;
-            EditorGUILayout.LabelField("Subscribed Event Count", eventManager.SubscribedEventCount.ToString());
-            EditorGUILayout.LabelField("Delayed Event Count", eventManager.DelayedEventCount.ToString());
+            EventManager targetObject = target as EventManager;
+            EditorGUILayout.LabelField("Subscribed Event Count", targetObject.SubscribedEventCount.ToString());
+            EditorGUILayout.LabelField("Delayed Event Count", targetObject.DelayedEventCount.ToString());
 
             Repaint();
         }

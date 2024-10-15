@@ -101,6 +101,7 @@ namespace XFramework
             {
                 Log.Error($"[XFramework] [EventManager] Publish failed, event id {id} does not exist.");
             }
+            evt.Destroy();
         }
 
         public void PublishLater(int id, IEvent evt, int delayFrame = 1)
