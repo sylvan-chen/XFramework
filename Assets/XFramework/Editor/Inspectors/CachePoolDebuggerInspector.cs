@@ -12,6 +12,11 @@ namespace XFramework.Editor
         private readonly HashSet<string> _expandedFoldout = new();
         private bool _showFullTypeName = false;
 
+        private void OnEnable()
+        {
+
+        }
+
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
@@ -60,36 +65,38 @@ namespace XFramework.Editor
                 }
                 if (isExpanded)
                 {
-                    // 居中样式
-                    GUIStyle centeredStyle = new(GUI.skin.label)
-                    {
-                        alignment = TextAnchor.MiddleCenter
-                    };
                     // 垂直盒子中显示具体的缓存池信息
                     using (new EditorGUILayout.VerticalScope("box"))
                     {
+                        // 居中样式
+                        GUIStyle centeredStyle = new(GUI.skin.label)
+                        {
+                            alignment = TextAnchor.MiddleCenter
+                        };
                         using (new EditorGUILayout.HorizontalScope())
                         {
-                            EditorGUILayout.LabelField(_showFullTypeName ? "Full Type Name" : "Type Name", GUILayout.ExpandWidth(true));
-                            EditorGUILayout.LabelField("Unused", centeredStyle, GUILayout.Width(70));
-                            EditorGUILayout.LabelField("Using", centeredStyle, GUILayout.Width(70));
-                            EditorGUILayout.LabelField("Spawned", centeredStyle, GUILayout.Width(70));
-                            EditorGUILayout.LabelField("Unspawned", centeredStyle, GUILayout.Width(70));
-                            EditorGUILayout.LabelField("Created", centeredStyle, GUILayout.Width(70));
-                            EditorGUILayout.LabelField("Discarded", centeredStyle, GUILayout.Width(70));
+                            GUILayout.Label(_showFullTypeName ? "Full Type Name" : "Type Name", EditorStyles.wordWrappedLabel, GUILayout.Width(200));
+                            // EditorGUILayout.LabelField(_showFullTypeName ? "Full Type Name" : "Type Name", GUILayout.Width(500);
+                            EditorGUILayout.LabelField("Unused", centeredStyle, GUILayout.Width(80));
+                            EditorGUILayout.LabelField("Using", centeredStyle, GUILayout.Width(80));
+                            EditorGUILayout.LabelField("Spawned", centeredStyle, GUILayout.Width(80));
+                            EditorGUILayout.LabelField("Unspawned", centeredStyle, GUILayout.Width(80));
+                            EditorGUILayout.LabelField("Created", centeredStyle, GUILayout.Width(80));
+                            EditorGUILayout.LabelField("Discarded", centeredStyle, GUILayout.Width(80));
                         }
                         cacheCollectionInfos.Sort(CompareCacheCollectionInfo);
                         foreach (CacheCollectionInfo cacheCollectionInfo in cacheCollectionInfos)
                         {
                             using (new EditorGUILayout.HorizontalScope())
                             {
-                                EditorGUILayout.LabelField(_showFullTypeName ? cacheCollectionInfo.CacheType.FullName : cacheCollectionInfo.CacheType.Name, GUILayout.ExpandWidth(true));
-                                EditorGUILayout.LabelField(cacheCollectionInfo.UnusedCount.ToString(), centeredStyle, GUILayout.Width(70));
-                                EditorGUILayout.LabelField(cacheCollectionInfo.UsingCount.ToString(), centeredStyle, GUILayout.Width(70));
-                                EditorGUILayout.LabelField(cacheCollectionInfo.SpawnedCount.ToString(), centeredStyle, GUILayout.Width(70));
-                                EditorGUILayout.LabelField(cacheCollectionInfo.UnspawnedCount.ToString(), centeredStyle, GUILayout.Width(70));
-                                EditorGUILayout.LabelField(cacheCollectionInfo.CreatedCount.ToString(), centeredStyle, GUILayout.Width(70));
-                                EditorGUILayout.LabelField(cacheCollectionInfo.DiscardedCount.ToString(), centeredStyle, GUILayout.Width(70));
+                                GUILayout.Label(_showFullTypeName ? cacheCollectionInfo.CacheType.FullName : cacheCollectionInfo.CacheType.Name, EditorStyles.wordWrappedLabel, GUILayout.Width(200));
+                                // EditorGUILayout.LabelField(_showFullTypeName ? cacheCollectionInfo.CacheType.FullName : cacheCollectionInfo.CacheType.Name, GUILayout.Width(500));
+                                EditorGUILayout.LabelField(cacheCollectionInfo.UnusedCount.ToString(), centeredStyle, GUILayout.Width(80));
+                                EditorGUILayout.LabelField(cacheCollectionInfo.UsingCount.ToString(), centeredStyle, GUILayout.Width(80));
+                                EditorGUILayout.LabelField(cacheCollectionInfo.SpawnedCount.ToString(), centeredStyle, GUILayout.Width(80));
+                                EditorGUILayout.LabelField(cacheCollectionInfo.UnspawnedCount.ToString(), centeredStyle, GUILayout.Width(80));
+                                EditorGUILayout.LabelField(cacheCollectionInfo.CreatedCount.ToString(), centeredStyle, GUILayout.Width(80));
+                                EditorGUILayout.LabelField(cacheCollectionInfo.DiscardedCount.ToString(), centeredStyle, GUILayout.Width(80));
                             }
                         }
                     }

@@ -6,64 +6,84 @@ namespace XFramework
 {
     public abstract class PoolBase
     {
+        public abstract Type ObjectType { get; }
+        public abstract bool AllowMultiReference { get; }
+        public abstract int Capacity { get; set; }
+        public abstract float ObjectExpiredTime { get; set; }
+        public abstract float AutoClearInterval { get; set; }
+        public abstract float AutoClearTimer { get; }
+        public abstract int Count { get; }
+        public abstract int DiscardableCount { get; }
+
         internal abstract void Update(float deltaTime, float unscaledDeltaTime);
         internal abstract void Destroy();
 
+        public abstract PoolObjectInfo[] GetAllPoolObjectInfos();
         public abstract void Squeeze();
-        public abstract void DiscardAllUnused();
+        public abstract void DicardAllUnused();
+        public abstract void DiscardAllExpired();
     }
 
     public sealed class Pool<T> : PoolBase where T : class
     {
-        private readonly bool _allowMultiReference;        // 是否允许多引用
-        private float _autoSqueezeInterval;                // 自动收缩间隔
+        private readonly bool _allowMultiReference;        // 是否允许多重引用
         private int _capacity;                             // 容量
-        private float _poolObjectSurvivalTime;             // 池对象可存活时间（秒）
-        private float _poolObjectSurvivalDuration = 0f;    // 池对象已存活时间（秒）
+        private float _objectExpiredTime;                  // 对象过期时间
+        private float _autoClearInterval;                  // 自动清理间隔
+        private float _autoClearTimer = 0f;
         private readonly Dictionary<T, PoolObject> _poolObjectDict = new();
-        private readonly List<PoolObject> _cachedDiscardingPoolObjects = new();
         private readonly List<PoolObject> _cachedDiscardablePoolObjects = new();
 
-        public Pool(bool allowMultiReference, float autoSqueezeInterval, float poolObjectSurvivalTime, int capacity)
+        public Pool(bool allowMultiReference, int capacity, float objectExpiredTime, float autoClearInterval)
         {
             _allowMultiReference = allowMultiReference;
-            _autoSqueezeInterval = autoSqueezeInterval;
-            _poolObjectSurvivalTime = poolObjectSurvivalTime;
             _capacity = capacity;
+            _objectExpiredTime = objectExpiredTime;
+            _autoClearInterval = autoClearInterval;
         }
 
-        public float AutoSqueezeInterval
+        public override Type ObjectType
         {
-            get => _autoSqueezeInterval;
+            get => typeof(T);
+        }
+
+        public override bool AllowMultiReference
+        {
+            get => _allowMultiReference;
+        }
+
+        public override float AutoClearInterval
+        {
+            get => _autoClearInterval;
             set
             {
                 if (value < 0f)
                 {
                     throw new ArgumentException("Set AutoSqueezeInterval failed. AutoSqueezeInterval must be greater than or equal to 0.", nameof(value));
                 }
-                _autoSqueezeInterval = value;
+                _autoClearInterval = value;
             }
         }
 
-        public float PoolObjectSurvivalTime
+        public override float AutoClearTimer
         {
-            get => _poolObjectSurvivalTime;
+            get => _autoClearTimer;
+        }
+
+        public override float ObjectExpiredTime
+        {
+            get => _objectExpiredTime;
             set
             {
                 if (value < 0f)
                 {
                     throw new ArgumentException("Set PoolObjectSurvivalTime failed. PoolObjectSurvivalTime must be greater than or equal to 0.", nameof(value));
                 }
-                _poolObjectSurvivalTime = value;
+                _objectExpiredTime = value;
             }
         }
 
-        public int Count
-        {
-            get => _poolObjectDict.Count;
-        }
-
-        public int Capacity
+        public override int Capacity
         {
             get => _capacity;
             set
@@ -77,13 +97,23 @@ namespace XFramework
             }
         }
 
+        public override int Count
+        {
+            get => _poolObjectDict.Count;
+        }
+
+        public override int DiscardableCount
+        {
+            get => _cachedDiscardablePoolObjects.Count;
+        }
+
         internal override void Update(float deltaTime, float unscaledDeltaTime)
         {
-            _poolObjectSurvivalDuration += unscaledDeltaTime;
-            if (_poolObjectSurvivalDuration >= _autoSqueezeInterval)
+            _autoClearTimer += unscaledDeltaTime;
+            if (_autoClearTimer >= _autoClearInterval)
             {
-                _poolObjectSurvivalDuration = 0f;
-                Squeeze();
+                DiscardAllExpired();
+                _autoClearTimer = 0f;
             }
         }
 
@@ -98,7 +128,7 @@ namespace XFramework
         /// <summary>
         /// 注册一个对象到池中
         /// </summary>
-        public void Register(T target, Action<T> onSpawn = null, Action<T> onUnspawn = null, Action<T> onDestroy = null)
+        public void Register(T target, Action<T> onSpawn = null, Action<T> onUnspawn = null, Action<T> onDiscard = null)
         {
             if (target == null)
             {
@@ -107,9 +137,26 @@ namespace XFramework
             PoolObject poolObject = PoolObject.Create(target);
             poolObject.OnSpawn = onSpawn == null ? null : () => onSpawn?.Invoke(target);
             poolObject.OnUnspawn = onUnspawn == null ? null : () => onUnspawn?.Invoke(target);
-            poolObject.OnDestroy = onDestroy == null ? null : () => onDestroy?.Invoke(target);
-            poolObject.SpawnCount = 1;
+            poolObject.OnDiscard = onDiscard == null ? null : () => onDiscard?.Invoke(target);
+            poolObject.ReferenceCount = 1;
             _poolObjectDict.Add(target, poolObject);
+        }
+
+        public override PoolObjectInfo[] GetAllPoolObjectInfos()
+        {
+            PoolObjectInfo[] poolObjectInfos = new PoolObjectInfo[_poolObjectDict.Count];
+            int index = 0;
+            foreach (PoolObject poolObject in _poolObjectDict.Values)
+            {
+                poolObjectInfos[index++] = new PoolObjectInfo
+                (
+                    poolObject.Locked,
+                    poolObject.IsInUse,
+                    poolObject.ReferenceCount,
+                    poolObject.LastUseUtcTime.ToLocalTime()
+                );
+            }
+            return poolObjectInfos;
         }
 
         public T Spawn()
@@ -134,7 +181,7 @@ namespace XFramework
             if (_poolObjectDict.TryGetValue(target, out PoolObject poolObject))
             {
                 poolObject.Unspawn();
-                if (Count > Capacity && poolObject.SpawnCount <= 0)
+                if (Count > Capacity && poolObject.ReferenceCount <= 0)
                 {
                     Squeeze();
                 }
@@ -210,58 +257,81 @@ namespace XFramework
         }
 
         /// <summary>
-        /// 释放对象池中所有未使用的对象
+        /// 清理对象池中所有未使用的对象
         /// </summary>
-        public override void DiscardAllUnused()
+        public override void DicardAllUnused()
         {
-            _autoSqueezeInterval = 0f;
-            List<PoolObject> discardablePoolObjects = GetDiscardablePoolObjects();
-            foreach (PoolObject poolObject in discardablePoolObjects)
+            UpdateDiscardablePoolObjectsWithoutExpiredCheck();
+            foreach (PoolObject poolObject in _cachedDiscardablePoolObjects)
             {
                 Discard(poolObject);
             }
+            _cachedDiscardablePoolObjects.Clear();
         }
 
         /// <summary>
-        /// 尝试丢弃过期对象，使得池中对象数量不要超出容量限制
+        /// 清理对象池中所有过期的对象
+        /// </summary>
+        public override void DiscardAllExpired()
+        {
+            UpdateDiscardablePoolObjects();
+            foreach (PoolObject poolObject in _cachedDiscardablePoolObjects)
+            {
+                Discard(poolObject);
+            }
+            _cachedDiscardablePoolObjects.Clear();
+        }
+
+        /// <summary>
+        /// 收缩，使得池中对象数量不要超出容量限制
         /// </summary>
         public override void Squeeze()
         {
-            SqueezeInternal(Count - Capacity, DefaultDiscardObjectFilter);
-        }
-
-        /// <summary>
-        /// 尝试丢弃过期对象，使得池中对象数量不要超出容量限制
-        /// </summary>
-        /// <param name="discardablePoolObjectFilter">自定义丢弃对象过滤器</param>
-        public void Squeeze(DiscardablePoolObjectFilter discardablePoolObjectFilter)
-        {
-            SqueezeInternal(Count - Capacity, discardablePoolObjectFilter);
-        }
-
-        private void SqueezeInternal(int discardCount, DiscardablePoolObjectFilter discardablePoolObjectFilter)
-        {
-            if (discardablePoolObjectFilter == null)
-            {
-                throw new ArgumentNullException(nameof(discardablePoolObjectFilter), "DiscardObjectFilter cannot be null.");
-            }
+            int discardCount = Count - Capacity;
             if (discardCount <= 0)
             {
                 return;
             }
-
-            List<PoolObject> discardingObjects = discardablePoolObjectFilter(GetDiscardablePoolObjects(), discardCount, _poolObjectSurvivalTime);
-            if (discardingObjects == null || discardingObjects.Count <= 0)
+            UpdateDiscardablePoolObjectsWithoutExpiredCheck();
+            _cachedDiscardablePoolObjects.Sort((a, b) => b.LastUseUtcTime.CompareTo(a.LastUseUtcTime));
+            for (int i = 0; i < _cachedDiscardablePoolObjects.Count; i++)
             {
-                return;
+                Discard(_cachedDiscardablePoolObjects[i]);
             }
-            foreach (PoolObject obj in discardingObjects)
+            _cachedDiscardablePoolObjects.Clear();
+        }
+
+        /// <summary>
+        /// 更新可丢弃对象缓存列表，包括未使用、未锁定且过期的对象
+        /// </summary>
+        /// <returns></returns>
+        private void UpdateDiscardablePoolObjects()
+        {
+            _cachedDiscardablePoolObjects.Clear();
+            foreach (PoolObject poolObject in _poolObjectDict.Values)
             {
-                Discard(obj);
+                if (poolObject.IsInUse || poolObject.Locked)
+                {
+                    continue;
+                }
+                double remainingTime = (poolObject.LastUseUtcTime - DateTime.MinValue).TotalSeconds + _objectExpiredTime;
+                // 如果过期时间为无穷大，则认为该对象永不过期
+                if (remainingTime.CompareTo(float.MaxValue) >= 0)
+                {
+                    continue;
+                }
+                DateTime expiredTime = poolObject.LastUseUtcTime.AddSeconds(_objectExpiredTime);
+                if (DateTime.UtcNow > expiredTime)
+                {
+                    _cachedDiscardablePoolObjects.Add(poolObject);
+                }
             }
         }
 
-        private List<PoolObject> GetDiscardablePoolObjects()
+        /// <summary>
+        /// 更新可丢弃对象缓存列表，包括未使用、未锁定的对象，不检查过期时间
+        /// </summary>
+        private void UpdateDiscardablePoolObjectsWithoutExpiredCheck()
         {
             _cachedDiscardablePoolObjects.Clear();
             foreach (PoolObject poolObject in _poolObjectDict.Values)
@@ -272,32 +342,7 @@ namespace XFramework
                 }
                 _cachedDiscardablePoolObjects.Add(poolObject);
             }
-            return _cachedDiscardablePoolObjects;
         }
 
-        private List<PoolObject> DefaultDiscardObjectFilter(List<PoolObject> candidatePoolObjects, int discardCount, float objectTTL)
-        {
-            _cachedDiscardingPoolObjects.Clear();
-            for (int i = candidatePoolObjects.Count - 1; i >= 0; i--)
-            {
-                if (candidatePoolObjects[i].LastUseUtcTime.AddSeconds(objectTTL) < DateTime.UtcNow)
-                {
-                    _cachedDiscardingPoolObjects.Add(candidatePoolObjects[i]);
-                    candidatePoolObjects.RemoveAt(i);
-                }
-            }
-            discardCount -= _cachedDiscardingPoolObjects.Count;
-            candidatePoolObjects.Sort((a, b) => a.LastUseUtcTime.CompareTo(b.LastUseUtcTime));
-            foreach (PoolObject obj in candidatePoolObjects)
-            {
-                _cachedDiscardingPoolObjects.Add(obj);
-                discardCount--;
-                if (discardCount <= 0)
-                {
-                    break;
-                }
-            }
-            return _cachedDiscardingPoolObjects;
-        }
     }
 }

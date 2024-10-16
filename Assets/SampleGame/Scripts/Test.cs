@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using XFramework;
@@ -20,7 +21,7 @@ public class Test : MonoBehaviour
 
     private Button _quitBtn;
 
-    private Image _lastImg;
+    private Stack<Image> _imgStack = new();
 
     private void Awake()
     {
@@ -34,7 +35,7 @@ public class Test : MonoBehaviour
     {
         Global.EventManager.Subscribe(TestEvent.ID, OnEventBtnClick);
 
-        Pool<Image> imagePool = Global.PoolManager.CreatePool<Image>();
+        Pool<Image> imagePool = Global.PoolManager.CreatePool<Image>(1, 10f, 15f);
 
         _eventBtn.onClick.AddListener(() =>
         {
@@ -43,28 +44,45 @@ public class Test : MonoBehaviour
         int index = 0;
         _spawnBtn.onClick.AddListener(() =>
         {
-            _lastImg = imagePool.Spawn();
-            if (_lastImg == null)
+            Image lastImg = imagePool.Spawn();
+            if (lastImg == null)
             {
-                _lastImg = Instantiate(_targetImg);
-                _lastImg.gameObject.SetActive(true);
-                _lastImg.transform.SetParent(_targetImgParent);
-                _lastImg.name = $"Image_{index++}";
-                Log.Debug($"Create: {_lastImg.name}");
-                imagePool.Register(_lastImg, (target) => { target.gameObject.SetActive(true); }, (target) => { target.gameObject.SetActive(false); });
+                lastImg = Instantiate(_targetImg);
+                lastImg.gameObject.SetActive(true);
+                lastImg.transform.SetParent(_targetImgParent);
+                lastImg.name = $"Image_{index++}";
+                _imgStack.Push(lastImg);
+                Log.Debug($"Create: {lastImg.name}");
+                imagePool.Register
+                (
+                    lastImg,
+                    (target) =>
+                    {
+                        target.gameObject.SetActive(true);
+                    },
+                    (target) =>
+                    {
+                        target.gameObject.SetActive(false);
+                    },
+                    (target) =>
+                    {
+                        Destroy(target.gameObject);
+                    }
+                );
             }
             else
             {
-                Log.Debug($"Spawn: {_lastImg.name}");
+                Log.Debug($"Spawn: {lastImg.name}");
             }
         });
         _unspawnBtn.onClick.AddListener(() =>
         {
-            if (_lastImg != null)
+            Image lastImg = _imgStack.Pop();
+            if (lastImg != null)
             {
-                Log.Debug($"Unspawn: {_lastImg.name}");
-                imagePool.Unspawn(_lastImg);
-                _lastImg = null;
+                Log.Debug($"Unspawn: {lastImg.name}");
+                imagePool.Unspawn(lastImg);
+                lastImg = null;
             }
         });
         _quitBtn.onClick.AddListener(() =>

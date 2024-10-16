@@ -13,7 +13,7 @@ namespace XFramework
     {
         internal Action OnSpawn;
         internal Action OnUnspawn;
-        internal Action OnDestroy;
+        internal Action OnDiscard;
 
         /// <summary>
         /// 实际管理的对象
@@ -36,14 +36,14 @@ namespace XFramework
         /// <summary>
         /// 引用计数
         /// </summary>
-        public int SpawnCount { get; internal set; }
+        public int ReferenceCount { get; internal set; }
 
         /// <summary>
         /// 是否正在使用
         /// </summary>
         public bool IsInUse
         {
-            get => SpawnCount > 0;
+            get => ReferenceCount > 0;
         }
 
         internal static PoolObject Create(object target, bool locked = false)
@@ -52,7 +52,7 @@ namespace XFramework
             poolObject.Target = target ?? throw new ArgumentNullException(nameof(target), "Target can not be null.");
             poolObject.Locked = locked;
             poolObject.LastUseUtcTime = DateTime.UtcNow;
-            poolObject.SpawnCount = 0;
+            poolObject.ReferenceCount = 0;
             return poolObject;
         }
 
@@ -61,7 +61,7 @@ namespace XFramework
         /// </summary>
         internal PoolObject Spawn()
         {
-            SpawnCount++;
+            ReferenceCount++;
             LastUseUtcTime = DateTime.UtcNow;
             OnSpawn?.Invoke();
             return this;
@@ -74,8 +74,8 @@ namespace XFramework
         {
             OnUnspawn?.Invoke();
             LastUseUtcTime = DateTime.UtcNow;
-            SpawnCount--;
-            if (SpawnCount < 0)
+            ReferenceCount--;
+            if (ReferenceCount < 0)
             {
                 throw new InvalidOperationException("SpawnCount can not be negative.");
             }
@@ -83,7 +83,7 @@ namespace XFramework
 
         internal void Destroy()
         {
-            OnDestroy?.Invoke();
+            OnDiscard?.Invoke();
             CachePool.Unspawn(this);
         }
 
@@ -91,11 +91,11 @@ namespace XFramework
         {
             OnSpawn = null;
             OnUnspawn = null;
-            OnDestroy = null;
+            OnDiscard = null;
             Target = null;
             Locked = false;
             LastUseUtcTime = default;
-            SpawnCount = 0;
+            ReferenceCount = 0;
         }
     }
 }

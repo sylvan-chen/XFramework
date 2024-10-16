@@ -31,7 +31,7 @@ namespace XFramework.Utils
             int index = 0;
             foreach (CacheCollection cacheCollection in _cacheCollections.Values)
             {
-                infos[index] = new CacheCollectionInfo
+                infos[index++] = new CacheCollectionInfo
                 (
                     cacheCollection.CacheType,
                     cacheCollection.UnusedCount,
@@ -41,7 +41,6 @@ namespace XFramework.Utils
                     cacheCollection.CreatedCount,
                     cacheCollection.DiscardedCount
                 );
-                index++;
             }
             return infos;
         }
