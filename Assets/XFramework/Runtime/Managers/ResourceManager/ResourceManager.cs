@@ -1,6 +1,6 @@
 namespace XFramework
 {
-    public class ResourceManager : ManagerBase
+    public sealed class ResourceManager : ManagerBase
     {
 
     }

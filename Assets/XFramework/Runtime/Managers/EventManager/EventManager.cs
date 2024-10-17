@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using XFramework.Utils;
 
 namespace XFramework
 {
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/Event Manager")]
     public sealed partial class EventManager : ManagerBase
     {
         /// <summary>

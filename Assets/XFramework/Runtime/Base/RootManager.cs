@@ -12,6 +12,8 @@ namespace XFramework
     /// <remarks>
     /// 管理各个管理器，并提供安全关闭游戏的方法。
     /// </remarks>
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/Root Manager")]
     internal sealed class RootManager : MonoSingletonPersistent<RootManager>
     {
         private readonly Dictionary<Type, ManagerBase> _managerDict = new();

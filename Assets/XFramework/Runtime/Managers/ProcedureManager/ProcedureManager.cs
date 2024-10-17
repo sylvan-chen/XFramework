@@ -7,6 +7,8 @@ namespace XFramework
     /// <summary>
     /// 流程管理器
     /// </summary>
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/Procedure Manager")]
     public sealed class ProcedureManager : ManagerBase
     {
         [SerializeField]

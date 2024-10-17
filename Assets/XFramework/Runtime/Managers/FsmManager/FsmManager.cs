@@ -8,6 +8,8 @@ namespace XFramework
     /// <summary>
     /// 有限状态机管理器
     /// </summary>
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/FSM Manager")]
     public sealed class FSMManager : ManagerBase
     {
         private readonly Dictionary<int, FSMBase> _fsms = new();

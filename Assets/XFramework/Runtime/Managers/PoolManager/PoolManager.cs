@@ -5,6 +5,8 @@ using XFramework.Utils;
 
 namespace XFramework
 {
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/Pool Manager")]
     public sealed class PoolManager : ManagerBase
     {
         public const int MaxCapacity = int.MaxValue;
