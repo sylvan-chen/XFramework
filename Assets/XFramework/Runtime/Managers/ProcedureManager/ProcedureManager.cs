@@ -9,7 +9,7 @@ namespace XFramework
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Procedure Manager")]
-    public sealed class ProcedureManager : ManagerBase
+    public sealed class ProcedureManager : XFrameworkComponentBase
     {
         [SerializeField]
         private string[] _availableProcedureTypeNames;

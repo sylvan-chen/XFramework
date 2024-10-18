@@ -8,7 +8,7 @@ namespace XFramework
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Game Setting Manager")]
-    public sealed class GameSettingManager : ManagerBase
+    public sealed class GameSettingManager : XFrameworkComponentBase
     {
         private int _frameRate = 30;                  // 帧率
         private float _gameSpeed = 1f;                // 游戏速度

@@ -10,7 +10,7 @@ namespace XFramework
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/FSM Manager")]
-    public sealed class FSMManager : ManagerBase
+    public sealed class FSMManager : XFrameworkComponentBase
     {
         private readonly Dictionary<int, FSMBase> _fsms = new();
 

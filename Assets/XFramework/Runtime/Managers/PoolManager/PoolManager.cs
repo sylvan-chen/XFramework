@@ -7,7 +7,7 @@ namespace XFramework
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Pool Manager")]
-    public sealed class PoolManager : ManagerBase
+    public sealed class PoolManager : XFrameworkComponentBase
     {
         public const int MaxCapacity = int.MaxValue;
         public const float InfinityObjectExpiredTime = float.MaxValue;

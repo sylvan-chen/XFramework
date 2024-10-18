@@ -1,3 +1,6 @@
+using UnityEngine;
+using XFramework.Utils;
+
 namespace XFramework
 {
     /// <summary>
@@ -18,7 +21,7 @@ namespace XFramework
             {
                 if (_eventManager == null)
                 {
-                    _eventManager = RootManager.Instance.GetManager<EventManager>();
+                    _eventManager = XFrameworkDriver.Instance.FindComponent<EventManager>();
                 }
                 return _eventManager;
             }
@@ -30,7 +33,7 @@ namespace XFramework
             {
                 if (_gameSettingManager == null)
                 {
-                    _gameSettingManager = RootManager.Instance.GetManager<GameSettingManager>();
+                    _gameSettingManager = XFrameworkDriver.Instance.FindComponent<GameSettingManager>();
                 }
                 return _gameSettingManager;
             }
@@ -42,7 +45,7 @@ namespace XFramework
             {
                 if (_fsmManager == null)
                 {
-                    _fsmManager = RootManager.Instance.GetManager<FSMManager>();
+                    _fsmManager = XFrameworkDriver.Instance.FindComponent<FSMManager>();
                 }
                 return _fsmManager;
             }
@@ -54,7 +57,7 @@ namespace XFramework
             {
                 if (_procedureManager == null)
                 {
-                    _procedureManager = RootManager.Instance.GetManager<ProcedureManager>();
+                    _procedureManager = XFrameworkDriver.Instance.FindComponent<ProcedureManager>();
                 }
                 return _procedureManager;
             }
@@ -66,7 +69,7 @@ namespace XFramework
             {
                 if (_assetManager == null)
                 {
-                    _assetManager = RootManager.Instance.GetManager<AssetManager>();
+                    _assetManager = XFrameworkDriver.Instance.FindComponent<AssetManager>();
                 }
                 return _assetManager;
             }
@@ -78,15 +81,22 @@ namespace XFramework
             {
                 if (_poolManager == null)
                 {
-                    _poolManager = RootManager.Instance.GetManager<PoolManager>();
+                    _poolManager = XFrameworkDriver.Instance.FindComponent<PoolManager>();
                 }
                 return _poolManager;
             }
         }
 
+        /// <summary>
+        /// 退出游戏程序
+        /// </summary>
         public static void Shutdown()
         {
-            RootManager.Instance.ShutdownGame();
+            Log.Info("[XFramework] [Global] Shutdown game...");
+            Application.Quit();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#endif
         }
     }
 }

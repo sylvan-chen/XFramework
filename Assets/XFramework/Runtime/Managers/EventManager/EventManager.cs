@@ -7,7 +7,7 @@ namespace XFramework
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Event Manager")]
-    public sealed partial class EventManager : ManagerBase
+    public sealed partial class EventManager : XFrameworkComponentBase
     {
         /// <summary>
         /// 事件字典
