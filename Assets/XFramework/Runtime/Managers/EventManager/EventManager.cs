@@ -52,7 +52,7 @@ namespace XFramework
             }
         }
 
-        protected override void Clear()
+        public override void Clear()
         {
             base.Clear();
 
