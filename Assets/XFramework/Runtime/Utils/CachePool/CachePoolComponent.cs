@@ -4,7 +4,7 @@ namespace XFramework
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Cache Pool")]
-    public sealed class CachePoolComponent : XFrameworkComponentBase
+    public sealed class CachePoolComponent : XFrameworkComponent
     {
     }
 }

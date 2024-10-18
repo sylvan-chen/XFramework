@@ -1,7 +1,17 @@
+using UnityEngine;
+
 namespace XFramework
 {
-    public sealed class ResourceManager : XFrameworkComponentBase
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/Resource Manager")]
+    public sealed class ResourceManager : XFrameworkComponent
     {
+        [SerializeField]
+        private ResourceMode resourceMode;
 
+        private void Start()
+        {
+
+        }
     }
 }

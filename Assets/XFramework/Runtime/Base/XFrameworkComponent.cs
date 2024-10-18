@@ -6,7 +6,7 @@ namespace XFramework
     /// <summary>
     /// 框架组件基类
     /// </summary>
-    public abstract class XFrameworkComponentBase : MonoBehaviour
+    public abstract class XFrameworkComponent : MonoBehaviour
     {
         protected virtual void Awake()
         {

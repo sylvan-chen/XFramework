@@ -1,6 +1,6 @@
 namespace XFramework
 {
-    public enum ResouceMode : byte
+    public enum ResourceMode : byte
     {
         Editor = 0,
         Standalone = 1,

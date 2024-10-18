@@ -67,7 +67,10 @@ public class Test : MonoBehaviour
                     },
                     (target) =>
                     {
-                        Destroy(target.gameObject);
+                        if (target != null)
+                        {
+                            Destroy(target.gameObject);
+                        }
                     }
                 );
             }

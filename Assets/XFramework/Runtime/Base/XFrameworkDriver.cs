@@ -15,7 +15,7 @@ namespace XFramework
     [AddComponentMenu("XFramework/XFramework Driver")]
     internal sealed class XFrameworkDriver : MonoSingletonPersistent<XFrameworkDriver>
     {
-        private readonly Dictionary<Type, XFrameworkComponentBase> _componentDict = new();
+        private readonly Dictionary<Type, XFrameworkComponent> _componentDict = new();
 
         private void OnDestroy()
         {
@@ -23,7 +23,7 @@ namespace XFramework
             ShutdownFramework();
         }
 
-        public void Register(XFrameworkComponentBase component)
+        public void Register(XFrameworkComponent component)
         {
             if (component == null)
             {
@@ -37,9 +37,9 @@ namespace XFramework
             _componentDict.Add(componentType, component);
         }
 
-        public T FindComponent<T>() where T : XFrameworkComponentBase
+        public T FindComponent<T>() where T : XFrameworkComponent
         {
-            if (_componentDict.TryGetValue(typeof(T), out XFrameworkComponentBase component))
+            if (_componentDict.TryGetValue(typeof(T), out XFrameworkComponent component))
             {
                 return component as T;
             }
@@ -50,17 +50,17 @@ namespace XFramework
             }
         }
 
-        public XFrameworkComponentBase FindComponent(Type componentType)
+        public XFrameworkComponent FindComponent(Type componentType)
         {
             if (componentType == null)
             {
                 throw new ArgumentNullException(nameof(componentType), "Find component failed. Component type can not be null.");
             }
-            if (!typeof(XFrameworkComponentBase).IsAssignableFrom(componentType))
+            if (!typeof(XFrameworkComponent).IsAssignableFrom(componentType))
             {
-                throw new ArgumentException($"Find component failed. Type {componentType.Name} is not a subclass of {nameof(XFrameworkComponentBase)}.", nameof(componentType));
+                throw new ArgumentException($"Find component failed. Type {componentType.Name} is not a subclass of {nameof(XFrameworkComponent)}.", nameof(componentType));
             }
-            if (_componentDict.TryGetValue(componentType, out XFrameworkComponentBase component))
+            if (_componentDict.TryGetValue(componentType, out XFrameworkComponent component))
             {
                 return component;
             }
@@ -77,7 +77,7 @@ namespace XFramework
         private void ShutdownFramework()
         {
             Log.Info("[XFramework] [XFrameworkDriver] Shutdown XFramework...");
-            foreach (XFrameworkComponentBase manager in _componentDict.Values)
+            foreach (XFrameworkComponent manager in _componentDict.Values)
             {
                 DestroyImmediate(manager.gameObject);
             }
