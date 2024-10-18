@@ -59,6 +59,7 @@ public class Test : MonoBehaviour
                     (target) =>
                     {
                         target.gameObject.SetActive(true);
+                        _imgStack.Push(target);
                     },
                     (target) =>
                     {
