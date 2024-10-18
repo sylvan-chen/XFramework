@@ -79,9 +79,9 @@ namespace XFramework
 #endif
         }
 
-        protected override void OnDestroy()
+        public override void Clear()
         {
-            base.OnDestroy();
+            base.Clear();
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory -= OnLowMemory;
 #endif

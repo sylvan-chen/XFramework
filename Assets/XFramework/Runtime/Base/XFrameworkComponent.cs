@@ -18,5 +18,10 @@ namespace XFramework
         {
             Log.Debug($"[XFramework] [XFrameworkComponent] Destory {GetType().Name}.");
         }
+
+        public virtual void Clear()
+        {
+            Log.Debug($"[XFramework] [XFrameworkComponent] Clear component {GetType().Name}.");
+        }
     }
 }

@@ -79,10 +79,9 @@ namespace XFramework
             Log.Info("[XFramework] [XFrameworkDriver] Shutdown XFramework...");
             foreach (XFrameworkComponent manager in _componentDict.Values)
             {
-                DestroyImmediate(manager.gameObject);
+                manager.Clear();
             }
             _componentDict.Clear();
-            CachePool.Clear();
         }
     }
 }

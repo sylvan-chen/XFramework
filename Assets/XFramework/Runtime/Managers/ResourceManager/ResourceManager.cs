@@ -1,4 +1,5 @@
 using UnityEngine;
+using XFramework.Resource;
 
 namespace XFramework
 {
@@ -9,9 +10,14 @@ namespace XFramework
         [SerializeField]
         private ResourceMode resourceMode;
 
+        private IResourceHelper _resourceHelper;
+
         private void Start()
         {
-
+            if (resourceMode == ResourceMode.Editor)
+            {
+                // _resourceHelper =
+            }
         }
     }
 }

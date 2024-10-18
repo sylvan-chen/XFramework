@@ -59,6 +59,14 @@ namespace XFramework
             StartCoroutine(StartProcedureFSM());
         }
 
+        public override void Clear()
+        {
+            base.Clear();
+            Global.FSMManager.DestroyFSM<ProcedureManager>();
+            _procedureFSM = null;
+            _startupProcedure = null;
+        }
+
         public T GetProcedure<T>() where T : ProcedureBase
         {
             return _procedureFSM.GetState<T>();

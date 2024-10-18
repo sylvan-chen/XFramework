@@ -28,11 +28,10 @@ namespace XFramework
             }
         }
 
-        protected override void OnDestroy()
+        public override void Clear()
         {
-            base.OnDestroy();
+            base.Clear();
 
-            Log.Debug($"[XFramework] [PoolManager] Destroy PoolManager.");
             foreach (PoolBase pool in _poolDict.Values)
             {
                 pool.Destroy();

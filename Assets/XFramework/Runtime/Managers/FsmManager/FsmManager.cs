@@ -24,9 +24,9 @@ namespace XFramework
             }
         }
 
-        protected override void OnDestroy()
+        public override void Clear()
         {
-            base.OnDestroy();
+            base.Clear();
 
             foreach (FSMBase fsm in _fsms.Values)
             {

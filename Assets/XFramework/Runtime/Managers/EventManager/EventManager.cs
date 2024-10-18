@@ -52,6 +52,22 @@ namespace XFramework
             }
         }
 
+        protected override void Clear()
+        {
+            base.Clear();
+
+            foreach (EventHandlerChain handlerChain in _handlerChainDict.Values)
+            {
+                handlerChain.Destroy();
+            }
+            foreach (DelayEventWrapper wrapper in _delayedEvents)
+            {
+                wrapper.Destroy();
+            }
+            _handlerChainDict.Clear();
+            _delayedEvents.Clear();
+        }
+
         public void Subscribe(int id, Action<IEvent> handler)
         {
             if (handler == null)
