@@ -10,7 +10,7 @@ namespace XFramework
             internal const int GameSetting = 1;
             internal const int PoolManager = 1;
             internal const int ProcedureManager = 2;
-            internal const int ResourceManager = 2;
+            internal const int ResourceManager = 3;
         }
     }
 }

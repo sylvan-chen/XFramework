@@ -53,12 +53,12 @@ namespace XFramework.Utils
 
         public static string[] GetSubtypeNamesRuntime(Type baseType)
         {
-            return FindSubtypeNames(baseType, RuntimeAssemblyNames);
+            return GetSubtypeNamesInternal(baseType, RuntimeAssemblyNames);
         }
 
         public static string[] GetSubtypeNamesEditor(Type baseType)
         {
-            return FindSubtypeNames(baseType, EditorAssemblyNames);
+            return GetSubtypeNamesInternal(baseType, EditorAssemblyNames);
         }
 
         public static string[] GetSubtypeNamesRuntimeAndEditor(Type baseType)
@@ -77,7 +77,7 @@ namespace XFramework.Utils
         /// <param name="baseType">基类类型</param>
         /// <param name="assemblyNames">程序集名称数组</param>
         /// <returns></returns>
-        private static string[] FindSubtypeNames(Type baseType, string[] assemblyNames)
+        private static string[] GetSubtypeNamesInternal(Type baseType, string[] assemblyNames)
         {
             var typeNames = new List<string>();
             foreach (string assemblyName in assemblyNames)
