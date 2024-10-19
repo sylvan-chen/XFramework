@@ -1,7 +1,8 @@
+using System;
+
 namespace XFramework.Resource
 {
-    public abstract class IResourceHelper
+    public interface IResourceHelper
     {
-
     }
 }

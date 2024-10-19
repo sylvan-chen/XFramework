@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using XFramework.Resource;
 
@@ -8,7 +9,13 @@ namespace XFramework
     public sealed class ResourceManager : XFrameworkComponent
     {
         [SerializeField]
-        private ResourceMode resourceMode;
+        private bool _enableEditorSimulate = true;
+
+        [SerializeField]
+        private ResourceMode _resourceMode;
+
+        [SerializeField]
+        private ReadWritePathType _readWritePathType;
 
         private IResourceHelper _resourceHelper;
 
@@ -17,11 +24,40 @@ namespace XFramework
             get => Global.PriorityValue.ResourceManager;
         }
 
-        private void Start()
+        public string ReadOnlyPath
         {
-            if (resourceMode == ResourceMode.Editor)
+            get;
+            private set;
+        }
+
+        public string ReadWritePath
+        {
+            get;
+            private set;
+        }
+
+        internal override void Init()
+        {
+            if (_enableEditorSimulate)
             {
-                // _resourceHelper =
+                _resourceHelper = new EditorResourceHelper();
+            }
+            else
+            {
+                _resourceHelper = new DefaultResourceHelper();
+            }
+
+            ReadOnlyPath = Application.streamingAssetsPath;
+            ReadWritePath = _readWritePathType switch
+            {
+                ReadWritePathType.TemporaryCache => Application.temporaryCachePath,
+                ReadWritePathType.PersistentData => Application.persistentDataPath,
+                _ => throw new NotSupportedException($"ReadWritePathType {_readWritePathType} not supported."),
+            };
+
+            if (!_enableEditorSimulate)
+            {
+                return;
             }
         }
     }
