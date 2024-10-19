@@ -20,6 +20,11 @@ namespace XFramework
             get => _poolDict.Count;
         }
 
+        internal override int Priority
+        {
+            get => Global.PriorityValue.PoolManager;
+        }
+
         private void Update()
         {
             foreach (PoolBase pool in _poolDict.Values)
@@ -28,7 +33,7 @@ namespace XFramework
             }
         }
 
-        public override void Clear()
+        internal override void Clear()
         {
             base.Clear();
 

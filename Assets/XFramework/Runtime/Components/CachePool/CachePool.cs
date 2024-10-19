@@ -6,7 +6,7 @@ namespace XFramework
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Cache Pool")]
-    public sealed partial class CachePoolComponent : XFrameworkComponent
+    public sealed partial class CachePool : XFrameworkComponent
     {
         private readonly Dictionary<Type, CacheCollection> _cacheCollections = new();
 
@@ -15,7 +15,12 @@ namespace XFramework
         /// </summary>
         public int CacheCollectionCount => _cacheCollections.Count;
 
-        public override void Clear()
+        internal override int Priority
+        {
+            get => Global.PriorityValue.CachePool;
+        }
+
+        internal override void Clear()
         {
             base.Clear();
 

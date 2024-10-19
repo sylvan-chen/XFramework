@@ -5,7 +5,7 @@ using XFramework.Utils;
 
 namespace XFramework.Editor
 {
-    [CustomEditor(typeof(CachePoolComponent))]
+    [CustomEditor(typeof(CachePool))]
     internal class CachePoolInspector : InspectorBase
     {
         private readonly Dictionary<string, List<CacheCollectionInfo>> _cacheCollectionInfosDict = new();
@@ -23,7 +23,7 @@ namespace XFramework.Editor
             }
 
             // 选项：是否显示完整类型名
-            CachePoolComponent targetObject = target as CachePoolComponent;
+            CachePool targetObject = target as CachePool;
             _showFullTypeName = EditorGUILayout.Toggle("Show Full Type Name", _showFullTypeName);
 
             // 获取缓存池信息

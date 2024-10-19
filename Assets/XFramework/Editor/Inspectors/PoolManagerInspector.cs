@@ -60,7 +60,6 @@ namespace XFramework.Editor
                     EditorGUILayout.LabelField("Auto Clear Interval", pool.AutoClearInterval.ToString());
                     EditorGUILayout.LabelField("Capacity", pool.Capacity.ToString());
                     EditorGUILayout.LabelField("Count", pool.Count.ToString());
-                    EditorGUILayout.LabelField("Discardable Count", pool.DiscardableCount.ToString());
                     EditorGUILayout.Separator();
                     using (new EditorGUILayout.VerticalScope("box"))
                     {

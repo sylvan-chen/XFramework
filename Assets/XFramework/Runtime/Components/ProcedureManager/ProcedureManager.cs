@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using XFramework.Utils;
 
 namespace XFramework
 {
@@ -30,8 +31,15 @@ namespace XFramework
             get => _procedureFSM == null ? 0 : _procedureFSM.CurrentStateTime;
         }
 
-        private void Start()
+        internal override int Priority
         {
+            get => Global.PriorityValue.ProcedureManager;
+        }
+
+        internal override void Init()
+        {
+            base.Init();
+
             ProcedureBase[] procedures = new ProcedureBase[_availableProcedureTypeNames.Length];
             // 注册所有流程为状态
             for (int i = 0; i < _availableProcedureTypeNames.Length; i++)
@@ -59,7 +67,7 @@ namespace XFramework
             StartCoroutine(StartProcedureFSM());
         }
 
-        public override void Clear()
+        internal override void Clear()
         {
             base.Clear();
             Global.FSMManager.DestroyFSM<ProcedureManager>();

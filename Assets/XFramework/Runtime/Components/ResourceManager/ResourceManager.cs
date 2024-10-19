@@ -12,6 +12,11 @@ namespace XFramework
 
         private IResourceHelper _resourceHelper;
 
+        internal override int Priority
+        {
+            get => Global.PriorityValue.ResourceManager;
+        }
+
         private void Start()
         {
             if (resourceMode == ResourceMode.Editor)

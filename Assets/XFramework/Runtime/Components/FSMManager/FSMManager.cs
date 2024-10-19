@@ -16,6 +16,11 @@ namespace XFramework
 
         private const string DefaultFSMName = "default";
 
+        internal override int Priority
+        {
+            get => Global.PriorityValue.FSMManager;
+        }
+
         private void Update()
         {
             foreach (FSMBase fsm in _fsms.Values)
@@ -24,7 +29,7 @@ namespace XFramework
             }
         }
 
-        public override void Clear()
+        internal override void Clear()
         {
             base.Clear();
 

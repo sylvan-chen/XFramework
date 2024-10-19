@@ -7,8 +7,8 @@ namespace XFramework
     /// 游戏设置管理器
     /// </summary>
     [DisallowMultipleComponent]
-    [AddComponentMenu("XFramework/Game Setting Manager")]
-    public sealed class GameSettingManager : XFrameworkComponent
+    [AddComponentMenu("XFramework/Game Setting")]
+    public sealed class GameSetting : XFrameworkComponent
     {
         private int _frameRate = 30;                  // 帧率
         private float _gameSpeed = 1f;                // 游戏速度
@@ -16,6 +16,11 @@ namespace XFramework
         private bool _neverSleep = false;             // 保持屏幕常亮
 
         private float _gameSpeedBeforePause = 1f;     // 游戏暂停前的游戏速度
+
+        internal override int Priority
+        {
+            get => Global.PriorityValue.GameSetting;
+        }
 
         /// <summary>
         /// 帧率
@@ -62,9 +67,9 @@ namespace XFramework
             get { return Time.timeScale == 0f; }
         }
 
-        protected override void Awake()
+        internal override void Init()
         {
-            base.Awake();
+            base.Init();
 #if UNITY_5_3_OR_NEWER
             Application.targetFrameRate = _frameRate;
             Application.runInBackground = _allowRunInBackground;
@@ -79,7 +84,7 @@ namespace XFramework
 #endif
         }
 
-        public override void Clear()
+        internal override void Clear()
         {
             base.Clear();
 #if UNITY_5_6_OR_NEWER
@@ -125,7 +130,7 @@ namespace XFramework
         /// </summary>
         private void OnLowMemory()
         {
-            Log.Warning("[XFramework] [GlobalManager] Low memory reported...");
+            Log.Warning("[XFramework] [GameSetting] Low memory reported...");
             // TODO: 处理内存不足的情况
         }
     }

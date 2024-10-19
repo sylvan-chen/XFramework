@@ -16,11 +16,26 @@ namespace XFramework
     internal sealed class XFrameworkDriver : MonoSingletonPersistent<XFrameworkDriver>
     {
         private readonly Dictionary<Type, XFrameworkComponent> _componentDict = new();
+        private readonly List<XFrameworkComponent> _cachedComponents = new();
+
+        private void Start()
+        {
+            Init();
+        }
 
         private void OnDestroy()
         {
-            Log.Info("[XFramework] [XFrameworkDriver] Destroy XFrameworkDriver...");
             ShutdownFramework();
+        }
+
+        private void Init()
+        {
+            Log.Info("[XFramework] [XFrameworkDriver] Init All XFramework Components...");
+            _cachedComponents.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+            foreach (XFrameworkComponent component in _cachedComponents)
+            {
+                component.Init();
+            }
         }
 
         public void Register(XFrameworkComponent component)
@@ -30,11 +45,12 @@ namespace XFramework
                 throw new ArgumentNullException(nameof(component), "Register component failed. Component can not be null.");
             }
             Type componentType = component.GetType();
-            if (_componentDict.ContainsKey(componentType))
+            if (_componentDict.ContainsKey(componentType) || _cachedComponents.Contains(component))
             {
                 throw new InvalidOperationException($"Register component failed. Component of type {component.GetType().Name} has already been registered.");
             }
             _componentDict.Add(componentType, component);
+            _cachedComponents.Add(component);
         }
 
         public T FindComponent<T>() where T : XFrameworkComponent
@@ -77,11 +93,13 @@ namespace XFramework
         private void ShutdownFramework()
         {
             Log.Info("[XFramework] [XFrameworkDriver] Shutdown XFramework...");
-            foreach (XFrameworkComponent manager in _componentDict.Values)
+            _cachedComponents.Reverse();
+            foreach (XFrameworkComponent manager in _cachedComponents)
             {
                 manager.Clear();
             }
             _componentDict.Clear();
+            _cachedComponents.Clear();
         }
     }
 }

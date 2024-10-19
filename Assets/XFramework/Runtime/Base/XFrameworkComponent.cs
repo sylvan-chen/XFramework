@@ -8,20 +8,39 @@ namespace XFramework
     /// </summary>
     public abstract class XFrameworkComponent : MonoBehaviour
     {
+        /// <summary>
+        /// 组件优先级，所有组件按优先级从小到大初始化和 Update，并按反序从大到小清理
+        /// </summary>
+        internal abstract int Priority { get; }
+
+        /// <summary>
+        /// 组件在 Awake 时注册到驱动器
+        /// </summary>
         protected virtual void Awake()
         {
-            Log.Debug($"[XFramework] [XFrameworkComponent] Register {GetType().Name}.");
+            Log.Debug($"[XFramework] [XFrameworkComponent] Register component {GetType().Name}.");
             XFrameworkDriver.Instance.Register(this);
+            // 确保组件挂载在驱动器节点上作为子节点，以保证退出游戏程序时，不会在驱动器节点之前被销毁
+            if (transform.parent != XFrameworkDriver.Instance.transform)
+            {
+                transform.SetParent(XFrameworkDriver.Instance.transform);
+            }
         }
 
-        protected virtual void OnDestroy()
+        /// <summary>
+        /// 组件需要在 Init 方法中实现初始化逻辑
+        /// </summary>
+        internal virtual void Init()
         {
-            Log.Debug($"[XFramework] [XFrameworkComponent] Destory {GetType().Name}.");
+            Log.Debug($"[XFramework] [XFrameworkComponent] Init component {GetType().Name} (Priority: {Priority}).");
         }
 
-        public virtual void Clear()
+        /// <summary>
+        /// 组件需要重载实现 Clear 方法以在关闭框架时清理数据和资源
+        /// </summary>
+        internal virtual void Clear()
         {
-            Log.Debug($"[XFramework] [XFrameworkComponent] Clear component {GetType().Name}.");
+            Log.Debug($"[XFramework] [XFrameworkComponent] Clear component {GetType().Name} (Priority: {Priority}).");
         }
     }
 }

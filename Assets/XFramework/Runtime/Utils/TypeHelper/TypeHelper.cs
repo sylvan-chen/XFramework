@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using XFramework.Utils;
 
-namespace XFramework
+namespace XFramework.Utils
 {
     public static class TypeHelper
     {

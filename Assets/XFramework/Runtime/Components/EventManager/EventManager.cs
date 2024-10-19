@@ -32,6 +32,11 @@ namespace XFramework
             get => _delayedEvents.Count;
         }
 
+        internal override int Priority
+        {
+            get => Global.PriorityValue.EventManager;
+        }
+
         private void Update()
         {
             lock (_delayedEvents)
@@ -52,7 +57,7 @@ namespace XFramework
             }
         }
 
-        public override void Clear()
+        internal override void Clear()
         {
             base.Clear();
 

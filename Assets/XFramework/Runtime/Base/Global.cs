@@ -6,23 +6,23 @@ namespace XFramework
     /// <summary>
     /// 全局入口
     /// </summary>
-    public static class Global
+    public static partial class Global
     {
-        private static CachePoolComponent _cachePool;
+        private static CachePool _cachePool;
         private static EventManager _eventManager;
-        private static GameSettingManager _gameSettingManager;
+        private static GameSetting _gameSetting;
         private static FSMManager _fsmManager;
+        private static PoolManager _poolManager;
         private static ProcedureManager _procedureManager;
         private static AssetManager _assetManager;
-        private static PoolManager _poolManager;
 
-        public static CachePoolComponent CachePool
+        public static CachePool CachePool
         {
             get
             {
                 if (_cachePool == null)
                 {
-                    _cachePool = XFrameworkDriver.Instance.FindComponent<CachePoolComponent>();
+                    _cachePool = XFrameworkDriver.Instance.FindComponent<CachePool>();
                 }
                 return _cachePool;
             }
@@ -40,15 +40,15 @@ namespace XFramework
             }
         }
 
-        public static GameSettingManager GameSettingManager
+        public static GameSetting GameSetting
         {
             get
             {
-                if (_gameSettingManager == null)
+                if (_gameSetting == null)
                 {
-                    _gameSettingManager = XFrameworkDriver.Instance.FindComponent<GameSettingManager>();
+                    _gameSetting = XFrameworkDriver.Instance.FindComponent<GameSetting>();
                 }
-                return _gameSettingManager;
+                return _gameSetting;
             }
         }
 
@@ -61,6 +61,18 @@ namespace XFramework
                     _fsmManager = XFrameworkDriver.Instance.FindComponent<FSMManager>();
                 }
                 return _fsmManager;
+            }
+        }
+
+        public static PoolManager PoolManager
+        {
+            get
+            {
+                if (_poolManager == null)
+                {
+                    _poolManager = XFrameworkDriver.Instance.FindComponent<PoolManager>();
+                }
+                return _poolManager;
             }
         }
 
@@ -85,18 +97,6 @@ namespace XFramework
                     _assetManager = XFrameworkDriver.Instance.FindComponent<AssetManager>();
                 }
                 return _assetManager;
-            }
-        }
-
-        public static PoolManager PoolManager
-        {
-            get
-            {
-                if (_poolManager == null)
-                {
-                    _poolManager = XFrameworkDriver.Instance.FindComponent<PoolManager>();
-                }
-                return _poolManager;
             }
         }
 

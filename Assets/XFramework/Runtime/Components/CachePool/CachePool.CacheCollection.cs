@@ -4,7 +4,7 @@ using XFramework.Utils;
 
 namespace XFramework
 {
-    public sealed partial class CachePoolComponent
+    public sealed partial class CachePool
     {
         private class CacheCollection
         {

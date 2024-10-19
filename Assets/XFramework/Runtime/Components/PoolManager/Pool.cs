@@ -13,7 +13,6 @@ namespace XFramework
         public abstract float AutoClearInterval { get; set; }
         public abstract float AutoClearTimer { get; }
         public abstract int Count { get; }
-        public abstract int DiscardableCount { get; }
 
         internal abstract void Update(float deltaTime, float unscaledDeltaTime);
         internal abstract void Destroy();
@@ -100,11 +99,6 @@ namespace XFramework
         public override int Count
         {
             get => _poolObjectDict.Count;
-        }
-
-        public override int DiscardableCount
-        {
-            get => _cachedDiscardablePoolObjects.Count;
         }
 
         internal override void Update(float deltaTime, float unscaledDeltaTime)
