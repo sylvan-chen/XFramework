@@ -15,13 +15,13 @@ namespace XFramework
 
             public static EventHandlerChain Create()
             {
-                EventHandlerChain handlerChain = CachePool.Spawn<EventHandlerChain>();
+                EventHandlerChain handlerChain = Global.CachePool.Spawn<EventHandlerChain>();
                 return handlerChain;
             }
 
             public void Destroy()
             {
-                CachePool.Unspawn(this);
+                Global.CachePool.Unspawn(this);
             }
 
             public int Count

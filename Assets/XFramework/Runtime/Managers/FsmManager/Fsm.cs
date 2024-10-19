@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using XFramework.Utils;
 
 namespace XFramework
 {
@@ -73,7 +72,7 @@ namespace XFramework
 
         internal static FSM<T> Create(string name, T owner, params StateBase<T>[] states)
         {
-            var fsm = CachePool.Spawn<FSM<T>>();
+            var fsm = Global.CachePool.Spawn<FSM<T>>();
             fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Create FSM failed. Name cannot be null.");
             fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Create FSM failed. Owner cannot be null.");
             foreach (StateBase<T> state in states)
@@ -111,7 +110,7 @@ namespace XFramework
                 state.OnFsmDestroy(this);
             }
             _isDestroyed = true;
-            CachePool.Unspawn(this);
+            Global.CachePool.Unspawn(this);
         }
 
         /// <summary>

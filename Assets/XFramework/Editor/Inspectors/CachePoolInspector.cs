@@ -28,7 +28,7 @@ namespace XFramework.Editor
 
             // 获取缓存池信息
             _cacheCollectionInfosDict.Clear();
-            CacheCollectionInfo[] cacheCollectionInfoArray = CachePool.GetAllCacheCollectionInfos();
+            CacheCollectionInfo[] cacheCollectionInfoArray = Global.CachePool.GetAllCacheCollectionInfos();
             foreach (CacheCollectionInfo cacheCollectionInfo in cacheCollectionInfoArray)
             {
                 string assemblyName = cacheCollectionInfo.CacheType.Assembly.GetName().Name;

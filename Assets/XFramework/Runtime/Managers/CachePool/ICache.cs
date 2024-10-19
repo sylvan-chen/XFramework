@@ -1,4 +1,4 @@
-namespace XFramework.Utils
+namespace XFramework
 {
     /// <summary>
     /// 可缓存对象

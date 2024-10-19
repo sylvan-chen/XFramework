@@ -1,5 +1,4 @@
 using System;
-using XFramework.Utils;
 
 namespace XFramework
 {
@@ -16,7 +15,7 @@ namespace XFramework
 
             public static DelayEventWrapper Create(IEvent evt, EventHandlerChain handlerChain, int delayFrame)
             {
-                var wrapper = CachePool.Spawn<DelayEventWrapper>();
+                var wrapper = Global.CachePool.Spawn<DelayEventWrapper>();
                 wrapper.Event = evt ?? throw new ArgumentNullException(nameof(evt), "Spawn DelayEventWrapper failed. Args is null.");
                 wrapper.HandlerChain = handlerChain ?? throw new ArgumentNullException(nameof(handlerChain), "Spawn DelayEventWrapper failed. HandlerChain is null.");
                 wrapper.DelayFrame = delayFrame;
@@ -25,7 +24,7 @@ namespace XFramework
 
             public void Destroy()
             {
-                CachePool.Unspawn(this);
+                Global.CachePool.Unspawn(this);
             }
 
             public void Clear()

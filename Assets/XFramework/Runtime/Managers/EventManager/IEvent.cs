@@ -1,5 +1,3 @@
-using XFramework.Utils;
-
 namespace XFramework
 {
     /// <summary>
@@ -9,7 +7,7 @@ namespace XFramework
     {
         internal void Destroy()
         {
-            CachePool.Unspawn(this);
+            Global.CachePool.Unspawn(this);
         }
     }
 }

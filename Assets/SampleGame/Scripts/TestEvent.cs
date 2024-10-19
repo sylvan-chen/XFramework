@@ -1,5 +1,4 @@
 using XFramework;
-using XFramework.Utils;
 
 public class TestEvent : IEvent
 {
@@ -8,7 +7,7 @@ public class TestEvent : IEvent
 
     public static TestEvent Create(string message)
     {
-        TestEvent evt = CachePool.Spawn<TestEvent>();
+        TestEvent evt = Global.CachePool.Spawn<TestEvent>();
         evt.Message = message;
         return evt;
     }

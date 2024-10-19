@@ -1,5 +1,4 @@
 using System;
-using XFramework.Utils;
 
 namespace XFramework
 {
@@ -48,7 +47,7 @@ namespace XFramework
 
         internal static PoolObject Create(object target, bool locked = false)
         {
-            PoolObject poolObject = CachePool.Spawn<PoolObject>();
+            PoolObject poolObject = Global.CachePool.Spawn<PoolObject>();
             poolObject.Target = target ?? throw new ArgumentNullException(nameof(target), "Target can not be null.");
             poolObject.Locked = locked;
             poolObject.LastUseUtcTime = DateTime.UtcNow;
@@ -84,7 +83,7 @@ namespace XFramework
         internal void Destroy()
         {
             OnDiscard?.Invoke();
-            CachePool.Unspawn(this);
+            Global.CachePool.Unspawn(this);
         }
 
         public void Clear()

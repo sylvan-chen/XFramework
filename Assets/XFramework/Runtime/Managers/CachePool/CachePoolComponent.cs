@@ -1,23 +1,24 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
-namespace XFramework.Utils
+namespace XFramework
 {
-    public static partial class CachePool
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/Cache Pool")]
+    public sealed partial class CachePoolComponent : XFrameworkComponent
     {
-        private static readonly Dictionary<Type, CacheCollection> _cacheCollections = new();
+        private readonly Dictionary<Type, CacheCollection> _cacheCollections = new();
 
         /// <summary>
         /// 缓存集合的数量（也是缓存池中的类型数量）
         /// </summary>
-        public static int CacheCollectionCount => _cacheCollections.Count;
+        public int CacheCollectionCount => _cacheCollections.Count;
 
-        /// <summary>
-        /// 清空所有缓存集合
-        /// </summary>
-        public static void Clear()
+        public override void Clear()
         {
-            Log.Debug("[XFramework] [CachePool] Clear all caches...");
+            base.Clear();
+
             foreach (CacheCollection cacheCollection in _cacheCollections.Values)
             {
                 cacheCollection.DiscardAll();
@@ -25,7 +26,7 @@ namespace XFramework.Utils
             _cacheCollections.Clear();
         }
 
-        public static CacheCollectionInfo[] GetAllCacheCollectionInfos()
+        public CacheCollectionInfo[] GetAllCacheCollectionInfos()
         {
             CacheCollectionInfo[] infos = new CacheCollectionInfo[_cacheCollections.Count];
             int index = 0;
@@ -50,7 +51,7 @@ namespace XFramework.Utils
         /// </summary>
         /// <param name="type">要获取的缓存类型</param>
         /// <returns>得到的缓存</returns>
-        public static ICache Spawn(Type type)
+        public ICache Spawn(Type type)
         {
             CheckTypeCompilance(type);
             return GetCacheableCollection(type).Spawn();
@@ -61,7 +62,7 @@ namespace XFramework.Utils
         /// </summary>
         /// <typeparam name="T">要获取的缓存类型</typeparam>
         /// <returns>得到的缓存</returns>
-        public static T Spawn<T>() where T : class, ICache, new()
+        public T Spawn<T>() where T : class, ICache, new()
         {
             return GetCacheableCollection(typeof(T)).Spawn() as T;
         }
@@ -70,7 +71,7 @@ namespace XFramework.Utils
         /// 放入一个缓存
         /// </summary>
         /// <param name="cache">要放入的缓存</param>
-        public static void Unspawn(ICache cache)
+        public void Unspawn(ICache cache)
         {
             if (cache == null)
             {
@@ -87,7 +88,7 @@ namespace XFramework.Utils
         /// </summary>
         /// <param name="type">要预留的缓存类型</param>
         /// <param name="count">要预留的数量</param>
-        public static void Reserve(Type type, int count)
+        public void Reserve(Type type, int count)
         {
             CheckTypeCompilance(type);
             GetCacheableCollection(type).Reserve(count);
@@ -98,7 +99,7 @@ namespace XFramework.Utils
         /// </summary>
         /// <typeparam name="T">要预留的缓存类型</typeparam>
         /// <param name="count">要预留的数量</param>
-        public static void Reserve<T>(int count) where T : class, ICache, new()
+        public void Reserve<T>(int count) where T : class, ICache, new()
         {
             GetCacheableCollection(typeof(T)).Reserve(count);
         }
@@ -108,7 +109,7 @@ namespace XFramework.Utils
         /// </summary>
         /// <param name="type">要丢弃的缓存类型</param>
         /// <param name="count">要丢弃的数量</param>
-        public static void Discard(Type type, int count)
+        public void Discard(Type type, int count)
         {
             CheckTypeCompilance(type);
             GetCacheableCollection(type).Discard(count);
@@ -119,7 +120,7 @@ namespace XFramework.Utils
         /// </summary>
         /// <typeparam name="T">要丢弃的缓存类型</typeparam>
         /// <param name="count">要丢弃的数量</param>
-        public static void Discard<T>(int count) where T : class, ICache, new()
+        public void Discard<T>(int count) where T : class, ICache, new()
         {
             GetCacheableCollection(typeof(T)).Discard(count);
         }
@@ -128,18 +129,18 @@ namespace XFramework.Utils
         /// 丢弃指定类型的所有缓存
         /// </summary>
         /// <param name="type">要丢弃的缓存类型</param>
-        public static void DiscardAll(Type type)
+        public void DiscardAll(Type type)
         {
             CheckTypeCompilance(type);
             GetCacheableCollection(type).DiscardAll();
         }
 
-        public static void DiscardAll<T>() where T : class, ICache, new()
+        public void DiscardAll<T>() where T : class, ICache, new()
         {
             GetCacheableCollection(typeof(T)).DiscardAll();
         }
 
-        private static void CheckTypeCompilance(Type type)
+        private void CheckTypeCompilance(Type type)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (type == null)
@@ -157,7 +158,7 @@ namespace XFramework.Utils
 #endif
         }
 
-        private static CacheCollection GetCacheableCollection(Type type)
+        private CacheCollection GetCacheableCollection(Type type)
         {
             if (type == null)
             {

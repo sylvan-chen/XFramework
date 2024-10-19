@@ -8,12 +8,25 @@ namespace XFramework
     /// </summary>
     public static class Global
     {
+        private static CachePoolComponent _cachePool;
         private static EventManager _eventManager;
         private static GameSettingManager _gameSettingManager;
         private static FSMManager _fsmManager;
         private static ProcedureManager _procedureManager;
         private static AssetManager _assetManager;
         private static PoolManager _poolManager;
+
+        public static CachePoolComponent CachePool
+        {
+            get
+            {
+                if (_cachePool == null)
+                {
+                    _cachePool = XFrameworkDriver.Instance.FindComponent<CachePoolComponent>();
+                }
+                return _cachePool;
+            }
+        }
 
         public static EventManager EventManager
         {

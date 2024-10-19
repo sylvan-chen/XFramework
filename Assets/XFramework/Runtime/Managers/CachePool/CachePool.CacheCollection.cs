@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using XFramework.Utils;
 
-namespace XFramework.Utils
+namespace XFramework
 {
-    public static partial class CachePool
+    public sealed partial class CachePoolComponent
     {
         private class CacheCollection
         {
