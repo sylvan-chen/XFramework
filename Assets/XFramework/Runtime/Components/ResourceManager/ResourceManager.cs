@@ -1,13 +1,17 @@
 using System;
+using System.Collections;
 using UnityEngine;
-using XFramework.Resource;
+using UnityEngine.Networking;
 
 namespace XFramework
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Resource Manager")]
-    public sealed class ResourceManager : XFrameworkComponent
+    public sealed partial class ResourceManager : XFrameworkComponent
     {
+        public const string RemoteManifestFileName = "ResourceManifest.dat";
+        public const string LocalManifestFileName = "ResourceManifest_Local.json";
+
         [SerializeField]
         private bool _enableEditorSimulate = true;
 
@@ -17,34 +21,50 @@ namespace XFramework
         [SerializeField]
         private ReadWritePathType _readWritePathType;
 
-        private IResourceHelper _resourceHelper;
-
         internal override int Priority
         {
             get => Global.PriorityValue.ResourceManager;
         }
 
+        /// <summary>
+        /// 只读路径
+        /// </summary>
         public string ReadOnlyPath
         {
             get;
             private set;
         }
 
+        /// <summary>
+        /// 读写路径
+        /// </summary>
         public string ReadWritePath
         {
             get;
             private set;
         }
 
+        /// <summary>
+        /// 当前变体
+        /// </summary>
+        public string CurrentVariant
+        {
+            get;
+            set;
+        }
+
         internal override void Init()
         {
-            if (_enableEditorSimulate)
+            switch (_resourceMode)
             {
-                _resourceHelper = new EditorResourceHelper();
-            }
-            else
-            {
-                _resourceHelper = new DefaultResourceHelper();
+                case ResourceMode.Standalone:
+                    InitForStandalone();
+                    break;
+                case ResourceMode.Online:
+                    InitForOnline();
+                    break;
+                default:
+                    throw new NotSupportedException($"ResourceMode {_resourceMode} not supported.");
             }
 
             ReadOnlyPath = Application.streamingAssetsPath;
@@ -59,6 +79,16 @@ namespace XFramework
             {
                 return;
             }
+        }
+
+        private void InitForStandalone()
+        {
+
+        }
+
+        private void InitForOnline()
+        {
+
         }
     }
 }

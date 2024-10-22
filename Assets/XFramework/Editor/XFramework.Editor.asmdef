@@ -2,8 +2,8 @@
     "name": "XFramework.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:39db3ea64bd468b4b8867c3652bc9e25",
-        "GUID:e34a5702dd353724aa315fb8011f08c3"
+        "XFramework.Runtime",
+        "YooAsset"
     ],
     "includePlatforms": [
         "Editor"
