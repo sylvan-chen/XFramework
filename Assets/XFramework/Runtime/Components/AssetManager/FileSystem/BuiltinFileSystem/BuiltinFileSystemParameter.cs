@@ -9,10 +9,5 @@ namespace XFramework.Resource
         /// 根目录
         /// </summary>
         public readonly string RootDirectory;
-
-        public BuiltinFileSystemParameter(string rootDirectory)
-        {
-            RootDirectory = rootDirectory;
-        }
     }
 }

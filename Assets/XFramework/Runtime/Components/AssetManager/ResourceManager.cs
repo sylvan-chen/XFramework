@@ -10,7 +10,7 @@ namespace XFramework.Resource
         private ResourceMode _resourceMode;
 
         private bool _isInit = false;
-        private IResourceHelper _resourceHelper;
+        private IResourceModeKernel _resourceHelper;
 
         internal override int Priority
         {

@@ -12,23 +12,13 @@ namespace XFramework.Resource
             return new FSInitResult(TaskResultStatus.Failure, error);
         }
 
-        private readonly TaskResultStatus _status;
-        private readonly string _error;
+        public readonly TaskResultStatus Status;
+        public readonly string Error;
 
-        private FSInitResult(TaskResultStatus status, string error)
+        public FSInitResult(TaskResultStatus status, string error)
         {
-            _status = status;
-            _error = error;
-        }
-
-        public TaskResultStatus Status
-        {
-            get => _status;
-        }
-
-        public string Error
-        {
-            get => _error;
+            Status = status;
+            Error = error;
         }
     }
 }
