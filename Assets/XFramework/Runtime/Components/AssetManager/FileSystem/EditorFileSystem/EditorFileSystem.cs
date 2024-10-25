@@ -1,5 +1,7 @@
+using System;
 using System.IO;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using XFramework.Utils;
 
 namespace XFramework.Resource
@@ -9,62 +11,48 @@ namespace XFramework.Resource
     /// </summary>
     internal sealed class EditorFileSystem : IFileSystem
     {
-        public EditorFileSystem(EditorFileSystemParameter parameter)
-        {
-            RootDirectory = parameter.RootDirectory;
-        }
-
         public string RootDirectory { get; private set; }
 
         public int FileCount { get; private set; }
 
-        public UniTask<FSInitResult> InitAsync()
+        public UniTask InitAsync()
         {
-            return UniTask.FromResult(FSInitResult.Sucess());
+            RootDirectory = PathHelper.Combine(Application.dataPath, ResourceManagerConsts.ResourcePackFolderName);
+
+            return UniTask.CompletedTask;
         }
 
-        public async UniTask<string> LoadResourceVersionAsync(float timeout)
+        public async UniTask<string> LoadResourceVersionAsync()
         {
-            string versionFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConfig.ResourceVersionFileName);
+            string versionFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ResourceVersionFileName);
+
             return await FileHelper.ReadAllTextAsync(versionFilePath);
         }
 
-        public async UniTask<FSLoadManifestResult> LoadManifestAsync(string resourceVersion, float timeout)
+        public async UniTask<Manifest> LoadManifestAsync()
         {
-            string hashFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConfig.ManifestHashFileName);
-            string binaryFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConfig.ManifestBinaryFileName);
+            string hashFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ManifestHashFileName);
+            string binaryFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ManifestBinaryFileName);
             if (!File.Exists(hashFilePath))
             {
-                return FSLoadManifestResult.Failure($"{hashFilePath} not found.");
+                throw new InvalidOperationException($"LoadManifestAsync failed. {hashFilePath} not found.");
             }
             if (!File.Exists(binaryFilePath))
             {
-                return FSLoadManifestResult.Failure($"{binaryFilePath} not found.");
+                throw new InvalidOperationException($"LoadManifestAsync failed. {binaryFilePath} not found.");
             }
 
             // 先验证清单文件的 MD5 哈希值
-            string targetHash = await FileHelper.ReadAllTextAsync(hashFilePath);
-            byte[] binaryFileData = await FileHelper.ReadAllBytesAsync(binaryFilePath);
-            string actualHash = HashHelper.BytesMD5(binaryFileData);
-            if (actualHash != targetHash)
+            string correctHash = await FileHelper.ReadAllTextAsync(hashFilePath);
+            byte[] manifestData = await FileHelper.ReadAllBytesAsync(binaryFilePath);
+            string manifestHash = HashHelper.BytesMD5(manifestData);
+            if (manifestHash != correctHash)
             {
-                return FSLoadManifestResult.Failure($"The manifest file '{binaryFilePath}' is corrupted. The MD5 checksum verification has failed.");
+                throw new InvalidOperationException($"LoadManifestAsync failed. The manifest file '{binaryFilePath}' is corrupted.");
             }
 
-            // 反序列化清单文件
-            Manifest manifest = ManifestSerilizer.DeserializeFromBytes(binaryFileData);
-
-            return FSLoadManifestResult.Success(manifest);
-        }
-
-        public UniTask ClearAllBundleFilesAsync()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public UniTask ClearAllUnusedBundleFilesAsync(Manifest manifestInfo)
-        {
-            throw new System.NotImplementedException();
+            // 再反序列化清单文件
+            return ManifestSerilizer.DeserializeFromBytes(manifestData);
         }
     }
 }

@@ -1,7 +1,8 @@
 namespace XFramework.Resource
 {
-    public static class ResourceManagerConfig
+    public static class ResourceManagerConsts
     {
+        public const string ResourcePackFolderName = "ResourcePack";
         public const string ManifestBinaryFileName = "Manifest.bytes";
         public const string ManifestJsonFileName = "Manifest.json";
         public const string ManifestHashFileName = "ManifestHash";
@@ -11,7 +12,7 @@ namespace XFramework.Resource
         public const int ManifestFileMaxSize = 1024 * 1024 * 100; // 100MB
 
         /// <summary>
-        /// 清单的头部标记
+        /// 清单文件的头部标记
         /// </summary>
         public static readonly byte[] ManifestBinaryFileHeaderSign = new byte[3] { (byte)'X', (byte)'F', (byte)'M' };
     }

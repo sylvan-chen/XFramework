@@ -9,10 +9,10 @@ namespace XFramework.Resource
     {
         public static byte[] SerializeToBytes(Manifest manifest)
         {
-            ByteBufferWriter bufferWriter = new ByteBufferWriter(ResourceManagerConfig.ManifestFileMaxSize);
+            ByteBufferWriter bufferWriter = new ByteBufferWriter(ResourceManagerConsts.ManifestFileMaxSize);
 
             // 写文件头
-            bufferWriter.WriteBytes(ResourceManagerConfig.ManifestBinaryFileHeaderSign);
+            bufferWriter.WriteBytes(ResourceManagerConsts.ManifestBinaryFileHeaderSign);
             // 写清单属性
             bufferWriter.WriteUTF8String(manifest.ResourceVersion);
             bufferWriter.WriteUTF8String(manifest.BuildPipeline);
@@ -47,7 +47,7 @@ namespace XFramework.Resource
 
             // 检查文件头
             byte[] fileHeaderSign = bufferReader.ReadBytes(3);
-            if (!fileHeaderSign.SequenceEqual(ResourceManagerConfig.ManifestBinaryFileHeaderSign))
+            if (!fileHeaderSign.SequenceEqual(ResourceManagerConsts.ManifestBinaryFileHeaderSign))
             {
                 throw new ArgumentException("Deserialize failed. Invalid file header sign.", nameof(bytes));
             }

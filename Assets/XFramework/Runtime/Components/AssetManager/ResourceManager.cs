@@ -10,14 +10,19 @@ namespace XFramework.Resource
         private ResourceMode _resourceMode;
 
         private bool _isInit = false;
-        private IResourceModeKernel _resourceHelper;
+        private IResourceManagerKernel _kernel;
 
         internal override int Priority
         {
             get { return Global.PriorityValue.ResourceManager; }
         }
 
+        internal override void Init()
+        {
+            base.Init();
 
+            InitAsync().Forget();
+        }
 
         public async UniTask InitAsync()
         {
@@ -25,24 +30,27 @@ namespace XFramework.Resource
             {
                 throw new InvalidOperationException("Init ResourceManager failed. It has already been initialized.");
             }
-#if !UNITY_EDITOR
-            if (_resourceMode == ResourceMode.EditorSimulate)
-            {
-                throw new InvalidOperationException("Init ResourceManager failed. ResourceMode EditorSimulate cannot be used in runtime.");
-            }
-#endif
             switch (_resourceMode)
             {
                 case ResourceMode.EditorSimulate:
+#if UNITY_EDITOR
+                    _kernel = new EditorSimulateKernel(EditorSimulateBuildPipeline.ScriptableBuildPipeline);
                     break;
+#else
+                    throw new InvalidOperationException("Init ResourceManager failed. ResourceMode EditorSimulate cannot be used in runtime.");
+#endif
                 case ResourceMode.Standalone:
+                    _kernel = new StandaloneKernel();
                     break;
                 case ResourceMode.Online:
+                    _kernel = new OnlineKernel();
                     break;
                 default:
                     throw new NotSupportedException($"ResourceMode {_resourceMode} is not supported.");
             }
             _isInit = true;
+
+            await _kernel.InitAsync();
         }
     }
 }
