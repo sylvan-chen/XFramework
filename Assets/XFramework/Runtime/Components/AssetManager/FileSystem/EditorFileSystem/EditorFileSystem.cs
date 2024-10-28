@@ -9,7 +9,7 @@ namespace XFramework.Resource
     /// <summary>
     /// 编辑器文件系统，用于编辑器下的模拟
     /// </summary>
-    internal sealed class EditorFileSystem : IFileSystem
+    internal sealed class EditorFileSystem
     {
         public string RootDirectory { get; private set; }
 
@@ -17,22 +17,22 @@ namespace XFramework.Resource
 
         public UniTask InitAsync()
         {
-            RootDirectory = PathHelper.Combine(Application.dataPath, ResourceManagerConsts.ResourcePackFolderName);
+            RootDirectory = PathHelper.Combine(Application.dataPath, ResourceManagerSettings.ResourcePackFolderName);
 
             return UniTask.CompletedTask;
         }
 
         public async UniTask<string> LoadResourceVersionAsync()
         {
-            string versionFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ResourceVersionFileName);
+            string versionFilePath = PathHelper.Combine(RootDirectory, ResourceManagerSettings.ResourceVersionFileName);
 
             return await FileHelper.ReadAllTextAsync(versionFilePath);
         }
 
         public async UniTask<Manifest> LoadManifestAsync()
         {
-            string hashFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ManifestHashFileName);
-            string binaryFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ManifestBinaryFileName);
+            string hashFilePath = PathHelper.Combine(RootDirectory, ResourceManagerSettings.ManifestHashFileName);
+            string binaryFilePath = PathHelper.Combine(RootDirectory, ResourceManagerSettings.ManifestBinaryFileName);
             if (!File.Exists(hashFilePath))
             {
                 throw new InvalidOperationException($"LoadManifestAsync failed. {hashFilePath} not found.");

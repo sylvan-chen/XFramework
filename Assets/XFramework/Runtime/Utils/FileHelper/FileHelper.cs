@@ -8,6 +8,25 @@ namespace XFramework.Utils
 {
     public static class FileHelper
     {
+        public static bool Exists(string path)
+        {
+            return File.Exists(path);
+        }
+
+        public static void Delete(string path)
+        {
+            File.Delete(path);
+        }
+
+        public static long GetFileSize(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return 0;
+            }
+            return new FileInfo(path).Length;
+        }
+
         public static string ReadAllText(string path)
         {
             return ReadAllText(path, Encoding.UTF8);

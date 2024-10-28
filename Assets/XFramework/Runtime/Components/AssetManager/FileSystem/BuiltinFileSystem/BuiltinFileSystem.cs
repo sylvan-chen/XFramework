@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+using System.IO;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using XFramework.Utils;
@@ -7,72 +6,36 @@ using XFramework.Utils;
 namespace XFramework.Resource
 {
     /// <summary>
-    /// 内置文件系统，包含内置在游戏本体中的文件
+    /// 内置文件系统，用于访问内置资源（首包资源）
     /// </summary>
-    internal sealed partial class BuiltinFileSystem : IFileSystem
+    internal sealed partial class BuiltinFileSystem
     {
-        private readonly Dictionary<string, VFile> _files = new();
+        private readonly string _rootDirectory;
 
-        public string RootDirectory { get; private set; }
-
-        public int FileCount
+        public BuiltinFileSystem(string rootDirectory)
         {
-            get => _files.Count;
+            _rootDirectory = rootDirectory;
         }
 
         public UniTask InitAsync()
         {
-            RootDirectory = PathHelper.Combine(Application.streamingAssetsPath, ResourceManagerConsts.ResourcePackFolderName);
-
             return UniTask.CompletedTask;
         }
 
-        public async UniTask<string> LoadResourceVersionAsync()
+        public async UniTask<AssetBundle> LoadBundleAsync(ManifestBundle bundle)
         {
-            string versionFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ResourceVersionFileName);
-            string versionFileURI = WebRequestHelper.ConvertToWWWURI(versionFilePath);
+            string bunldeFilePath = GetBuiltinFilePath(bundle.FileName);
+            if (!FileHelper.Exists(bunldeFilePath))
+            {
+                throw new FileNotFoundException($"Cannot find bundle file {bunldeFilePath}", bunldeFilePath);
+            }
 
-            WebRequestResult wwwResult = await WebRequestHelper.WebGetAsync(versionFileURI);
-            if (wwwResult.Status == WebRequestStatus.Success)
-            {
-                string version = wwwResult.Text;
-                return version;
-            }
-            else
-            {
-                throw new InvalidOperationException(wwwResult.Error);
-            }
+            return await AssetBundle.LoadFromFileAsync(bunldeFilePath);
         }
 
-        public async UniTask<Manifest> LoadManifestAsync()
+        private string GetBuiltinFilePath(string fileName)
         {
-            string hashFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ManifestHashFileName);
-            string binaryFilePath = PathHelper.Combine(RootDirectory, ResourceManagerConsts.ManifestBinaryFileName);
-
-            string hashFileURI = WebRequestHelper.ConvertToWWWURI(hashFilePath);
-            string binaryFileURI = WebRequestHelper.ConvertToWWWURI(binaryFilePath);
-
-            WebRequestResult hashResult = await WebRequestHelper.WebGetAsync(hashFileURI);
-            if (hashResult.Status != WebRequestStatus.Success)
-            {
-                throw new InvalidOperationException(hashResult.Error);
-            }
-            string correctHash = hashResult.Text;
-
-            WebRequestResult binaryResult = await WebRequestHelper.WebGetAsync(binaryFileURI);
-            if (binaryResult.Status != WebRequestStatus.Success)
-            {
-                throw new InvalidOperationException(binaryResult.Error);
-            }
-            byte[] manifestData = binaryResult.Data;
-            string manifestHash = HashHelper.BytesMD5(manifestData);
-
-            if (manifestHash != correctHash)
-            {
-                throw new InvalidOperationException($"The manifest file '{binaryFilePath}' is corrupted. The MD5 checksum verification has failed.");
-            }
-
-            return ManifestSerilizer.DeserializeFromBytes(manifestData);
+            return PathHelper.Combine(_rootDirectory, fileName);
         }
     }
 }

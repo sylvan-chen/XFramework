@@ -10,19 +10,29 @@ namespace XFramework.Utils
         UnknownError,
     }
 
+    public readonly struct WebDownloadBuffer
+    {
+        public readonly byte[] Data;
+        public readonly string Text;
+
+        public WebDownloadBuffer(byte[] data, string text)
+        {
+            Data = data;
+            Text = text;
+        }
+    }
+
     public readonly struct WebRequestResult
     {
         public readonly WebRequestStatus Status;
         public readonly string Error;
-        public readonly byte[] Data;
-        public readonly string Text;
+        public readonly WebDownloadBuffer DownloadBuffer;
 
-        public WebRequestResult(WebRequestStatus status, string error, byte[] data, string text)
+        public WebRequestResult(WebRequestStatus status, string error, WebDownloadBuffer downloadBuffer)
         {
             Status = status;
             Error = error;
-            Data = data;
-            Text = text;
+            DownloadBuffer = downloadBuffer;
         }
     }
 }

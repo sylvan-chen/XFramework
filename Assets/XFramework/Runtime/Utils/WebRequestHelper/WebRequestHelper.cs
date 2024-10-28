@@ -8,34 +8,29 @@ namespace XFramework.Utils
 {
     public static class WebRequestHelper
     {
-        public static string ConvertToWWWURI(string path)
-        {
-            string uri;
-            switch (Application.platform)
-            {
-                case RuntimePlatform.WindowsEditor:
-                    uri = $"file:///{path}";
-                    break;
-                case RuntimePlatform.Android:
-                    uri = $"jar:file://{path}";
-                    break;
-                case RuntimePlatform.IPhonePlayer:
-                case RuntimePlatform.WindowsPlayer:
-                case RuntimePlatform.OSXPlayer:
-                    uri = $"file://{path}";
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
-            return uri;
-        }
-
-        public static async UniTask<WebRequestResult> WebGetAsync(string uri, float timeout = 60f)
+        public static async UniTask<WebRequestResult> WebGetBufferAsync(string uri, float timeout = 60f)
         {
             UnityWebRequest www = UnityWebRequest.Get(uri);
             www.downloadHandler = new DownloadHandlerBuffer();
             www.disposeDownloadHandlerOnDispose = true;
 
+            return await WebRequestInternal(www, timeout);
+        }
+
+        public static async UniTask<WebRequestResult> WebGetFileAsync(string uri, string savePath, float timeout = 60f)
+        {
+            UnityWebRequest www = UnityWebRequest.Get(uri);
+            www.downloadHandler = new DownloadHandlerFile(savePath)
+            {
+                removeFileOnAbort = true
+            };
+            www.disposeDownloadHandlerOnDispose = true;
+
+            return await WebRequestInternal(www, timeout);
+        }
+
+        private static async UniTask<WebRequestResult> WebRequestInternal(UnityWebRequest www, float timeout, bool autoDispose = true)
+        {
             var cts = new CancellationTokenSource();
             cts.CancelAfterSlim(TimeSpan.FromSeconds(timeout));
             var (isCanceled, _) = await www.SendWebRequest().WithCancellation(cts.Token).SuppressCancellationThrow();
@@ -46,9 +41,8 @@ namespace XFramework.Utils
                 result = new WebRequestResult
                 (
                     WebRequestStatus.TimeoutError,
-                    $"Request for {uri} faild. Error: Time out.",
-                    null,
-                    null
+                    $"Request for {www.uri} faild. {WebRequestStatus.TimeoutError}: Time out.",
+                    default
                 );
             }
             else if (www.result == UnityWebRequest.Result.Success)
@@ -57,8 +51,7 @@ namespace XFramework.Utils
                 (
                     WebRequestStatus.Success,
                     null,
-                    www.downloadHandler.data,
-                    www.downloadHandler.text
+                    new WebDownloadBuffer(www.downloadHandler.data, www.downloadHandler.text)
                 );
             }
             else
@@ -82,13 +75,16 @@ namespace XFramework.Utils
                 result = new WebRequestResult
                 (
                     status,
-                    $"Request for {uri} failed. Error: {www.error}",
-                    null,
-                    null
+                    $"Request for {www.uri} failed. {status}: {www.error}",
+                    default
                 );
             }
 
-            www.Dispose();
+            if (autoDispose)
+            {
+                www.Dispose();
+            }
+
             return result;
         }
     }

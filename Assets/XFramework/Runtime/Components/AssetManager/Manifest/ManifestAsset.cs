@@ -9,6 +9,6 @@ namespace XFramework.Resource
         public string Address;
         public string Path;
         public string[] Tags;
-        public string BundleName;
+        public string BundleFileName;
     }
 }

@@ -25,7 +25,7 @@ namespace XFramework
             }
 
             // 从 StreamingAssets 中加载清单
-            string fileURI = PathHelper.GetRemoteFilePath(Path.Combine(ReadOnlyPath, RemoteManifestFileName));
+            string fileURI = PathHelper.ConvertToWWWFilePath(Path.Combine(ReadOnlyPath, RemoteManifestFileName));
             LoadBytesResult result = await BytesHelper.LoadBytesAsync(fileURI);
             if (result.IsSuccess)
             {

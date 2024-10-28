@@ -9,10 +9,10 @@ namespace XFramework.Resource
     {
         public static byte[] SerializeToBytes(Manifest manifest)
         {
-            ByteBufferWriter bufferWriter = new ByteBufferWriter(ResourceManagerConsts.ManifestFileMaxSize);
+            ByteBufferWriter bufferWriter = new ByteBufferWriter(ResourceManagerSettings.ManifestFileMaxSize);
 
             // 写文件头
-            bufferWriter.WriteBytes(ResourceManagerConsts.ManifestBinaryFileHeaderSign);
+            bufferWriter.WriteBytes(ResourceManagerSettings.ManifestBinaryFileHeaderSign);
             // 写清单属性
             bufferWriter.WriteUTF8String(manifest.ResourceVersion);
             bufferWriter.WriteUTF8String(manifest.BuildPipeline);
@@ -25,7 +25,7 @@ namespace XFramework.Resource
                 bufferWriter.WriteInt64(bundle.FileSize);
                 bufferWriter.WriteBool(bundle.IsEncrypted);
                 bufferWriter.WriteUTF8StringArray(bundle.Tags);
-                bufferWriter.WriteUTF8StringArray(bundle.DependentBundleNames);
+                bufferWriter.WriteUTF8StringArray(bundle.DependenyNames);
             }
             // 写 Assets 信息
             bufferWriter.WriteInt32(manifest.Assets.Count);
@@ -35,7 +35,7 @@ namespace XFramework.Resource
                 bufferWriter.WriteUTF8String(asset.Address);
                 bufferWriter.WriteUTF8String(asset.Path);
                 bufferWriter.WriteUTF8StringArray(asset.Tags);
-                bufferWriter.WriteUTF8String(asset.BundleName);
+                bufferWriter.WriteUTF8String(asset.BundleFileName);
             }
 
             return bufferWriter.Bytes;
@@ -47,7 +47,7 @@ namespace XFramework.Resource
 
             // 检查文件头
             byte[] fileHeaderSign = bufferReader.ReadBytes(3);
-            if (!fileHeaderSign.SequenceEqual(ResourceManagerConsts.ManifestBinaryFileHeaderSign))
+            if (!fileHeaderSign.SequenceEqual(ResourceManagerSettings.ManifestBinaryFileHeaderSign))
             {
                 throw new ArgumentException("Deserialize failed. Invalid file header sign.", nameof(bytes));
             }
@@ -69,7 +69,7 @@ namespace XFramework.Resource
                     FileSize = bufferReader.ReadInt64(),
                     IsEncrypted = bufferReader.ReadBool(),
                     Tags = bufferReader.ReadUTF8StringArray(),
-                    DependentBundleNames = bufferReader.ReadUTF8StringArray(),
+                    DependenyNames = bufferReader.ReadUTF8StringArray(),
                 };
                 manifest.Bundles.Add(bundle);
             }
@@ -84,7 +84,7 @@ namespace XFramework.Resource
                     Address = bufferReader.ReadUTF8String(),
                     Path = bufferReader.ReadUTF8String(),
                     Tags = bufferReader.ReadUTF8StringArray(),
-                    BundleName = bufferReader.ReadUTF8String(),
+                    BundleFileName = bufferReader.ReadUTF8String(),
                 };
                 manifest.Assets.Add(asset);
             }

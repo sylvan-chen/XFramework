@@ -52,5 +52,6 @@ namespace XFramework.Resource
 
             await _kernel.InitAsync();
         }
+
     }
 }

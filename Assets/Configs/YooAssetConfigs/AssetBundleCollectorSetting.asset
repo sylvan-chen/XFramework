@@ -33,6 +33,14 @@ MonoBehaviour:
         CollectorGUID: 323295f0c14438f4295bf889a8cfac39
         CollectorType: 0
         AddressRuleName: AddressByFileName
+        PackRuleName: PackSeparately
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+      - CollectPath: Assets/XFramework/Runtime/Utils
+        CollectorGUID: 0983182e2b62bb9449d40ad8270b0611
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory
         FilterRuleName: CollectAll
         AssetTags: 

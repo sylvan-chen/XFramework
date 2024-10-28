@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using UnityEngine;
 
 namespace XFramework.Utils
 {
@@ -39,6 +41,48 @@ namespace XFramework.Utils
             }
         }
 
+        public static string GetExtension(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            return Path.GetExtension(path);
+        }
+
+        public static bool HasExtension(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+
+            return Path.HasExtension(path);
+        }
+
+        public static string GetFileName(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            path = GetRegularPath(path);
+            return Path.GetFileName(path);
+        }
+
+        public static string GetFileNameWithoutExtension(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            path = GetRegularPath(path);
+            return Path.GetFileNameWithoutExtension(path);
+        }
+
         public static string Combine(string[] paths)
         {
             return Path.Combine(paths);
@@ -59,25 +103,48 @@ namespace XFramework.Utils
             return Path.Combine(path1, path2, path3, path4);
         }
 
-        #region 老代码
-
         /// <summary>
-        /// 获取远程文件格式的路径（'file://' 前缀）
+        /// 获取 WWW 文件格式的路径（'file://' 前缀）
         /// </summary>
-        public static string GetRemoteFilePath(string path)
+        public static string ConvertToWWWFilePath(string path)
         {
-            return GetRemotePathInternal(path, "file:///");
+            string prefix;
+            switch (Application.platform)
+            {
+                case RuntimePlatform.WindowsEditor:
+                    prefix = "file:///";
+                    break;
+                case RuntimePlatform.Android:
+                    prefix = "jar:file://";
+                    break;
+                case RuntimePlatform.IPhonePlayer:
+                case RuntimePlatform.WindowsPlayer:
+                case RuntimePlatform.OSXPlayer:
+                    prefix = "file://";
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            return ConvertToWWWPathInternal(path, prefix);
         }
 
         /// <summary>
-        /// 获取远程 HTTP 格式的路径（'http://' 前缀）
+        /// 获取 HTTP 格式的路径（'http://' 前缀）
         /// </summary>
-        public static string GetRemoteHttpPath(string path)
+        public static string ConvertToHttpPath(string path)
         {
-            return GetRemotePathInternal(path, "http://");
+            return ConvertToWWWPathInternal(path, "http://");
         }
 
-        private static string GetRemotePathInternal(string path, string prefix)
+        /// <summary>
+        /// 获取 HTTPS 格式的路径（'http://' 前缀）
+        /// </summary>
+        public static string ConvertToHttpsPath(string path)
+        {
+            return ConvertToWWWPathInternal(path, "https://");
+        }
+
+        private static string ConvertToWWWPathInternal(string path, string prefix)
         {
             string regularPath = GetRegularPath(path);
             if (regularPath == null)
@@ -96,7 +163,5 @@ namespace XFramework.Utils
                 return fullPath.Replace(prefix + "/", prefix);
             }
         }
-
-        #endregion
     }
 }
