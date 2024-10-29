@@ -12,20 +12,18 @@ namespace XFramework.XAsset
         private readonly List<string> _allFolders = new();
 
         private UnityEngine.Object _target;
+        private AddressStrategy _addressStrategy;
         private bool _recursiveCollect;
         private bool _IsDropDownExpanded;
 
-        public AssetCollector() : this(null, true)
+        public AssetCollector() : this(null, AddressStrategy.AddressByFileName, true)
         {
         }
 
-        public AssetCollector(UnityEngine.Object target) : this(target, true)
-        {
-        }
-
-        public AssetCollector(UnityEngine.Object target, bool recursiveCollect)
+        public AssetCollector(UnityEngine.Object target, AddressStrategy addressStrategy, bool recursiveCollect)
         {
             _target = target;
+            _addressStrategy = addressStrategy;
             _recursiveCollect = recursiveCollect;
             _IsDropDownExpanded = false;
         }
@@ -46,6 +44,12 @@ namespace XFramework.XAsset
                 }
                 return AssetDatabase.GetAssetPath(_target);
             }
+        }
+
+        public AddressStrategy AddressStrategy
+        {
+            get => _addressStrategy;
+            set => _addressStrategy = value;
         }
 
         public bool IsDropDownExpanded
@@ -97,8 +101,6 @@ namespace XFramework.XAsset
                 }
                 result.Add(assetPath);
             }
-
-            Log.Debug($"Get {result.Count} assets in {TargetPath}");
 
             return result.ToArray();
         }
