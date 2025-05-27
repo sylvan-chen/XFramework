@@ -4,9 +4,18 @@ using UnityEngine;
 
 namespace XFramework.Utils
 {
-
     public static class PathHelper
     {
+        public static bool IsFileExists(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+
+            return File.Exists(path);
+        }
+
         /// <summary>
         /// 获取规范化的路径
         /// </summary>
