@@ -839,6 +839,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
+      propertyPath: _availableProcedureTypeNames.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
+      propertyPath: _availableProcedureTypeNames.Array.data[0]
+      value: ProcedurePreload
+      objectReference: {fileID: 0}
+    - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
+      propertyPath: _availableProcedureTypeNames.Array.data[1]
+      value: ProcedureSplash
+      objectReference: {fileID: 0}
+    - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
+      propertyPath: _availableProcedureTypeNames.Array.data[2]
+      value: ProcedureStartup
+      objectReference: {fileID: 0}
+    - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
+      propertyPath: _availableProcedureTypeNames.Array.data[3]
+      value: ProcedureStartup
+      objectReference: {fileID: 0}
+    - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
+      propertyPath: _availableProcedureTypeNames.Array.data[4]
+      value: ProcedureStartup
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

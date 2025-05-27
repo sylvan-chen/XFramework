@@ -7,6 +7,11 @@ using System.IO;
 
 namespace XFramework
 {
+    /// <summary>
+    /// 资源加载管理器，依赖于 YooAsset
+    /// </summary>
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/Asset Manager")]
     public sealed class AssetManager : XFrameworkComponent
     {
         [SerializeField]
@@ -52,7 +57,7 @@ namespace XFramework
             // 尝试获取资源包，如果资源包不存在，则创建资源包
             // 注意：这里需要先在 Collector 创建同名 Package
             _package = YooAssets.TryGetPackage(DEFAULT_PACKAGE_NAME) ?? YooAssets.CreatePackage(DEFAULT_PACKAGE_NAME);
-            // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载改资源包内容
+            // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载该资源包内容
             YooAssets.SetDefaultPackage(_package);
             // 初始化资源包
             StartCoroutine(InitPackageInternal(onSucceed, onFail));
