@@ -18,17 +18,17 @@ namespace XFramework
         [SerializeField]
         private string _startupProcedureTypeName;
 
-        private FSM<ProcedureManager> _procedureFSM;
+        private StateMachine<ProcedureManager> _procedureStateMachine;
         private ProcedureBase _startupProcedure;
 
         public ProcedureBase CurrentProcedure
         {
-            get => _procedureFSM?.CurrentState as ProcedureBase;
+            get => _procedureStateMachine?.CurrentState as ProcedureBase;
         }
 
         public float CurrentProcedureTime
         {
-            get => _procedureFSM == null ? 0 : _procedureFSM.CurrentStateTime;
+            get => _procedureStateMachine == null ? 0 : _procedureStateMachine.CurrentStateTime;
         }
 
         internal override int Priority
@@ -63,36 +63,36 @@ namespace XFramework
                 throw new InvalidOperationException("ProcedureManager init failed. Startup procedure is null.");
             }
 
-            _procedureFSM = Global.FSMManager.CreateFSM(this, procedures);
-            StartCoroutine(StartProcedureFSM());
+            _procedureStateMachine = Global.StateMachineManager.Create(this, procedures);
+            StartCoroutine(StartProcedureStateMachine());
         }
 
         internal override void Clear()
         {
             base.Clear();
-            Global.FSMManager.DestroyFSM<ProcedureManager>();
-            _procedureFSM = null;
+            Global.StateMachineManager.Destroy<ProcedureManager>();
+            _procedureStateMachine = null;
             _startupProcedure = null;
         }
 
         public T GetProcedure<T>() where T : ProcedureBase
         {
-            return _procedureFSM.GetState<T>();
+            return _procedureStateMachine.GetState<T>();
         }
 
         public bool HasProcedure<T>() where T : ProcedureBase
         {
-            return _procedureFSM.HasState<T>();
+            return _procedureStateMachine.HasState<T>();
         }
 
         /// <summary>
         /// 启动流程状态机
         /// </summary>
-        private IEnumerator StartProcedureFSM()
+        private IEnumerator StartProcedureStateMachine()
         {
             // 等到帧末，确保所有必要组件都启动完毕
             yield return new WaitForEndOfFrame();
-            _procedureFSM.Start(_startupProcedure.GetType());
+            _procedureStateMachine.Start(_startupProcedure.GetType());
         }
     }
 }

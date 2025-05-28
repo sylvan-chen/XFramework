@@ -3,7 +3,7 @@ using XFramework.Utils;
 
 public sealed class ProcedureCheckUpdate : ProcedureBase
 {
-    public override void OnEnter(FSM<ProcedureManager> fsm)
+    public override void OnEnter(StateMachine<ProcedureManager> fsm)
     {
         base.OnEnter(fsm);
 

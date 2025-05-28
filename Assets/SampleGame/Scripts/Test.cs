@@ -33,13 +33,13 @@ public class Test : MonoBehaviour
 
     private void Start()
     {
-        Global.EventManager.Subscribe(TestEvent.ID, OnEventBtnClick);
+        Global.EventManager.Subscribe(TestEvent.Id, OnEventBtnClick);
 
         Pool<Image> imagePool = Global.PoolManager.CreatePool<Image>(1, 10f, 15f);
 
         _eventBtn.onClick.AddListener(() =>
         {
-            Global.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 60);
+            Global.EventManager.PublishLater(TestEvent.Id, TestEvent.Create("Hello, world!"), 60);
         });
         int index = 0;
         _spawnBtn.onClick.AddListener(() =>
@@ -97,7 +97,7 @@ public class Test : MonoBehaviour
 
     private void OnDestroy()
     {
-        Global.EventManager.Unsubscribe(TestEvent.ID, OnEventBtnClick);
+        Global.EventManager.Unsubscribe(TestEvent.Id, OnEventBtnClick);
     }
 
     private void OnEventBtnClick(IEvent args)

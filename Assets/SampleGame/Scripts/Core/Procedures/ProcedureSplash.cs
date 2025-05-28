@@ -2,7 +2,7 @@ using XFramework;
 
 public sealed class ProcedureSplash : ProcedureBase
 {
-    public override void OnEnter(FSM<ProcedureManager> fsm)
+    public override void OnEnter(StateMachine<ProcedureManager> fsm)
     {
         base.OnEnter(fsm);
 

@@ -11,7 +11,7 @@ namespace XFramework
         private static CachePool _cachePool;
         private static EventManager _eventManager;
         private static GameSetting _gameSetting;
-        private static FSMManager _fsmManager;
+        private static StateMachineManager _stateMachineManager;
         private static PoolManager _poolManager;
         private static ProcedureManager _procedureManager;
         private static AssetManager _assetManager;
@@ -52,15 +52,15 @@ namespace XFramework
             }
         }
 
-        public static FSMManager FSMManager
+        public static StateMachineManager StateMachineManager
         {
             get
             {
-                if (_fsmManager == null)
+                if (_stateMachineManager == null)
                 {
-                    _fsmManager = XFrameworkDriver.Instance.FindComponent<FSMManager>();
+                    _stateMachineManager = XFrameworkDriver.Instance.FindComponent<StateMachineManager>();
                 }
-                return _fsmManager;
+                return _stateMachineManager;
             }
         }
 

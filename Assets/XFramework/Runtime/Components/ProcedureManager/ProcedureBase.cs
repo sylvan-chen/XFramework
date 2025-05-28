@@ -14,7 +14,7 @@ namespace XFramework
         /// 流程初始化时
         /// </summary>
         /// <param name="fsm">流程管理器的状态机</param>
-        public override void OnInit(FSM<ProcedureManager> fsm)
+        public override void OnInit(StateMachine<ProcedureManager> fsm)
         {
             base.OnInit(fsm);
         }
@@ -23,7 +23,7 @@ namespace XFramework
         /// 进入流程时
         /// </summary>
         /// <param name="fsm">流程管理器的状态机</param>
-        public override void OnEnter(FSM<ProcedureManager> fsm)
+        public override void OnEnter(StateMachine<ProcedureManager> fsm)
         {
             base.OnEnter(fsm);
             Log.Debug($"[Procedure] Enter {GetType().Name}...");
@@ -33,7 +33,7 @@ namespace XFramework
         /// 离开流程时
         /// </summary>
         /// <param name="fsm">流程管理器的状态机</param>
-        public override void OnExit(FSM<ProcedureManager> fsm)
+        public override void OnExit(StateMachine<ProcedureManager> fsm)
         {
             base.OnExit(fsm);
             Log.Debug($"[Procedure] Exit {GetType().Name}...");
@@ -43,7 +43,7 @@ namespace XFramework
         /// 流程销毁时
         /// </summary>
         /// <param name="fsm">流程管理器的状态机</param>
-        public override void OnFsmDestroy(FSM<ProcedureManager> fsm)
+        public override void OnFsmDestroy(StateMachine<ProcedureManager> fsm)
         {
             base.OnFsmDestroy(fsm);
         }
@@ -54,7 +54,7 @@ namespace XFramework
         /// <param name="fsm">流程管理器的状态机</param>
         /// <param name="logicSeconds">逻辑时间</param>
         /// <param name="realSeconds">真实时间</param>
-        public override void OnUpdate(FSM<ProcedureManager> fsm, float logicSeconds, float realSeconds)
+        public override void OnUpdate(StateMachine<ProcedureManager> fsm, float logicSeconds, float realSeconds)
         {
             base.OnUpdate(fsm, logicSeconds, realSeconds);
         }

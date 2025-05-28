@@ -3,17 +3,17 @@ using System.Collections.Generic;
 
 namespace XFramework
 {
-    public abstract class FSMBase
+    public abstract class StateMachineBase
     {
         internal abstract void Update(float deltaTime, float unscaleDeltaTime);
         internal abstract void Destroy();
     }
 
     /// <summary>
-    /// 有限状态机
+    /// 状态机
     /// </summary>
-    /// <typeparam name="T">有限状态机的所有者类型</typeparam>
-    public sealed class FSM<T> : FSMBase, ICache where T : class
+    /// <typeparam name="T">状态机的所有者类型</typeparam>
+    public sealed class StateMachine<T> : StateMachineBase, ICache where T : class
     {
         private readonly Dictionary<Type, StateBase<T>> _stateDict = new();
         private string _name;
@@ -70,20 +70,20 @@ namespace XFramework
             get { return _isDestroyed; }
         }
 
-        internal static FSM<T> Create(string name, T owner, params StateBase<T>[] states)
+        internal static StateMachine<T> Create(string name, T owner, params StateBase<T>[] states)
         {
-            var fsm = Global.CachePool.Spawn<FSM<T>>();
-            fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Create FSM failed. Name cannot be null.");
-            fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Create FSM failed. Owner cannot be null.");
+            var fsm = Global.CachePool.Spawn<StateMachine<T>>();
+            fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Create StateMachine failed. Name cannot be null.");
+            fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Create StateMachine failed. Owner cannot be null.");
             foreach (StateBase<T> state in states)
             {
                 if (state == null)
                 {
-                    throw new ArgumentNullException(nameof(states), $"Create FSM failed. The state in initial states cannot be null.");
+                    throw new ArgumentNullException(nameof(states), $"Create StateMachine failed. The state in initial states cannot be null.");
                 }
                 if (fsm._stateDict.ContainsKey(state.GetType()))
                 {
-                    throw new ArgumentException($"Create FSM failed. The state of type {state.GetType().FullName} is already created.", nameof(states));
+                    throw new ArgumentException($"Create StateMachine failed. The state of type {state.GetType().FullName} is already created.", nameof(states));
                 }
                 fsm._stateDict.Add(state.GetType(), state);
                 state.OnInit(fsm);
@@ -121,11 +121,11 @@ namespace XFramework
         {
             if (_isDestroyed)
             {
-                throw new InvalidOperationException($"Start FSM {Name} failed. It has already been destroyed.");
+                throw new InvalidOperationException($"Start StateMachine {Name} failed. It has already been destroyed.");
             }
             if (CheckStarted())
             {
-                throw new InvalidOperationException($"Start FSM {Name} failed. It has already been started, don't start it again.");
+                throw new InvalidOperationException($"Start StateMachine {Name} failed. It has already been started, don't start it again.");
             }
 
             if (_stateDict.TryGetValue(typeof(TState), out StateBase<T> state))
@@ -136,7 +136,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Start FSM {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
+                throw new ArgumentException($"Start StateMachine {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
             }
         }
 
@@ -148,11 +148,11 @@ namespace XFramework
         {
             if (_isDestroyed)
             {
-                throw new InvalidOperationException($"Start FSM {Name} failed. It has already been destroyed.");
+                throw new InvalidOperationException($"Start StateMachine {Name} failed. It has already been destroyed.");
             }
             if (CheckStarted())
             {
-                throw new InvalidOperationException($"Start FSM {Name} failed. It has already been started, don't start it again.");
+                throw new InvalidOperationException($"Start StateMachine {Name} failed. It has already been started, don't start it again.");
             }
             CheckTypeCompilance(startStateType);
 
@@ -164,7 +164,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Start FSM {Name} failed. State of type {startStateType.FullName} not found.", nameof(startStateType));
+                throw new ArgumentException($"Start StateMachine {Name} failed. State of type {startStateType.FullName} not found.", nameof(startStateType));
             }
         }
 
@@ -172,7 +172,7 @@ namespace XFramework
         {
             if (_stateDict.TryGetValue(typeof(TState), out StateBase<T> state))
             {
-                return state as TState ?? throw new InvalidOperationException($"Get state of FSM {Name} failed.");
+                return state as TState ?? throw new InvalidOperationException($"Get state of StateMachine {Name} failed.");
             }
             return null;
         }
@@ -204,11 +204,11 @@ namespace XFramework
         {
             if (_isDestroyed)
             {
-                throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM has already been destroyed.");
+                throw new InvalidOperationException($"Change state of StateMachine {Name} failed. The FSM has already been destroyed.");
             }
             if (!CheckStarted())
             {
-                throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM didn't start yet.");
+                throw new InvalidOperationException($"Change state of StateMachine {Name} failed. The FSM didn't start yet.");
             }
             if (_stateDict.TryGetValue(typeof(TState), out StateBase<T> state))
             {
@@ -219,7 +219,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Change state of FSM {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
+                throw new ArgumentException($"Change state of StateMachine {Name} failed. State of type {typeof(TState).FullName} not found.", nameof(TState));
             }
         }
 
@@ -227,11 +227,11 @@ namespace XFramework
         {
             if (_isDestroyed)
             {
-                throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM has already been destroyed.");
+                throw new InvalidOperationException($"Change state of StateMachine {Name} failed. The FSM has already been destroyed.");
             }
             if (!CheckStarted())
             {
-                throw new InvalidOperationException($"Change state of FSM {Name} failed. The FSM didn't start yet.");
+                throw new InvalidOperationException($"Change state of StateMachine {Name} failed. The FSM didn't start yet.");
             }
             CheckTypeCompilance(stateType);
 
@@ -244,7 +244,7 @@ namespace XFramework
             }
             else
             {
-                throw new ArgumentException($"Change state of FSM {Name} failed. State of type {stateType.FullName} not found.", nameof(stateType));
+                throw new ArgumentException($"Change state of StateMachine {Name} failed. State of type {stateType.FullName} not found.", nameof(stateType));
             }
         }
 
@@ -252,7 +252,7 @@ namespace XFramework
         {
             if (_isDestroyed)
             {
-                throw new InvalidOperationException($"Get all states of FSM {Name} failed. The FSM has already been destroyed.");
+                throw new InvalidOperationException($"Get all states of StateMachine {Name} failed. The StateMachine has already been destroyed.");
             }
             if (_stateDict.Count == 0)
             {
@@ -286,11 +286,11 @@ namespace XFramework
             }
             if (!type.IsClass || type.IsAbstract)
             {
-                throw new ArgumentException($"Check type complience of FSM {Name} failed. State type {type.FullName} must be a non-abstract class.", nameof(type));
+                throw new ArgumentException($"Check type complience of StateMachine {Name} failed. State type {type.FullName} must be a non-abstract class.", nameof(type));
             }
             if (!typeof(StateBase<T>).IsAssignableFrom(type))
             {
-                throw new ArgumentException($"Check type complience of FSM {Name} failed. State type {type.FullName} must be a subclass of {typeof(StateBase<T>).Name}.", nameof(type));
+                throw new ArgumentException($"Check type complience of StateMachine {Name} failed. State type {type.FullName} must be a subclass of {typeof(StateBase<T>).Name}.", nameof(type));
             }
 #endif
         }

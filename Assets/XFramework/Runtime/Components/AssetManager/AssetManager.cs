@@ -37,7 +37,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => 0;
+            get => Global.PriorityValue.AssetManager;
         }
 
         internal override void Init()
