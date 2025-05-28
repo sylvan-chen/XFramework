@@ -10,9 +10,14 @@ namespace XFramework
     [AddComponentMenu("XFramework/Game Setting")]
     public sealed class GameSetting : XFrameworkComponent
     {
+        [SerializeField]
         private int _frameRate = 30;                  // 帧率
+        [SerializeField]
+        [Range(0f, 10f)]
         private float _gameSpeed = 1f;                // 游戏速度
+        [SerializeField]
         private bool _allowRunInBackground = true;    // 允许后台运行
+        [SerializeField]
         private bool _neverSleep = false;             // 保持屏幕常亮
 
         private float _gameSpeedBeforePause = 1f;     // 游戏暂停前的游戏速度
