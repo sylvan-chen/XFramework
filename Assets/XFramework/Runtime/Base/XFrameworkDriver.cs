@@ -18,8 +18,10 @@ namespace XFramework
         private readonly Dictionary<Type, XFrameworkComponent> _componentDict = new();
         private readonly List<XFrameworkComponent> _cachedComponents = new();
 
-        private void Start()
+        protected override void Awake()
         {
+            base.Awake();
+
             Init();
         }
 

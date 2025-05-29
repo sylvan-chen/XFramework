@@ -72,15 +72,19 @@ namespace XFramework
 
         #region 资源管理接口
 
-        /// <summary>
-        /// 初始化资源
-        /// </summary>
-        /// <param name="onSucceed">初始化成功回调</param>
-        /// <param name="onFail">初始化失败回调，参数为错误信息</param>
-        public void InitAsync(Action onSucceed, Action<string> onFail)
+        public void InitPackageAsync(Action callback = null)
         {
             // 初始化资源包
-            StartCoroutine(InitPackageInternal(onSucceed, onFail));
+            StartCoroutine(InitPackageInternal(() =>
+            {
+                StartCoroutine(RequestPackageVersion(() =>
+                {
+                    StartCoroutine(UpdatePackageManifest(() =>
+                    {
+                        StartCoroutine(UpdatePackageFiles(callback));
+                    }));
+                }));
+            }));
         }
 
         /// <summary>
@@ -130,7 +134,7 @@ namespace XFramework
         /// <summary>
         /// 初始化资源包
         /// </summary>
-        private IEnumerator InitPackageInternal(Action onSuccess, Action<string> onFail)
+        private IEnumerator InitPackageInternal(Action callback = null)
         {
             InitializationOperation operation = null;
             switch (_buildMode)
@@ -177,12 +181,11 @@ namespace XFramework
             if (operation.Status == EOperationStatus.Succeed)
             {
                 Log.Debug($"[XFramework] [AssetManager] Initialize package succeed. ({_buildMode})");
-                onSuccess?.Invoke();
+                callback?.Invoke();
             }
             else
             {
                 Log.Error($"[XFramework] [AssetManager] Initialize package failed. ({_buildMode}) {operation.Error}");
-                onFail?.Invoke(operation.Error);
             }
         }
 
@@ -212,7 +215,7 @@ namespace XFramework
         /// <summary>
         /// 获取资源版本
         /// </summary>
-        private IEnumerator RequestPackageVersion()
+        private IEnumerator RequestPackageVersion(Action callback)
         {
             var operation = _package.RequestPackageVersionAsync();
             yield return operation;
@@ -221,6 +224,7 @@ namespace XFramework
             {
                 _packageVersion = operation.PackageVersion;
                 Log.Debug($"[XFramework] [AssetManager] Request package version succeed. {_packageVersion}");
+                callback?.Invoke();
             }
             else
             {
@@ -231,30 +235,33 @@ namespace XFramework
         /// <summary>
         /// 根据版本号更新资源清单
         /// </summary>
-        private IEnumerator UpdatePackageManifest()
+        private IEnumerator UpdatePackageManifest(Action callback)
         {
             var operation = _package.UpdatePackageManifestAsync(_packageVersion);
             yield return operation;
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Update package manifest succeed. Current version: {_packageVersion}");
+                Log.Debug($"[XFramework] [AssetManager] Update package manifest succeed. Latest version: {_packageVersion}");
+                callback?.Invoke();
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Update package manifest failed. (Target version: {_packageVersion}) {operation.Error}");
+                Log.Error($"[XFramework] [AssetManager] Update package manifest failed. (Latest version: {_packageVersion}) {operation.Error}");
             }
         }
 
         /// <summary>
         /// 根据资源清单更新资源文件（下载到缓存资源）
         /// </summary>
-        private IEnumerator UpdatePackageFiles()
+        private IEnumerator UpdatePackageFiles(Action callback)
         {
             var downloader = _package.CreateResourceDownloader(_maxConcurrentDownloadCount, _failedDownloadRetryCount);
 
             if (downloader.TotalDownloadCount == 0)
             {
+                Log.Debug("[XFramework] [AssetManager] No package files need to update.");
+                callback?.Invoke();
                 yield break;
             }
 
@@ -263,19 +270,19 @@ namespace XFramework
 
             downloader.DownloadFinishCallback = (finishData) =>
             {
-                _onDownloadFinish.Invoke(finishData);
+                _onDownloadFinish?.Invoke(finishData);
             };
             downloader.DownloadErrorCallback = (errorData) =>
             {
-                _onDownloadError.Invoke(errorData);
+                _onDownloadError?.Invoke(errorData);
             };
             downloader.DownloadUpdateCallback = (updateData) =>
             {
-                _onDownloadUpdate.Invoke(updateData);
+                _onDownloadUpdate?.Invoke(updateData);
             };
             downloader.DownloadFileBeginCallback = (fileData) =>
             {
-                _onDownloadFileBegin.Invoke(fileData);
+                _onDownloadFileBegin?.Invoke(fileData);
             };
 
             downloader.BeginDownload();
@@ -284,6 +291,7 @@ namespace XFramework
             if (downloader.Status == EOperationStatus.Succeed)
             {
                 Log.Debug($"[XFramework] [AssetManager] Update package files succeed. Total download count: {totalDownloadCount}, Total download bytes: {totalDownloadBytes}");
+                callback?.Invoke();
             }
             else
             {

@@ -23,6 +23,8 @@ public class Test : MonoBehaviour
 
     private Stack<Image> _imgStack = new();
 
+    private Sprite _bg;
+
     private void Awake()
     {
         _eventBtn = transform.Find("EventBtn").GetComponent<Button>();
@@ -40,8 +42,11 @@ public class Test : MonoBehaviour
         _eventBtn.onClick.AddListener(() =>
         {
             Global.EventManager.PublishLater(TestEvent.Id, TestEvent.Create("Hello, world!"), 60);
+            Global.AssetManager.LoadAssetAsync<Sprite>("bg", (result) => { _bg = result; });
         });
         int index = 0;
+
+
         _spawnBtn.onClick.AddListener(() =>
         {
             Image lastImg = imagePool.Spawn();
@@ -50,6 +55,7 @@ public class Test : MonoBehaviour
                 lastImg = Instantiate(_targetImg);
                 lastImg.gameObject.SetActive(true);
                 lastImg.transform.SetParent(_targetImgParent);
+                lastImg.sprite = _bg;
                 lastImg.name = $"Image_{index++}";
                 _imgStack.Push(lastImg);
                 Log.Debug($"Create: {lastImg.name}");

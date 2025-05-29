@@ -7,15 +7,9 @@ public sealed class ProcedureInitAssets : ProcedureBase
     {
         base.OnEnter(fsm);
 
-        Global.AssetManager.InitAsync(
-            onSucceed: () =>
-            {
-                fsm.ChangeState<ProcedurePreload>();
-            },
-            onFail: (error) =>
-            {
-                Log.Error($"[XFramework] [ProcedureInitAssets] Init Resource failed. {error}");
-            }
-        );
+        Global.AssetManager.InitPackageAsync(() =>
+        {
+            fsm.ChangeState<ProcedurePreload>();
+        });
     }
 }

@@ -29,19 +29,11 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Res/Test
-        CollectorGUID: 323295f0c14438f4295bf889a8cfac39
+      - CollectPath: Assets/Res/UI
+        CollectorGUID: a967f1e74bd551b4f9a92800e78de4df
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackSeparately
-        FilterRuleName: CollectAll
-        AssetTags: 
-        UserData: 
-      - CollectPath: Assets/Res/ortho2.png
-        CollectorGUID: ee79f1ac0273c5c45bf26100444551be
-        CollectorType: 0
-        AddressRuleName: AddressByFileName
-        PackRuleName: PackDirectory
         FilterRuleName: CollectAll
         AssetTags: 
         UserData: 
