@@ -3,17 +3,26 @@ using UnityEngine;
 using System.Collections;
 using XFramework.Utils;
 using System;
-using System.IO;
+using Cysharp.Threading.Tasks;
 
 namespace XFramework
 {
     /// <summary>
     /// 资源加载管理器，依赖于 YooAsset
     /// </summary>
+    /// <remarks>目前只支持单个默认资源包，后续可以扩展支持多个资源包</remarks>
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Asset Manager")]
     public sealed class AssetManager : XFrameworkComponent
     {
+        internal enum BuildMode
+        {
+            Editor, // 编辑器模式，编辑器下模拟运行游戏，只在编辑器下有效
+            Offline, // 单机运行模式，不需要热更新资源的游戏
+            Online, // 联机模式，需要热更新资源的游戏
+            WebGL, // 针对 WebGL 的特殊模式
+        }
+
         [SerializeField]
         BuildMode _buildMode;
 
@@ -30,10 +39,15 @@ namespace XFramework
         private int _failedDownloadRetryCount = 3;
 
         private ResourcePackage _package;
-        private ResourceDownloaderOperation _downloader;
-        private long _totalDownloadBytes;
+        private string _packageVersion;
 
-        private const string DEFAULT_PACKAGE_NAME = "DefaultPackage";
+        // 资源下载回调
+        private Action<DownloaderFinishData> _onDownloadFinish;
+        private Action<DownloadErrorData> _onDownloadError;
+        private Action<DownloadUpdateData> _onDownloadUpdate;
+        private Action<DownloadFileData> _onDownloadFileBegin;
+
+        private const string DEFAULT_PACKAGE_NAME = "DefaultPackage"; // 默认资源包名称
 
         internal override int Priority
         {
@@ -45,7 +59,25 @@ namespace XFramework
             base.Init();
 
             YooAssets.Initialize();
+            // 尝试获取资源包，如果资源包不存在，则创建资源包
+            // 注意：需要先在 Collector 创建同名 Package
+            _package = YooAssets.TryGetPackage(DEFAULT_PACKAGE_NAME);
+            if (_package == null)
+            {
+                _package = YooAssets.CreatePackage(DEFAULT_PACKAGE_NAME);
+            }
+            // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载该资源包内容
+            YooAssets.SetDefaultPackage(_package);
         }
+
+        internal override void Clear()
+        {
+            base.Clear();
+
+            StartCoroutine(DestroyPackageInternal());
+        }
+
+        #region 资源管理接口
 
         /// <summary>
         /// 初始化资源
@@ -54,79 +86,92 @@ namespace XFramework
         /// <param name="onFail">初始化失败回调，参数为错误信息</param>
         public void InitAsync(Action onSucceed, Action<string> onFail)
         {
-            // 尝试获取资源包，如果资源包不存在，则创建资源包
-            // 注意：这里需要先在 Collector 创建同名 Package
-            _package = YooAssets.TryGetPackage(DEFAULT_PACKAGE_NAME) ?? YooAssets.CreatePackage(DEFAULT_PACKAGE_NAME);
-            // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载该资源包内容
-            YooAssets.SetDefaultPackage(_package);
             // 初始化资源包
             StartCoroutine(InitPackageInternal(onSucceed, onFail));
         }
 
         /// <summary>
-        /// 检查更新
+        /// 加载资源（UniTask 方式）
         /// </summary>
-        /// <param name="onSucceed">检查成功回调，参数为是否有更新</param>
-        /// <param name="onFail">检查失败回调，参数为错误信息</param>
-        public void CheckUpdateAsync(Action<bool> onSucceed, Action<string> onFail)
+        public async UniTask<T> LoadAssetAsync<T>(string assetName) where T : UnityEngine.Object
         {
-            StartCoroutine(CheckUpdateInternal(onSucceed, onFail));
+            AssetHandle handle = _package.LoadAssetAsync<T>(assetName);
+            await handle.Task.AsUniTask();
+            return handle.AssetObject as T;
         }
 
         /// <summary>
-        /// 下载更新
+        /// 加载资源（回调方式）
         /// </summary>
-        /// <param name="onSucceed">下载成功回调</param>
-        /// <param name="onDownloading">下载进度变动回调，参数为总下载数量，当前下载数量，总下载字节数，当前下载字节数</param>
-        /// <param name="onFail">下载失败回调，参数为错误信息</param>
-        public void DwonloadUpdateAsync(Action onSucceed, Action<int, int, long, long> onDownloading, Action<string> onFail)
+        public void LoadAssetAsync<T>(string assetName, Action<T> callback) where T : UnityEngine.Object
         {
-            StartCoroutine(DownloadUpdateInternal(onSucceed, onDownloading, onFail));
+            AssetHandle handle = _package.LoadAssetAsync<T>(assetName);
+            handle.Completed += (resultHandle) =>
+            {
+                callback?.Invoke(resultHandle.AssetObject as T);
+            };
         }
 
         /// <summary>
-        /// 检查磁盘空间是否足够用于下载更新
+        /// 卸载所有未使用的资源
         /// </summary>
-        public bool CheckDiskSpaceEnough()
+        public async UniTask UnloadUnusedAssetsAsync()
         {
-            DriveInfo driveInfo = new(Application.persistentDataPath);
-            long freeSpace = driveInfo.AvailableFreeSpace;
-            return freeSpace > _totalDownloadBytes;
+            var operation = _package.UnloadUnusedAssetsAsync();
+            await operation.Task.AsUniTask();
         }
 
-        private IEnumerator InitPackageInternal(Action onSuccess, Action<string> onFail, EDefaultBuildPipeline buildPipelineInEditorMode = EDefaultBuildPipeline.ScriptableBuildPipeline)
+        /// <summary>
+        /// 强制卸载所有资源
+        /// </summary>
+        public async UniTask ForceUnloadAllAssetsAsync()
+        {
+            var operation = _package.UnloadAllAssetsAsync();
+            await operation.Task.AsUniTask();
+        }
+
+        #endregion
+
+        #region 初始化和销毁
+
+        /// <summary>
+        /// 初始化资源包
+        /// </summary>
+        private IEnumerator InitPackageInternal(Action onSuccess, Action<string> onFail)
         {
             InitializationOperation operation = null;
             switch (_buildMode)
             {
                 case BuildMode.Editor:
-                    SimulateBuildResult simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(buildPipelineInEditorMode, "DefaultPackage");
+                    var simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(DEFAULT_PACKAGE_NAME);
                     var initParametersEditor = new EditorSimulateModeParameters()
                     {
-                        EditorFileSystemParameters = FileSystemParameters.CreateDefaultEditorFileSystemParameters(simulateBuildResult)
+                        EditorFileSystemParameters = FileSystemParameters.CreateDefaultEditorFileSystemParameters(simulateBuildResult.PackageRootDirectory)
                     };
                     operation = _package.InitializeAsync(initParametersEditor);
                     break;
-                case BuildMode.Standalone:
-                    var initParametersStandalone = new OfflinePlayModeParameters
+                case BuildMode.Offline:
+                    var initParametersOffline = new OfflinePlayModeParameters
                     {
                         BuildinFileSystemParameters = FileSystemParameters.CreateDefaultBuildinFileSystemParameters()
                     };
-                    operation = _package.InitializeAsync(initParametersStandalone);
+                    operation = _package.InitializeAsync(initParametersOffline);
                     break;
                 case BuildMode.Online:
-                    IRemoteServices remoteServices = new RemoteServices(_defaultHostServer, _fallbackHostServer);
-                    var initParametersRemote = new HostPlayModeParameters
+                    IRemoteServices remoteServicesOnline = new RemoteServices(_defaultHostServer, _fallbackHostServer);
+                    var initParametersOnline = new HostPlayModeParameters
                     {
                         BuildinFileSystemParameters = FileSystemParameters.CreateDefaultBuildinFileSystemParameters(),
-                        CacheFileSystemParameters = FileSystemParameters.CreateDefaultCacheFileSystemParameters(remoteServices)
+                        CacheFileSystemParameters = FileSystemParameters.CreateDefaultCacheFileSystemParameters(remoteServicesOnline)
                     };
-                    operation = _package.InitializeAsync(initParametersRemote);
+                    operation = _package.InitializeAsync(initParametersOnline);
                     break;
                 case BuildMode.WebGL:
+                    IRemoteServices remoteServicesWebGL = new RemoteServices(_defaultHostServer, _fallbackHostServer);
                     var initParametersWebGL = new WebPlayModeParameters
                     {
-                        WebFileSystemParameters = FileSystemParameters.CreateDefaultWebFileSystemParameters()
+                        WebServerFileSystemParameters = FileSystemParameters.CreateDefaultWebServerFileSystemParameters(),
+                        WebRemoteFileSystemParameters = FileSystemParameters.CreateDefaultWebRemoteFileSystemParameters(remoteServicesWebGL)
                     };
                     operation = _package.InitializeAsync(initParametersWebGL);
                     break;
@@ -136,107 +181,200 @@ namespace XFramework
             }
             yield return operation;
 
-            if (operation.Status != EOperationStatus.Succeed)
+            if (operation.Status == EOperationStatus.Succeed)
+            {
+                Log.Debug($"[XFramework] [AssetManager] Initialize package succeed. ({_buildMode})");
+                onSuccess?.Invoke();
+            }
+            else
             {
                 Log.Error($"[XFramework] [AssetManager] Initialize package failed. ({_buildMode}) {operation.Error}");
                 onFail?.Invoke(operation.Error);
             }
-            Log.Debug($"[XFramework] [AssetManager] Initialize package succeed. ({_buildMode})");
-            onSuccess?.Invoke();
         }
 
-        private IEnumerator CheckUpdateInternal(Action<bool> onSucceed, Action<string> onFail)
+        /// <summary>
+        /// 销毁资源包
+        /// </summary>
+        private IEnumerator DestroyPackageInternal()
         {
             if (_package == null)
             {
-                throw new InvalidOperationException("Package is null. Please initialize package first.");
-            }
-            // 获取资源包版本
-            // 单机模式下，直接获取本地资源包版本
-            // 联机模式下，请求服务器资源包版本
-            var requestVersionOperation = _package.RequestPackageVersionAsync();
-            yield return requestVersionOperation;
-            if (requestVersionOperation.Status != EOperationStatus.Succeed)
-            {
-                Log.Error($"[XFramework] [AssetManager] Request package version failed: {requestVersionOperation.Error}");
-                onFail?.Invoke(requestVersionOperation.Error);
                 yield break;
             }
-            string packageVersion = requestVersionOperation.PackageVersion;
-            Log.Debug($"[XFramework] [AssetManager] Current package version: {packageVersion}");
+            string packageName = _package.PackageName;
+            DestroyOperation destroyOperation = _package.DestroyAsync();
+            yield return destroyOperation;
 
-            // 更新资源清单到本地
-            var updateManifestOperation = _package.UpdatePackageManifestAsync(packageVersion);
-            yield return updateManifestOperation;
-            if (updateManifestOperation.Status != EOperationStatus.Succeed)
+            if (YooAssets.RemovePackage(_package))
             {
-                Log.Error($"[XFramework] [AssetManager] Update package manifest failed: {updateManifestOperation.Error}");
-                onFail?.Invoke(updateManifestOperation.Error);
-                yield break;
+                Log.Debug($"[XFramework] [AssetManager] Destroy package ({packageName}) succeed.");
             }
-            Log.Debug("[XFramework] [AssetManager] Update package manifest succeed.");
+        }
 
-            // 创建下载器，如果没有要下载的资源，说明不需要更新
-            _downloader = _package.CreateResourceDownloader(_maxConcurrentDownloadCount, _failedDownloadRetryCount);
-            if (_downloader.TotalDownloadCount == 0)
+        #endregion
+
+        #region 资源更新
+
+        /// <summary>
+        /// 获取资源版本
+        /// </summary>
+        private IEnumerator RequestPackageVersion()
+        {
+            var operation = _package.RequestPackageVersionAsync();
+            yield return operation;
+
+            if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug("[XFramework] [AssetManager] No need to download update.");
-                _downloader = null;
-                onSucceed?.Invoke(false);
+                _packageVersion = operation.PackageVersion;
+                Log.Debug($"[XFramework] [AssetManager] Request package version succeed. {_packageVersion}");
             }
             else
             {
-                _totalDownloadBytes = _downloader.TotalDownloadBytes;
-                onSucceed?.Invoke(true);
+                Log.Error($"[XFramework] [AssetManager] Request package version failed. {operation.Error}");
             }
         }
 
-        private IEnumerator DownloadUpdateInternal(Action onSucceed, Action<int, int, long, long> onDownloading, Action<string> onFail)
+        /// <summary>
+        /// 根据版本号更新资源清单
+        /// </summary>
+        private IEnumerator UpdatePackageManifest()
         {
-            if (_package == null)
+            var operation = _package.UpdatePackageManifestAsync(_packageVersion);
+            yield return operation;
+
+            if (operation.Status == EOperationStatus.Succeed)
             {
-                throw new InvalidOperationException("Package is null. Please initialize package first.");
+                Log.Debug($"[XFramework] [AssetManager] Update package manifest succeed. Current version: {_packageVersion}");
             }
-            if (_downloader == null)
+            else
             {
-                onFail?.Invoke("Downloader is null. Please check update first.");
+                Log.Error($"[XFramework] [AssetManager] Update package manifest failed. (Target version: {_packageVersion}) {operation.Error}");
+            }
+        }
+
+        /// <summary>
+        /// 根据资源清单更新资源文件（下载到缓存资源）
+        /// </summary>
+        private IEnumerator UpdatePackageFiles()
+        {
+            var downloader = _package.CreateResourceDownloader(_maxConcurrentDownloadCount, _failedDownloadRetryCount);
+
+            if (downloader.TotalDownloadCount == 0)
+            {
                 yield break;
             }
-            if (_downloader.TotalDownloadCount == 0)
-            {
-                onSucceed?.Invoke();
-                yield break;
-            }
 
-            _downloader.OnDownloadErrorCallback += (fileName, error) =>
+            int totalDownloadCount = downloader.TotalDownloadCount;
+            long totalDownloadBytes = downloader.TotalDownloadBytes;
+
+            downloader.DownloadFinishCallback = (finishData) =>
             {
-                Log.Error($"[XFramework] [AssetManager] Download {fileName} failed. {error}");
-                onFail?.Invoke(error);
+                _onDownloadFinish.Invoke(finishData);
             };
-            _downloader.OnDownloadProgressCallback += (totalDownloadCount, currentDownloadCount, totalDownloadBytes, currentDownloadBytes) =>
+            downloader.DownloadErrorCallback = (errorData) =>
             {
-                onDownloading?.Invoke(totalDownloadCount, currentDownloadCount, totalDownloadBytes, currentDownloadBytes);
+                _onDownloadError.Invoke(errorData);
+            };
+            downloader.DownloadUpdateCallback = (updateData) =>
+            {
+                _onDownloadUpdate.Invoke(updateData);
+            };
+            downloader.DownloadFileBeginCallback = (fileData) =>
+            {
+                _onDownloadFileBegin.Invoke(fileData);
             };
 
-            _downloader.BeginDownload();
-            yield return _downloader;
+            downloader.BeginDownload();
+            yield return downloader;
 
-            if (_downloader.Status != EOperationStatus.Succeed)
+            if (downloader.Status == EOperationStatus.Succeed)
             {
-                Log.Error($"[XFramework] [AssetManager] Download update failed. {_downloader.Error}");
-                onFail?.Invoke(_downloader.Error);
+                Log.Debug($"[XFramework] [AssetManager] Update package files succeed. Total download count: {totalDownloadCount}, Total download bytes: {totalDownloadBytes}");
             }
-            Log.Debug("[XFramework] [AssetManager] Download update succeed.");
-            onSucceed?.Invoke();
+            else
+            {
+                Log.Error($"[XFramework] [AssetManager] Update package files failed. {downloader.Error}");
+            }
         }
 
-        internal enum BuildMode
+        #endregion
+
+        #region 资源移除
+
+        /// <summary>
+        /// 清理所有缓存资源文件
+        /// </summary>
+        private IEnumerator ClearAllCacheBundleFiles()
         {
-            Editor,
-            Standalone,
-            Online,
-            WebGL,
+            var operation = _package.ClearCacheFilesAsync(EFileClearMode.ClearAllBundleFiles);
+            yield return operation;
+
+            if (operation.Status == EOperationStatus.Succeed)
+            {
+                Log.Debug($"[XFramework] [AssetManager] Clear all cache bundle files succeed.");
+            }
+            else
+            {
+                Log.Error($"[XFramework] [AssetManager] Clear all cache bundle files failed. {operation.Error}");
+            }
         }
+
+        /// <summary>
+        /// 清理未使用的缓存资源文件
+        /// </summary>
+        private IEnumerator ClearUnusedCacheBundleFiles()
+        {
+            var operation = _package.ClearCacheFilesAsync(EFileClearMode.ClearUnusedBundleFiles);
+            yield return operation;
+
+            if (operation.Status == EOperationStatus.Succeed)
+            {
+                Log.Debug($"[XFramework] [AssetManager] Clear unused cache bundle files succeed.");
+            }
+            else
+            {
+                Log.Error($"[XFramework] [AssetManager] Clear unused cache bundle files failed. {operation.Error}");
+            }
+        }
+
+        /// <summary>
+        /// 清理所有缓存清单文件
+        /// </summary>
+        private IEnumerator ClearAllCacheManifestFiles()
+        {
+            var operation = _package.ClearCacheFilesAsync(EFileClearMode.ClearAllManifestFiles);
+            yield return operation;
+
+            if (operation.Status == EOperationStatus.Succeed)
+            {
+                Log.Debug($"[XFramework] [AssetManager] Clear all cache manifest files succeed.");
+            }
+            else
+            {
+                Log.Error($"[XFramework] [AssetManager] Clear all cache manifest files failed. {operation.Error}");
+            }
+        }
+
+        /// <summary>
+        /// 清理未使用的缓存清单文件
+        /// </summary>
+        private IEnumerator ClearUnusedCacheManifestFiles()
+        {
+            var operation = _package.ClearCacheFilesAsync(EFileClearMode.ClearUnusedManifestFiles);
+            yield return operation;
+
+            if (operation.Status == EOperationStatus.Succeed)
+            {
+                Log.Debug($"[XFramework] [AssetManager] Clear unused cache manifest files succeed.");
+            }
+            else
+            {
+                Log.Error($"[XFramework] [AssetManager] Clear unused cache manifest files failed. {operation.Error}");
+            }
+        }
+
+        #endregion
 
         public class RemoteServices : IRemoteServices
         {
