@@ -841,19 +841,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
       propertyPath: _availableProcedureTypeNames.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
       propertyPath: _availableProcedureTypeNames.Array.data[0]
-      value: ProcedurePreload
+      value: ProcedureInitAssets
       objectReference: {fileID: 0}
     - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
       propertyPath: _availableProcedureTypeNames.Array.data[1]
-      value: ProcedureSplash
+      value: ProcedurePreload
       objectReference: {fileID: 0}
     - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
       propertyPath: _availableProcedureTypeNames.Array.data[2]
-      value: ProcedureStartup
+      value: ProcedureSplash
       objectReference: {fileID: 0}
     - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
       propertyPath: _availableProcedureTypeNames.Array.data[3]

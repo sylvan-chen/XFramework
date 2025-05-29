@@ -97,7 +97,10 @@ public class Test : MonoBehaviour
 
     private void OnDestroy()
     {
-        Global.EventManager.Unsubscribe(TestEvent.Id, OnEventBtnClick);
+        if (Global.EventManager != null)
+        {
+            Global.EventManager.Unsubscribe(TestEvent.Id, OnEventBtnClick);
+        }
     }
 
     private void OnEventBtnClick(IEvent args)

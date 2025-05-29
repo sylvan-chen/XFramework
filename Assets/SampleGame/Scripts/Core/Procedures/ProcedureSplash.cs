@@ -9,6 +9,6 @@ public sealed class ProcedureSplash : ProcedureBase
         // TODO: 这里播放闪屏动画
         // ...
 
-        // fsm.ChangeState<ProcedureInitAssets>();
+        fsm.ChangeState<ProcedureInitAssets>();
     }
 }

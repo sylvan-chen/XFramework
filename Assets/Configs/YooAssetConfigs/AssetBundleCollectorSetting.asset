@@ -24,8 +24,8 @@ MonoBehaviour:
     AutoCollectShaders: 1
     IgnoreRuleName: NormalIgnoreRule
     Groups:
-    - GroupName: Battle
-      GroupDesc: "\u6218\u6597"
+    - GroupName: UI
+      GroupDesc: "\u754C\u9762"
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
@@ -37,8 +37,8 @@ MonoBehaviour:
         FilterRuleName: CollectAll
         AssetTags: 
         UserData: 
-      - CollectPath: Assets/XFramework/Runtime/Utils
-        CollectorGUID: 0983182e2b62bb9449d40ad8270b0611
+      - CollectPath: Assets/Res/ortho2.png
+        CollectorGUID: ee79f1ac0273c5c45bf26100444551be
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory

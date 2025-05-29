@@ -20,7 +20,7 @@ namespace XFramework
         {
             get
             {
-                if (_cachePool == null)
+                if (_cachePool == null && XFrameworkDriver.Instance != null)
                 {
                     _cachePool = XFrameworkDriver.Instance.FindComponent<CachePool>();
                 }
@@ -32,7 +32,7 @@ namespace XFramework
         {
             get
             {
-                if (_eventManager == null)
+                if (_eventManager == null && XFrameworkDriver.Instance != null)
                 {
                     _eventManager = XFrameworkDriver.Instance.FindComponent<EventManager>();
                 }
@@ -44,7 +44,7 @@ namespace XFramework
         {
             get
             {
-                if (_gameSetting == null)
+                if (_gameSetting == null && XFrameworkDriver.Instance != null)
                 {
                     _gameSetting = XFrameworkDriver.Instance.FindComponent<GameSetting>();
                 }
@@ -56,7 +56,7 @@ namespace XFramework
         {
             get
             {
-                if (_stateMachineManager == null)
+                if (_stateMachineManager == null && XFrameworkDriver.Instance != null)
                 {
                     _stateMachineManager = XFrameworkDriver.Instance.FindComponent<StateMachineManager>();
                 }
@@ -68,7 +68,7 @@ namespace XFramework
         {
             get
             {
-                if (_poolManager == null)
+                if (_poolManager == null && XFrameworkDriver.Instance != null)
                 {
                     _poolManager = XFrameworkDriver.Instance.FindComponent<PoolManager>();
                 }
@@ -80,7 +80,7 @@ namespace XFramework
         {
             get
             {
-                if (_procedureManager == null)
+                if (_procedureManager == null && XFrameworkDriver.Instance != null)
                 {
                     _procedureManager = XFrameworkDriver.Instance.FindComponent<ProcedureManager>();
                 }
@@ -92,7 +92,7 @@ namespace XFramework
         {
             get
             {
-                if (_assetManager == null)
+                if (_assetManager == null && XFrameworkDriver.Instance != null)
                 {
                     _assetManager = XFrameworkDriver.Instance.FindComponent<AssetManager>();
                 }

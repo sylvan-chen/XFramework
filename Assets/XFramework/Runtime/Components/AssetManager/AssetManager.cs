@@ -70,13 +70,6 @@ namespace XFramework
             YooAssets.SetDefaultPackage(_package);
         }
 
-        internal override void Clear()
-        {
-            base.Clear();
-
-            StartCoroutine(DestroyPackageInternal());
-        }
-
         #region 资源管理接口
 
         /// <summary>

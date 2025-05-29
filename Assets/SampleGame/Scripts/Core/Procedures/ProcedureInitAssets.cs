@@ -10,7 +10,7 @@ public sealed class ProcedureInitAssets : ProcedureBase
         Global.AssetManager.InitAsync(
             onSucceed: () =>
             {
-                fsm.ChangeState<ProcedureCheckUpdate>();
+                fsm.ChangeState<ProcedurePreload>();
             },
             onFail: (error) =>
             {
