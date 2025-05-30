@@ -94,6 +94,7 @@ namespace XFramework
         {
             AssetHandle handle = _package.LoadAssetAsync<T>(assetName);
             await handle.Task.AsUniTask();
+            Log.Debug($"[XFramework] [AssetManager] Load asset ({assetName}) succeed.");
             return handle.AssetObject as T;
         }
 
@@ -105,6 +106,7 @@ namespace XFramework
             AssetHandle handle = _package.LoadAssetAsync<T>(assetName);
             handle.Completed += (resultHandle) =>
             {
+                Log.Debug($"[XFramework] [AssetManager] Load asset ({assetName}) succeed.");
                 callback?.Invoke(resultHandle.AssetObject as T);
             };
         }
