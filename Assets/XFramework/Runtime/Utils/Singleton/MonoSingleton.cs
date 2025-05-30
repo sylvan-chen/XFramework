@@ -13,7 +13,12 @@ namespace XFramework.Utils
             {
                 if (_instance == null)
                 {
+#if UNITY_6000_0_OR_NEWER
+                    _instance = FindFirstObjectByType<T>();
+#else
                     _instance = FindObjectOfType<T>();
+#endif
+
                 }
                 return _instance;
             }

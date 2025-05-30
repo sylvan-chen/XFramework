@@ -35,7 +35,7 @@ public class Test : MonoBehaviour
 
     private void Start()
     {
-        Global.EventManager.Subscribe(TestEvent.Id, OnEventBtnClick);
+        Global.EventManager.Subscribe(TestEvent.ID, OnEventBtnClick);
 
         Pool<Image> imagePool = Global.PoolManager.CreatePool<Image>(1, 10f, 15f);
 
@@ -43,7 +43,7 @@ public class Test : MonoBehaviour
 
         _eventBtn.onClick.AddListener(() =>
         {
-            Global.EventManager.PublishLater(TestEvent.Id, TestEvent.Create("Hello, world!"), 60);
+            Global.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 60);
         });
         int index = 0;
 
@@ -106,7 +106,7 @@ public class Test : MonoBehaviour
     {
         if (Global.EventManager != null)
         {
-            Global.EventManager.Unsubscribe(TestEvent.Id, OnEventBtnClick);
+            Global.EventManager.Unsubscribe(TestEvent.ID, OnEventBtnClick);
         }
     }
 

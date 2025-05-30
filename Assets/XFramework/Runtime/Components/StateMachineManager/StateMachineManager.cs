@@ -54,7 +54,7 @@ namespace XFramework
             {
                 throw new ArgumentNullException(nameof(states), "Create StateMachine failed. Initial states cannot be null or empty.");
             }
-            int id = GetId(typeof(T), name);
+            int id = GetID(typeof(T), name);
             if (_stateMachines.ContainsKey(id))
             {
                 throw new InvalidOperationException($"Create StateMachine failed. StateMachine with the same name ({name}) and same owner type ({typeof(T).Name}) already exists.");
@@ -91,7 +91,7 @@ namespace XFramework
             {
                 throw new ArgumentNullException(nameof(name), "Get StateMachine failed. Name cannot be null.");
             }
-            int id = GetId(typeof(T), name);
+            int id = GetID(typeof(T), name);
             if (_stateMachines.TryGetValue(id, out StateMachineBase stateMachine))
             {
                 return stateMachine as StateMachine<T>;
@@ -110,7 +110,7 @@ namespace XFramework
             {
                 throw new ArgumentNullException(nameof(name), "Destroy StateMachine failed. Name cannot be null.");
             }
-            int id = GetId(typeof(T), name);
+            int id = GetID(typeof(T), name);
             if (_stateMachines.TryGetValue(id, out StateMachineBase stateMachine))
             {
                 stateMachine.Destroy();
@@ -118,7 +118,7 @@ namespace XFramework
             }
         }
 
-        private int GetId(Type type, string name)
+        private int GetID(Type type, string name)
         {
             return (type.Name + name).GetHashCode();
         }
