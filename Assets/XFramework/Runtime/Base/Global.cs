@@ -15,6 +15,7 @@ namespace XFramework
         private static PoolManager _poolManager;
         private static ProcedureManager _procedureManager;
         private static AssetManager _assetManager;
+        private static UIManager _uiManager;
 
         public static CachePool CachePool
         {
@@ -97,6 +98,18 @@ namespace XFramework
                     _assetManager = XFrameworkDriver.Instance.FindComponent<AssetManager>();
                 }
                 return _assetManager;
+            }
+        }
+
+        public static UIManager UIManager
+        {
+            get
+            {
+                if (_uiManager == null && XFrameworkDriver.Instance != null)
+                {
+                    _uiManager = XFrameworkDriver.Instance.FindComponent<UIManager>();
+                }
+                return _uiManager;
             }
         }
 

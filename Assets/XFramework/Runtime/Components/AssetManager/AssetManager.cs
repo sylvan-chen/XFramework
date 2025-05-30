@@ -71,6 +71,19 @@ namespace XFramework
             YooAssets.SetDefaultPackage(_package);
         }
 
+        internal override void Clear()
+        {
+            base.Clear();
+
+            _package = null;
+            _packageVersion = null;
+
+            _onDownloadFinish = null;
+            _onDownloadError = null;
+            _onDownloadUpdate = null;
+            _onDownloadFileBegin = null;
+        }
+
         #region 资源管理接口
 
         public void InitPackageAsync(Action callback = null)
