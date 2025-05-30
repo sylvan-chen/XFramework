@@ -3,6 +3,9 @@
 .editorconfig
 ProjectSettings/
 yoo/
+yoo.meta
+YooAssetConfigs/
+YooAssetConfigs.meta
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
