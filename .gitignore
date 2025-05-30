@@ -6,6 +6,8 @@ yoo/
 yoo.meta
 YooAssetConfigs/
 YooAssetConfigs.meta
+MobileDependencyResolver/
+MobileDependencyResolver.meta
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #

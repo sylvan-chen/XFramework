@@ -4,6 +4,7 @@ using System.Collections;
 using XFramework.Utils;
 using System;
 using Cysharp.Threading.Tasks;
+using UnityEngine.SceneManagement;
 
 namespace XFramework
 {
@@ -88,7 +89,7 @@ namespace XFramework
         }
 
         /// <summary>
-        /// 加载资源（UniTask 方式）
+        /// 加载资源
         /// </summary>
         public async UniTask<T> LoadAssetAsync<T>(string assetName) where T : UnityEngine.Object
         {
@@ -99,7 +100,7 @@ namespace XFramework
         }
 
         /// <summary>
-        /// 加载资源（回调方式）
+        /// 加载资源
         /// </summary>
         public void LoadAssetAsync<T>(string assetName, Action<T> callback) where T : UnityEngine.Object
         {
@@ -108,6 +109,54 @@ namespace XFramework
             {
                 Log.Debug($"[XFramework] [AssetManager] Load asset ({assetName}) succeed.");
                 callback?.Invoke(resultHandle.AssetObject as T);
+            };
+        }
+
+        /// <summary>
+        /// 加载场景
+        /// </summary>
+        public async UniTask<Scene> LoadSceneAsync(string sceneName)
+        {
+            SceneHandle handle = _package.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            await handle.Task.AsUniTask();
+            Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
+            return handle.SceneObject;
+        }
+
+        /// <summary>
+        /// 加载场景
+        /// </summary>
+        public void LoadSceneAsync(string sceneName, Action<Scene> callback)
+        {
+            SceneHandle handle = _package.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            handle.Completed += (resultHandle) =>
+            {
+                Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
+                callback?.Invoke(resultHandle.SceneObject);
+            };
+        }
+
+        /// <summary>
+        /// 加载额外场景（不销毁当前已存在场景）
+        /// </summary>
+        public async UniTask<Scene> LoadAdditiveSceneAsync(string sceneName)
+        {
+            SceneHandle handle = _package.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+            await handle.Task.AsUniTask();
+            Log.Debug($"[XFramework] [AssetManager] Load additive scene ({handle.SceneName}) succeed.");
+            return handle.SceneObject;
+        }
+
+        /// <summary>
+        /// 加载额外场景（不销毁当前已存在场景）
+        /// </summary>
+        public void LoadAdditiveSceneAsync(string sceneName, Action<Scene> callback)
+        {
+            SceneHandle handle = _package.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+            handle.Completed += (resultHandle) =>
+            {
+                Log.Debug($"[XFramework] [AssetManager] Load additive scene ({handle.SceneName}) succeed.");
+                callback?.Invoke(resultHandle.SceneObject);
             };
         }
 

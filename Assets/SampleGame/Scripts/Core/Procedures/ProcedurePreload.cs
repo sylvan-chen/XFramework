@@ -1,4 +1,4 @@
-using UnityEngine.SceneManagement;
+using Cysharp.Threading.Tasks;
 using XFramework;
 
 public sealed class ProcedurePreload : ProcedureBase
@@ -7,7 +7,11 @@ public sealed class ProcedurePreload : ProcedureBase
     {
         base.OnEnter(fsm);
 
-        // 加载游戏主场景
-        SceneManager.LoadSceneAsync("Home", LoadSceneMode.Additive);
+        LoadSceneAsync("HomeScene").Forget();
+    }
+
+    public async UniTask LoadSceneAsync(string sceneName)
+    {
+        await Global.AssetManager.LoadSceneAsync(sceneName);
     }
 }
