@@ -113,42 +113,30 @@ namespace XFramework
         /// <summary>
         /// 加载资源
         /// </summary>
-        public async UniTask<T> LoadAssetAsync<T>(string address) where T : UnityEngine.Object
+        /// <typeparam name="T">资源类型</typeparam>
+        /// <param name="address">资源地址</param>
+        /// <returns>资源句柄</returns>
+        public async UniTask<AssetHandle> LoadAssetAsync<T>(string address) where T : UnityEngine.Object
         {
             AssetHandle handle = _package.LoadAssetAsync<T>(address);
             await handle.Task.AsUniTask();
             Log.Debug($"[XFramework] [AssetManager] Load asset ({address}) succeed.");
-            T assetObj = Instantiate(handle.AssetObject) as T;
-            handle.Release();
-            return assetObj;
+            return handle;
         }
 
         /// <summary>
         /// 加载资源
         /// </summary>
-        public void LoadAssetAsync<T>(string address, Action<T> callback) where T : UnityEngine.Object
+        /// <param name="address">资源地址</param>
+        /// <param name="callback">回调</param>
+        public void LoadAssetAsync<T>(string address, Action<AssetHandle> callback) where T : UnityEngine.Object
         {
             AssetHandle handle = _package.LoadAssetAsync<T>(address);
             handle.Completed += (resultHandle) =>
             {
                 Log.Debug($"[XFramework] [AssetManager] Load asset ({address}) succeed.");
-                T assetObj = Instantiate(handle.AssetObject) as T;
-                handle.Release();
-                callback?.Invoke(assetObj);
+                callback?.Invoke(resultHandle);
             };
-        }
-
-        /// <summary>
-        /// 加载预制体
-        /// </summary>
-        public async UniTask<GameObject> LoadPrefabAsync(string address)
-        {
-            AssetHandle handle = _package.LoadAssetAsync<GameObject>(address);
-            await handle.Task.AsUniTask();
-            Log.Debug($"[XFramework] [AssetManager] Load prefab ({address}) succeed.");
-            GameObject go = handle.InstantiateSync();
-            handle.Release();
-            return go;
         }
 
         /// <summary>

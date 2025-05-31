@@ -39,12 +39,11 @@ public class Test : MonoBehaviour
 
         Pool<Image> imagePool = Global.PoolManager.CreatePool<Image>(1, 10f, 15f);
 
-        Global.AssetManager.LoadAssetAsync<Sprite>("bg", (result) => { _bg = result; });
+        Global.AssetManager.LoadAssetAsync<Sprite>("bg", (handle) => { _bg = handle.AssetObject as Sprite; });
 
         _eventBtn.onClick.AddListener(() =>
         {
             Global.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 60);
-            Global.AssetManager.LoadAssetAsync<Sprite>("bg", (result) => { _bg = result; });
         });
         int index = 0;
 
