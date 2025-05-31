@@ -9,68 +9,50 @@ namespace XFramework
     /// </summary>
     public abstract class UIFormBase : MonoBehaviour
     {
-        private int _uiFormID;
-        private string _uiFormAssetName;
-        private int _uiFormOrder;
-        private bool _isHideCoveredUIForm;
+        private string _uiFormID;
+        private string _uiFormAssetAddress;
 
-        private bool _isAvailable = false;
-        private bool _isVisiable = false;
+        private bool _available = false;
+        private bool _visiable = false;
         private int _originalLayer = 0;
+
+        private bool _pauseOnCovered = true;
+        private bool _hideOnCovered = false;
 
         private readonly List<Transform> _cachedTransforms = new();
 
         /// <summary>
         /// UI 界面的 ID
         /// </summary>
-        public int UIFormID => _uiFormID;
+        public string UIFormID => _uiFormID;
 
         /// <summary>
-        /// UI 界面的名称
+        /// UI 界面的资源地址
         /// </summary>
-        public string Name
-        {
-            get => gameObject.name;
-            set => gameObject.name = value;
-        }
+        public string UIFormAssetAddress => _uiFormAssetAddress;
 
         /// <summary>
-        /// UI 界面的资源名称
+        /// UI 界面是否可用（可交互）
         /// </summary>
-        public string UIFormAssetName => _uiFormAssetName;
-
-        /// <summary>
-        /// UI 界面的顺序
-        /// </summary>
-        public int UIFormOrder => _uiFormOrder;
-
-        /// <summary>
-        /// 是否隐藏被该 UI 界面遮盖的其他界面
-        /// </summary>
-        public bool IsHideCoveredUIForm => _isHideCoveredUIForm;
-
-        /// <summary>
-        /// UI 界面是否可用（未打开的界面为不可用状态）
-        /// </summary>
-        public bool IsAvailable => _isAvailable;
+        public bool Available => _available;
 
         /// <summary>
         /// UI 界面是否可见
         /// </summary>
-        public bool IsVisiable => _isVisiable;
+        public bool Visiable => _visiable;
 
         /// <summary>
         /// 初始化 UI 界面
         /// </summary>
-        public void Init(int uiFormID, string uiFormAssetName, int uiFormOrder, bool isHideCoveredUIForm, object userData)
+        public void Init(string uiFormID, string uiFormAssetAddress, bool pauseOnCovered = true, bool hideOnCovered = false)
         {
             _uiFormID = uiFormID;
-            _uiFormAssetName = uiFormAssetName;
-            _uiFormOrder = uiFormOrder;
-            _isHideCoveredUIForm = isHideCoveredUIForm;
+            _uiFormAssetAddress = uiFormAssetAddress;
+            _pauseOnCovered = pauseOnCovered;
+            _hideOnCovered = hideOnCovered;
             _originalLayer = gameObject.layer;
 
-            OnInit(userData);
+            OnInit();
 
             Global.UIManager.Register(this);
         }
@@ -83,20 +65,20 @@ namespace XFramework
         /// <summary>
         /// 打开 UI 界面
         /// </summary>
-        public void Open(object userData)
+        public void Open()
         {
-            _isAvailable = true;
-            Show();
+            _available = true;
+            SetVisibilityInternal(true);
 
-            OnOpen(userData);
+            OnOpen();
         }
 
         /// <summary>
         /// 关闭 UI 界面
         /// </summary>
-        public void Close(object userData)
+        public void Close()
         {
-            OnClose(userData);
+            OnClose();
 
             // 递归设置界面和其子对象的层级，使其恢复原层级
             gameObject.GetComponentsInChildren<Transform>(true, _cachedTransforms);
@@ -106,17 +88,8 @@ namespace XFramework
             }
             _cachedTransforms.Clear();
 
-            Hide();
-            _isAvailable = false;
-        }
-
-        /// <summary>
-        /// 显示 UI 界面
-        /// </summary>
-        public void Show()
-        {
-            SetVisibilityInternal(true);
-            OnShow();
+            SetVisibilityInternal(false);
+            _available = false;
         }
 
         /// <summary>
@@ -129,24 +102,50 @@ namespace XFramework
         }
 
         /// <summary>
+        /// 显示 UI 界面
+        /// </summary>
+        public void Show()
+        {
+            SetVisibilityInternal(true);
+            OnShow();
+        }
+
+        /// <summary>
+        /// 暂停 UI 界面
+        /// </summary>
+        public void Pause()
+        {
+            OnPause();
+            _available = false;
+        }
+
+        /// <summary>
+        /// 恢复 UI 界面
+        /// </summary>
+        public void Resume()
+        {
+            _available = true;
+            OnResume();
+        }
+
+        /// <summary>
         /// UI 界面初始化时
         /// </summary>
-        /// <param name="userData"></param>
-        protected virtual void OnInit(object userData)
+        protected virtual void OnInit()
         {
         }
 
         /// <summary>
         /// UI 界面打开时
         /// </summary>
-        protected virtual void OnOpen(object userData)
+        protected virtual void OnOpen()
         {
         }
 
         /// <summary>
         /// UI 界面关闭时
         /// </summary>
-        protected virtual void OnClose(object userData)
+        protected virtual void OnClose()
         {
         }
 
@@ -164,19 +163,33 @@ namespace XFramework
         {
         }
 
-        private void SetVisibilityInternal(bool isVisiable)
+        /// <summary>
+        /// UI 界面暂停时
+        /// </summary>
+        protected virtual void OnPause()
         {
-            if (!_isAvailable)
+        }
+
+        /// <summary>
+        /// UI 界面恢复时
+        /// </summary>
+        protected virtual void OnResume()
+        {
+        }
+
+        private void SetVisibilityInternal(bool visiable)
+        {
+            if (!_available)
             {
-                Log.Warning($"[XFramework] [UIFormBase] UIForm {Name} is not available, can not set visibility.");
+                Log.Warning($"[XFramework] [UIFormBase] UIForm {UIFormID} is not available, can not set visibility.");
                 return;
             }
-            if (_isVisiable == isVisiable)
+            if (_visiable == visiable)
             {
                 return;
             }
-            _isVisiable = isVisiable;
-            gameObject.SetActive(_isVisiable);
+            _visiable = visiable;
+            gameObject.SetActive(_visiable);
         }
     }
 }

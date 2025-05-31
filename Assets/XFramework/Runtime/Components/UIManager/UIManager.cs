@@ -11,9 +11,8 @@ namespace XFramework
     [AddComponentMenu("XFramework/UI Manager")]
     public sealed class UIManager : XFrameworkComponent
     {
-        private Dictionary<int, UIFormBase> _uiFormDict = new(); // 全部 UIForm 的缓存
-        private List<UIFormBase> _availableUIForms = new(); // 打开的 UIForm 列表
-        private Transform _uiRoot; // UI 根节点
+        private Dictionary<string, UIFormBase> _uiFormDict = new(); // 全部 UIForm 的缓存
+        private List<UIFormBase> _openedUIForms = new(); // 打开的 UIForm 列表
 
         internal override int Priority
         {
@@ -56,23 +55,19 @@ namespace XFramework
         /// 打开 UIForm
         /// </summary>
         /// <param name="formID">要打开的 UIForm 的 ID</param>
-        public void Open(int formID, object userData = null)
+        public void Open(string formID)
         {
             if (!_uiFormDict.ContainsKey(formID))
             {
-                // Global.AssetManager.LoadAssetAsync <
+                // Global.AssetManager.
             }
-
-            UIFormBase uiForm = _uiFormDict[formID];
-            uiForm.Open(userData);
-            _availableUIForms.Add(uiForm);
         }
 
         /// <summary>
         /// 关闭 UIForm
         /// </summary>
         /// <param name="formID">要关闭的 UIForm 的 ID</param>
-        public void Close(int formID, object userData = null)
+        public void Close(string formID)
         {
             if (!_uiFormDict.ContainsKey(formID))
             {
@@ -81,11 +76,11 @@ namespace XFramework
             }
 
             UIFormBase uiForm = _uiFormDict[formID];
-            if (_availableUIForms.Contains(uiForm))
+            if (_openedUIForms.Contains(uiForm))
             {
-                _availableUIForms.Remove(uiForm);
+                _openedUIForms.Remove(uiForm);
             }
-            uiForm.Close(userData);
+            uiForm.Close();
         }
 
     }

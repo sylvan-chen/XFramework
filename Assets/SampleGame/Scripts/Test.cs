@@ -44,6 +44,7 @@ public class Test : MonoBehaviour
         _eventBtn.onClick.AddListener(() =>
         {
             Global.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 60);
+            Global.AssetManager.LoadAssetAsync<Sprite>("bg", (result) => { _bg = result; });
         });
         int index = 0;
 

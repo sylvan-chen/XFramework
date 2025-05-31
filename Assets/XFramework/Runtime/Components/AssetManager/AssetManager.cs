@@ -5,6 +5,7 @@ using XFramework.Utils;
 using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 namespace XFramework
 {
@@ -48,6 +49,8 @@ namespace XFramework
         private Action<DownloadUpdateData> _onDownloadUpdate;
         private Action<DownloadFileData> _onDownloadFileBegin;
 
+        private readonly Dictionary<string, AssetHandle> _assetHandleDict = new();
+
         private const string DEFAULT_PACKAGE_NAME = "DefaultPackage"; // 默认资源包名称
 
         internal override int Priority
@@ -69,6 +72,12 @@ namespace XFramework
             }
             // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载该资源包内容
             YooAssets.SetDefaultPackage(_package);
+
+            foreach (AssetHandle handle in _assetHandleDict.Values)
+            {
+                handle.Release();
+            }
+            _assetHandleDict.Clear();
         }
 
         internal override void Clear()
@@ -104,33 +113,50 @@ namespace XFramework
         /// <summary>
         /// 加载资源
         /// </summary>
-        public async UniTask<T> LoadAssetAsync<T>(string assetName) where T : UnityEngine.Object
+        public async UniTask<T> LoadAssetAsync<T>(string address) where T : UnityEngine.Object
         {
-            AssetHandle handle = _package.LoadAssetAsync<T>(assetName);
+            AssetHandle handle = _package.LoadAssetAsync<T>(address);
             await handle.Task.AsUniTask();
-            Log.Debug($"[XFramework] [AssetManager] Load asset ({assetName}) succeed.");
-            return handle.AssetObject as T;
+            Log.Debug($"[XFramework] [AssetManager] Load asset ({address}) succeed.");
+            T assetObj = Instantiate(handle.AssetObject) as T;
+            handle.Release();
+            return assetObj;
         }
 
         /// <summary>
         /// 加载资源
         /// </summary>
-        public void LoadAssetAsync<T>(string assetName, Action<T> callback) where T : UnityEngine.Object
+        public void LoadAssetAsync<T>(string address, Action<T> callback) where T : UnityEngine.Object
         {
-            AssetHandle handle = _package.LoadAssetAsync<T>(assetName);
+            AssetHandle handle = _package.LoadAssetAsync<T>(address);
             handle.Completed += (resultHandle) =>
             {
-                Log.Debug($"[XFramework] [AssetManager] Load asset ({assetName}) succeed.");
-                callback?.Invoke(resultHandle.AssetObject as T);
+                Log.Debug($"[XFramework] [AssetManager] Load asset ({address}) succeed.");
+                T assetObj = Instantiate(handle.AssetObject) as T;
+                handle.Release();
+                callback?.Invoke(assetObj);
             };
+        }
+
+        /// <summary>
+        /// 加载预制体
+        /// </summary>
+        public async UniTask<GameObject> LoadPrefabAsync(string address)
+        {
+            AssetHandle handle = _package.LoadAssetAsync<GameObject>(address);
+            await handle.Task.AsUniTask();
+            Log.Debug($"[XFramework] [AssetManager] Load prefab ({address}) succeed.");
+            GameObject go = handle.InstantiateSync();
+            handle.Release();
+            return go;
         }
 
         /// <summary>
         /// 加载场景
         /// </summary>
-        public async UniTask<Scene> LoadSceneAsync(string sceneName)
+        public async UniTask<Scene> LoadSceneAsync(string address)
         {
-            SceneHandle handle = _package.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            SceneHandle handle = _package.LoadSceneAsync(address, LoadSceneMode.Single);
             await handle.Task.AsUniTask();
             Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
             return handle.SceneObject;
@@ -139,9 +165,9 @@ namespace XFramework
         /// <summary>
         /// 加载场景
         /// </summary>
-        public void LoadSceneAsync(string sceneName, Action<Scene> callback)
+        public void LoadSceneAsync(string address, Action<Scene> callback)
         {
-            SceneHandle handle = _package.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            SceneHandle handle = _package.LoadSceneAsync(address, LoadSceneMode.Single);
             handle.Completed += (resultHandle) =>
             {
                 Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
@@ -152,9 +178,9 @@ namespace XFramework
         /// <summary>
         /// 加载额外场景（不销毁当前已存在场景）
         /// </summary>
-        public async UniTask<Scene> LoadAdditiveSceneAsync(string sceneName)
+        public async UniTask<Scene> LoadAdditiveSceneAsync(string address)
         {
-            SceneHandle handle = _package.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+            SceneHandle handle = _package.LoadSceneAsync(address, LoadSceneMode.Additive);
             await handle.Task.AsUniTask();
             Log.Debug($"[XFramework] [AssetManager] Load additive scene ({handle.SceneName}) succeed.");
             return handle.SceneObject;
@@ -163,14 +189,27 @@ namespace XFramework
         /// <summary>
         /// 加载额外场景（不销毁当前已存在场景）
         /// </summary>
-        public void LoadAdditiveSceneAsync(string sceneName, Action<Scene> callback)
+        public void LoadAdditiveSceneAsync(string address, Action<Scene> callback)
         {
-            SceneHandle handle = _package.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+            SceneHandle handle = _package.LoadSceneAsync(address, LoadSceneMode.Additive);
             handle.Completed += (resultHandle) =>
             {
                 Log.Debug($"[XFramework] [AssetManager] Load additive scene ({handle.SceneName}) succeed.");
                 callback?.Invoke(resultHandle.SceneObject);
             };
+        }
+
+        /// <summary>
+        /// 卸载指定资源
+        /// </summary>
+        public void UnloadAsset(string address)
+        {
+            if (_assetHandleDict.ContainsKey(address))
+            {
+                _assetHandleDict[address].Release();
+                _assetHandleDict.Remove(address);
+            }
+            _package.TryUnloadUnusedAsset(address);
         }
 
         /// <summary>
@@ -189,6 +228,7 @@ namespace XFramework
         {
             var operation = _package.UnloadAllAssetsAsync();
             await operation.Task.AsUniTask();
+            _assetHandleDict.Clear();
         }
 
         #endregion
