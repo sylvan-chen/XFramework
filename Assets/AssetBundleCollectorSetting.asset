@@ -42,8 +42,8 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/SampleGame/Scenes/HomeScene.unity
-        CollectorGUID: e9270eeac4cd1344b99a61b707e01b8c
+      - CollectPath: Assets/SampleGame/Scenes
+        CollectorGUID: e22d5183d82794642b4df4d3b1de1802
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory

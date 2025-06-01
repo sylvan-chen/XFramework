@@ -142,61 +142,32 @@ namespace XFramework
         /// <summary>
         /// 加载场景
         /// </summary>
-        public async UniTask<Scene> LoadSceneAsync(string address)
+        internal async UniTask<SceneHandle> LoadSceneAsync(string address, LoadSceneMode mode = LoadSceneMode.Single)
         {
-            SceneHandle handle = _package.LoadSceneAsync(address, LoadSceneMode.Single);
+            SceneHandle handle = _package.LoadSceneAsync(address, mode);
             await handle.Task.AsUniTask();
             Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
-            return handle.SceneObject;
+            return handle;
         }
 
         /// <summary>
         /// 加载场景
         /// </summary>
-        public void LoadSceneAsync(string address, Action<Scene> callback)
+        internal void LoadSceneAsync(string address, LoadSceneMode mode, Action<SceneHandle> callback)
         {
-            SceneHandle handle = _package.LoadSceneAsync(address, LoadSceneMode.Single);
+            SceneHandle handle = _package.LoadSceneAsync(address, mode);
             handle.Completed += (resultHandle) =>
             {
                 Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
-                callback?.Invoke(resultHandle.SceneObject);
+                callback?.Invoke(resultHandle);
             };
         }
 
         /// <summary>
-        /// 加载额外场景（不销毁当前已存在场景）
+        /// 尝试卸载指定资源
         /// </summary>
-        public async UniTask<Scene> LoadAdditiveSceneAsync(string address)
+        public void TryUnloadUnusedAsset(string address)
         {
-            SceneHandle handle = _package.LoadSceneAsync(address, LoadSceneMode.Additive);
-            await handle.Task.AsUniTask();
-            Log.Debug($"[XFramework] [AssetManager] Load additive scene ({handle.SceneName}) succeed.");
-            return handle.SceneObject;
-        }
-
-        /// <summary>
-        /// 加载额外场景（不销毁当前已存在场景）
-        /// </summary>
-        public void LoadAdditiveSceneAsync(string address, Action<Scene> callback)
-        {
-            SceneHandle handle = _package.LoadSceneAsync(address, LoadSceneMode.Additive);
-            handle.Completed += (resultHandle) =>
-            {
-                Log.Debug($"[XFramework] [AssetManager] Load additive scene ({handle.SceneName}) succeed.");
-                callback?.Invoke(resultHandle.SceneObject);
-            };
-        }
-
-        /// <summary>
-        /// 卸载指定资源
-        /// </summary>
-        public void UnloadAsset(string address)
-        {
-            if (_assetHandleDict.ContainsKey(address))
-            {
-                _assetHandleDict[address].Release();
-                _assetHandleDict.Remove(address);
-            }
             _package.TryUnloadUnusedAsset(address);
         }
 

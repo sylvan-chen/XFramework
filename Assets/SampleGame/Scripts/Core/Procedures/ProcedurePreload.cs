@@ -7,11 +7,19 @@ public sealed class ProcedurePreload : ProcedureBase
     {
         base.OnEnter(fsm);
 
-        LoadSceneAsync("HomeScene").Forget();
+        Preload().Forget();
     }
 
-    public async UniTask LoadSceneAsync(string sceneName)
+    private async UniTask Preload()
     {
-        await Global.AssetManager.LoadSceneAsync(sceneName);
+        await Global.SceneManager.ChangeSceneAsync("Background");
+        await Global.SceneManager.AddSceneAsync("HomeScene");
+        await Global.SceneManager.AddSceneAsync("Popup");
+        await UniTask.Delay(2000);
+        await Global.SceneManager.RemoveSceneAsync("Popup");
+        await UniTask.Delay(2000);
+        await Global.SceneManager.AddSceneAsync("Popup");
+        await UniTask.Delay(2000);
+        await Global.SceneManager.RemoveAllScenesAsync("HomeScene");
     }
 }
