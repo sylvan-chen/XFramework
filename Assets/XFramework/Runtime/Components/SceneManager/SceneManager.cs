@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using XFramework.Utils;
 using YooAsset;
 
 namespace XFramework
 {
+    [DisallowMultipleComponent]
+    [AddComponentMenu("XFramework/Scene Manager")]
     public class SceneManager : XFrameworkComponent
     {
         private readonly Dictionary<string, SceneHandle> _sceneHandleDict = new();
