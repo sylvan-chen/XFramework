@@ -37,6 +37,14 @@ MonoBehaviour:
         FilterRuleName: CollectAll
         AssetTags: 
         UserData: 
+      - CollectPath: Assets/SampleGame/Prefabs
+        CollectorGUID: a3510c3ff4d1c484b8b3e8a8d234ac67
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
     - GroupName: Scenes
       GroupDesc: 
       AssetTags: 

@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using XFramework.Utils;
+using YooAsset;
 
 namespace XFramework
 {
@@ -11,8 +13,8 @@ namespace XFramework
     [AddComponentMenu("XFramework/UI Manager")]
     public sealed class UIManager : XFrameworkComponent
     {
-        private Dictionary<string, UIFormBase> _uiFormDict = new(); // 全部 UIForm 的缓存
-        private List<UIFormBase> _openedUIForms = new(); // 打开的 UIForm 列表
+        private Stack<UIFormBase> _openedUIForms = new(); // 打开的 UIForm 栈
+        private Dictionary<string, AssetHandle> _handleDict = new(); // 资源句柄字典
 
         internal override int Priority
         {
@@ -22,66 +24,83 @@ namespace XFramework
         internal override void Clear()
         {
             base.Clear();
-        }
 
-        /// <summary>
-        /// 注册 UIForm 到管理器
-        /// </summary>
-        /// <param name="uiForm"></param>
-        public void Register(UIFormBase uiForm)
-        {
-            if (!_uiFormDict.ContainsKey(uiForm.UIFormID))
-            {
-                _uiFormDict.Add(uiForm.UIFormID, uiForm);
-            }
-            else
-            {
-                _uiFormDict[uiForm.UIFormID] = uiForm;
-            }
-        }
-
-        /// <summary>
-        /// 从管理器注销 UIForm
-        /// </summary>
-        public void Unregister(UIFormBase uiForm)
-        {
-            if (_uiFormDict.ContainsKey(uiForm.UIFormID))
-            {
-                _uiFormDict.Remove(uiForm.UIFormID);
-            }
+            CloseAll();
+            _openedUIForms.Clear();
+            _handleDict.Clear();
         }
 
         /// <summary>
         /// 打开 UIForm
         /// </summary>
-        /// <param name="formID">要打开的 UIForm 的 ID</param>
-        public void Open(string formID)
+        public void Open(string uiFormName)
         {
-            if (!_uiFormDict.ContainsKey(formID))
+            UIFormBase topUIForm = _openedUIForms.Peek();
+            if (topUIForm != null && topUIForm.UIFormName == uiFormName)
             {
-                // Global.AssetManager.
+                return; // 防止重复打开
             }
+
+            Global.AssetManager.LoadAssetAsync<GameObject>(uiFormName, (handle) =>
+            {
+                _handleDict.Add(uiFormName, handle);
+                GameObject go = handle.InstantiateSync();
+                if (!go.TryGetComponent(out UIFormBase uiForm))
+                {
+                    throw new ArgumentException($"Open UIForm failed. {uiFormName} missing UIFormBase component.");
+                }
+                if (topUIForm != null)
+                {
+                    topUIForm.Pause();
+                }
+                _openedUIForms.Push(uiForm);
+                uiForm.Init(uiFormName);
+            });
         }
 
         /// <summary>
         /// 关闭 UIForm
         /// </summary>
-        /// <param name="formID">要关闭的 UIForm 的 ID</param>
-        public void Close(string formID)
+        /// <param name="uiFormName">要关闭的 UIForm 的 ID</param>
+        public void Close(string uiFormName)
         {
-            if (!_uiFormDict.ContainsKey(formID))
+            if (!_handleDict.ContainsKey(uiFormName))
             {
-                Log.Error($"[XFramework] [UIManager] Close UIForm failed. Missing UIForm with ID {formID}.");
+                Log.Error($"Close UIForm failed. {uiFormName} not found.");
+                return;
+            }
+            if (_openedUIForms.Peek().UIFormName != uiFormName)
+            {
+                Log.Error($"Close UIForm {uiFormName} failed. You can only close the top UIForm.");
                 return;
             }
 
-            UIFormBase uiForm = _uiFormDict[formID];
-            if (_openedUIForms.Contains(uiForm))
+            if (_handleDict.TryGetValue(uiFormName, out AssetHandle handle))
             {
-                _openedUIForms.Remove(uiForm);
+                Destroy(_openedUIForms.Pop().gameObject);
+                UIFormBase topUIForm = _openedUIForms.Peek();
+                if (topUIForm != null)
+                {
+                    topUIForm.Resume();
+                }
+                handle.Release();
+                _handleDict.Remove(uiFormName);
             }
-            uiForm.Close();
         }
 
+        public void CloseAll()
+        {
+            while (_openedUIForms.Count > 0)
+            {
+                UIFormBase uiForm = _openedUIForms.Pop();
+                if (_handleDict.TryGetValue(uiForm.UIFormName, out AssetHandle handle))
+                {
+                    Destroy(uiForm.gameObject);
+                    handle.Release();
+                    _handleDict.Remove(uiForm.UIFormName);
+                }
+
+            }
+        }
     }
 }

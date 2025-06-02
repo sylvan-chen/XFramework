@@ -9,32 +9,14 @@ namespace XFramework
     /// </summary>
     public abstract class UIFormBase : MonoBehaviour
     {
-        private string _uiFormID;
-        private string _uiFormAssetAddress;
+        private string _uiFormName;
 
-        private bool _available = false;
         private bool _visiable = false;
-        private int _originalLayer = 0;
-
-        private bool _pauseOnCovered = true;
-        private bool _hideOnCovered = false;
-
-        private readonly List<Transform> _cachedTransforms = new();
 
         /// <summary>
-        /// UI 界面的 ID
+        /// UI 界面名字，也是其资源名称和唯一标识符
         /// </summary>
-        public string UIFormID => _uiFormID;
-
-        /// <summary>
-        /// UI 界面的资源地址
-        /// </summary>
-        public string UIFormAssetAddress => _uiFormAssetAddress;
-
-        /// <summary>
-        /// UI 界面是否可用（可交互）
-        /// </summary>
-        public bool Available => _available;
+        public string UIFormName => _uiFormName;
 
         /// <summary>
         /// UI 界面是否可见
@@ -44,52 +26,10 @@ namespace XFramework
         /// <summary>
         /// 初始化 UI 界面
         /// </summary>
-        public void Init(string uiFormID, string uiFormAssetAddress, bool pauseOnCovered = true, bool hideOnCovered = false)
+        public void Init(string uiFormName)
         {
-            _uiFormID = uiFormID;
-            _uiFormAssetAddress = uiFormAssetAddress;
-            _pauseOnCovered = pauseOnCovered;
-            _hideOnCovered = hideOnCovered;
-            _originalLayer = gameObject.layer;
-
+            _uiFormName = uiFormName;
             OnInit();
-
-            Global.UIManager.Register(this);
-        }
-
-        protected virtual void OnDestroy()
-        {
-            Global.UIManager.Unregister(this);
-        }
-
-        /// <summary>
-        /// 打开 UI 界面
-        /// </summary>
-        public void Open()
-        {
-            _available = true;
-            SetVisibilityInternal(true);
-
-            OnOpen();
-        }
-
-        /// <summary>
-        /// 关闭 UI 界面
-        /// </summary>
-        public void Close()
-        {
-            OnClose();
-
-            // 递归设置界面和其子对象的层级，使其恢复原层级
-            gameObject.GetComponentsInChildren<Transform>(true, _cachedTransforms);
-            foreach (Transform trans in _cachedTransforms)
-            {
-                trans.gameObject.layer = _originalLayer;
-            }
-            _cachedTransforms.Clear();
-
-            SetVisibilityInternal(false);
-            _available = false;
         }
 
         /// <summary>
@@ -116,7 +56,6 @@ namespace XFramework
         public void Pause()
         {
             OnPause();
-            _available = false;
         }
 
         /// <summary>
@@ -124,7 +63,6 @@ namespace XFramework
         /// </summary>
         public void Resume()
         {
-            _available = true;
             OnResume();
         }
 
@@ -136,16 +74,9 @@ namespace XFramework
         }
 
         /// <summary>
-        /// UI 界面打开时
+        /// UI 界面销毁时
         /// </summary>
-        protected virtual void OnOpen()
-        {
-        }
-
-        /// <summary>
-        /// UI 界面关闭时
-        /// </summary>
-        protected virtual void OnClose()
+        protected virtual void OnDestroy()
         {
         }
 
@@ -179,17 +110,8 @@ namespace XFramework
 
         private void SetVisibilityInternal(bool visiable)
         {
-            if (!_available)
-            {
-                Log.Warning($"[XFramework] [UIFormBase] UIForm {UIFormID} is not available, can not set visibility.");
-                return;
-            }
-            if (_visiable == visiable)
-            {
-                return;
-            }
-            _visiable = visiable;
             gameObject.SetActive(_visiable);
+            _visiable = visiable;
         }
     }
 }
