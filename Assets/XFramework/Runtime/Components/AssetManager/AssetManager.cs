@@ -19,15 +19,21 @@ namespace XFramework
     {
         internal enum BuildMode
         {
-            Editor, // 编辑器模式，编辑器下模拟运行游戏，只在编辑器下有效
+            Editor,  // 编辑器模式，编辑器下模拟运行游戏，只在编辑器下有效
             Offline, // 单机运行模式，不需要热更新资源的游戏
-            Online, // 联机模式，需要热更新资源的游戏
-            WebGL, // 针对 WebGL 的特殊模式
+            Online,  // 联机模式，需要热更新资源的游戏
+            WebGL,   // 针对 WebGL 的特殊模式
         }
 
+        [Header("资源构建模式")]
         [SerializeField]
         BuildMode _buildMode;
 
+        [Header("主要 Package 名称")]
+        [SerializeField]
+        private string _mainPackageName = "DefaultPackage";
+
+        [Header("资源下载配置")]
         [SerializeField]
         private string _defaultHostServer = "http://<Server>/CDN/<Platform>/<Version>";
 
@@ -51,8 +57,6 @@ namespace XFramework
 
         private readonly Dictionary<string, AssetHandle> _assetHandleDict = new();
 
-        private const string DEFAULT_PACKAGE_NAME = "DefaultPackage"; // 默认资源包名称
-
         internal override int Priority
         {
             get => Global.PriorityValue.AssetManager;
@@ -63,12 +67,12 @@ namespace XFramework
             base.Init();
 
             YooAssets.Initialize();
-            // 尝试获取资源包，如果资源包不存在，则创建资源包
+            // 获取资源包对象，如果资源包不存在，则创建资源包
             // 注意：需要先在 Collector 创建同名 Package
-            _package = YooAssets.TryGetPackage(DEFAULT_PACKAGE_NAME);
+            _package = YooAssets.TryGetPackage(_mainPackageName);
             if (_package == null)
             {
-                _package = YooAssets.CreatePackage(DEFAULT_PACKAGE_NAME);
+                _package = YooAssets.CreatePackage(_mainPackageName);
             }
             // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载该资源包内容
             YooAssets.SetDefaultPackage(_package);
@@ -203,7 +207,7 @@ namespace XFramework
             switch (_buildMode)
             {
                 case BuildMode.Editor:
-                    var simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(DEFAULT_PACKAGE_NAME);
+                    var simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(_mainPackageName);
                     var initParametersEditor = new EditorSimulateModeParameters()
                     {
                         EditorFileSystemParameters = FileSystemParameters.CreateDefaultEditorFileSystemParameters(simulateBuildResult.PackageRootDirectory)
