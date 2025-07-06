@@ -20,7 +20,7 @@ namespace XFramework
         {
             Log.Debug($"[XFramework] [XFrameworkComponent] Register component {GetType().Name}.");
             XFrameworkDriver.Instance.Register(this);
-            // 确保组件挂载在驱动器节点上作为子节点，以保证退出游戏程序时，不会在驱动器节点之前被销毁
+            // 确保组件挂载在驱动器节点上作为子节点，以保证框架的正常运行
             if (transform.parent != XFrameworkDriver.Instance.transform)
             {
                 transform.SetParent(XFrameworkDriver.Instance.transform);

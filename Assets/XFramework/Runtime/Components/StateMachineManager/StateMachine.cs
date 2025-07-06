@@ -108,6 +108,7 @@ namespace XFramework
             foreach (StateBase<T> state in _stateDict.Values)
             {
                 state.OnFsmDestroy(this);
+                state.Destroy();
             }
             _isDestroyed = true;
             Global.CachePool.Unspawn(this);

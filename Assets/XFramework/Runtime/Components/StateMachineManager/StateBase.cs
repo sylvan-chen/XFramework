@@ -1,4 +1,5 @@
 using System;
+using XFramework.Utils;
 
 namespace XFramework
 {
@@ -85,6 +86,11 @@ namespace XFramework
                 throw new ArgumentNullException(nameof(fsm), "ChangeState failed. FSM is null.");
             }
             fsm.ChangeState<TState>();
+        }
+
+        public virtual void Destroy()
+        {
+            Log.Debug($"[XFramework] [StateBase] Destroy State: {GetType().Name}...");
         }
     }
 }

@@ -46,16 +46,19 @@ namespace XFramework
         [SerializeField]
         private int _failedDownloadRetryCount = 3;
 
+
         private ResourcePackage _package;
         private string _packageVersion;
 
+        // 资源包初始化回调
+        public event Action OnInitializeFinishedEvent;
+        public event Action OnInitializeSucceedEvent;
+        public event Action OnInitializeFailedEvent;
         // 资源下载回调
-        private Action<DownloaderFinishData> _onDownloadFinish;
-        private Action<DownloadErrorData> _onDownloadError;
-        private Action<DownloadUpdateData> _onDownloadUpdate;
-        private Action<DownloadFileData> _onDownloadFileBegin;
-
-        private readonly Dictionary<string, AssetHandle> _assetHandleDict = new();
+        private Action<DownloaderFinishData> _onDownloadFinishedEvent;
+        private Action<DownloadErrorData> _onDownloadErrorEvent;
+        private Action<DownloadUpdateData> _onDownloadUpdateEvent;
+        private Action<DownloadFileData> _onDownloadFileBeginEvent;
 
         internal override int Priority
         {
@@ -76,12 +79,6 @@ namespace XFramework
             }
             // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载该资源包内容
             YooAssets.SetDefaultPackage(_package);
-
-            foreach (AssetHandle handle in _assetHandleDict.Values)
-            {
-                handle.Release();
-            }
-            _assetHandleDict.Clear();
         }
 
         internal override void Clear()
@@ -91,27 +88,21 @@ namespace XFramework
             _package = null;
             _packageVersion = null;
 
-            _onDownloadFinish = null;
-            _onDownloadError = null;
-            _onDownloadUpdate = null;
-            _onDownloadFileBegin = null;
+            OnInitializeFinishedEvent = null;
+            OnInitializeFailedEvent = null;
+            OnInitializeSucceedEvent = null;
+            _onDownloadFinishedEvent = null;
+            _onDownloadErrorEvent = null;
+            _onDownloadUpdateEvent = null;
+            _onDownloadFileBeginEvent = null;
         }
 
         #region 资源管理接口
 
-        public void InitPackageAsync(Action callback = null)
+        public void InitPackageAsync()
         {
             // 初始化资源包
-            StartCoroutine(InitPackageInternal(() =>
-            {
-                StartCoroutine(RequestPackageVersion(() =>
-                {
-                    StartCoroutine(UpdatePackageManifest(() =>
-                    {
-                        StartCoroutine(UpdatePackageFiles(callback));
-                    }));
-                }));
-            }));
+            StartCoroutine(InitPackageInternal());
         }
 
         /// <summary>
@@ -170,14 +161,20 @@ namespace XFramework
         /// <summary>
         /// 尝试卸载指定资源
         /// </summary>
+        /// <remarks>
+        /// 注意：如果该资源还在被使用（引用计数不为零），该方法会无效
+        /// </remarks>
         public void TryUnloadUnusedAsset(string address)
         {
             _package.TryUnloadUnusedAsset(address);
         }
 
         /// <summary>
-        /// 卸载所有未使用的资源
+        /// 卸载所有引用计数为零的资源
         /// </summary>
+        /// <remarks>
+        /// 可以在切换场景之后调用资源释放方法或者写定时器间隔时间去释放
+        /// </remarks>
         public async UniTask UnloadUnusedAssetsAsync()
         {
             var operation = _package.UnloadUnusedAssetsAsync();
@@ -187,11 +184,13 @@ namespace XFramework
         /// <summary>
         /// 强制卸载所有资源
         /// </summary>
+        /// <remarks>
+        ///  注意：Package在销毁的时候也会自动调用该方法
+        /// </remarks>
         public async UniTask ForceUnloadAllAssetsAsync()
         {
             var operation = _package.UnloadAllAssetsAsync();
             await operation.Task.AsUniTask();
-            _assetHandleDict.Clear();
         }
 
         #endregion
@@ -201,7 +200,7 @@ namespace XFramework
         /// <summary>
         /// 初始化资源包
         /// </summary>
-        private IEnumerator InitPackageInternal(Action callback = null)
+        private IEnumerator InitPackageInternal()
         {
             InitializationOperation operation = null;
             switch (_buildMode)
@@ -248,7 +247,7 @@ namespace XFramework
             if (operation.Status == EOperationStatus.Succeed)
             {
                 Log.Debug($"[XFramework] [AssetManager] Initialize package succeed. ({_buildMode})");
-                callback?.Invoke();
+                StartCoroutine(RequestPackageVersion());
             }
             else
             {
@@ -282,7 +281,7 @@ namespace XFramework
         /// <summary>
         /// 获取资源版本
         /// </summary>
-        private IEnumerator RequestPackageVersion(Action callback)
+        private IEnumerator RequestPackageVersion()
         {
             var operation = _package.RequestPackageVersionAsync();
             yield return operation;
@@ -291,7 +290,7 @@ namespace XFramework
             {
                 _packageVersion = operation.PackageVersion;
                 Log.Debug($"[XFramework] [AssetManager] Request package version succeed. {_packageVersion}");
-                callback?.Invoke();
+                StartCoroutine(UpdatePackageManifest());
             }
             else
             {
@@ -302,7 +301,7 @@ namespace XFramework
         /// <summary>
         /// 根据版本号更新资源清单
         /// </summary>
-        private IEnumerator UpdatePackageManifest(Action callback)
+        private IEnumerator UpdatePackageManifest()
         {
             var operation = _package.UpdatePackageManifestAsync(_packageVersion);
             yield return operation;
@@ -310,7 +309,7 @@ namespace XFramework
             if (operation.Status == EOperationStatus.Succeed)
             {
                 Log.Debug($"[XFramework] [AssetManager] Update package manifest succeed. Latest version: {_packageVersion}");
-                callback?.Invoke();
+                StartCoroutine(UpdatePackageFiles());
             }
             else
             {
@@ -321,14 +320,13 @@ namespace XFramework
         /// <summary>
         /// 根据资源清单更新资源文件（下载到缓存资源）
         /// </summary>
-        private IEnumerator UpdatePackageFiles(Action callback)
+        private IEnumerator UpdatePackageFiles()
         {
             var downloader = _package.CreateResourceDownloader(_maxConcurrentDownloadCount, _failedDownloadRetryCount);
 
             if (downloader.TotalDownloadCount == 0)
             {
                 Log.Debug("[XFramework] [AssetManager] No package files need to update.");
-                callback?.Invoke();
                 yield break;
             }
 
@@ -337,19 +335,19 @@ namespace XFramework
 
             downloader.DownloadFinishCallback = (finishData) =>
             {
-                _onDownloadFinish?.Invoke(finishData);
+                _onDownloadFinishedEvent?.Invoke(finishData);
             };
             downloader.DownloadErrorCallback = (errorData) =>
             {
-                _onDownloadError?.Invoke(errorData);
+                _onDownloadErrorEvent?.Invoke(errorData);
             };
             downloader.DownloadUpdateCallback = (updateData) =>
             {
-                _onDownloadUpdate?.Invoke(updateData);
+                _onDownloadUpdateEvent?.Invoke(updateData);
             };
             downloader.DownloadFileBeginCallback = (fileData) =>
             {
-                _onDownloadFileBegin?.Invoke(fileData);
+                _onDownloadFileBeginEvent?.Invoke(fileData);
             };
 
             downloader.BeginDownload();
@@ -357,11 +355,14 @@ namespace XFramework
 
             if (downloader.Status == EOperationStatus.Succeed)
             {
+                OnInitializeFinishedEvent?.Invoke();
+                OnInitializeSucceedEvent?.Invoke();
                 Log.Debug($"[XFramework] [AssetManager] Update package files succeed. Total download count: {totalDownloadCount}, Total download bytes: {totalDownloadBytes}");
-                callback?.Invoke();
             }
             else
             {
+                OnInitializeFinishedEvent?.Invoke();
+                OnInitializeFailedEvent?.Invoke();
                 Log.Error($"[XFramework] [AssetManager] Update package files failed. {downloader.Error}");
             }
         }
