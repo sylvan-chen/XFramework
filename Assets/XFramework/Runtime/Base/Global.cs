@@ -6,7 +6,7 @@ namespace XFramework
     /// <summary>
     /// 全局入口
     /// </summary>
-    public static partial class Global
+    public static class Global
     {
         private static CachePool _cachePool;
         private static EventManager _eventManager;

@@ -34,7 +34,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => Global.PriorityValue.EventManager;
+            get => XFrameworkConstant.ComponentPriority.EventManager;
         }
 
         private void Update()

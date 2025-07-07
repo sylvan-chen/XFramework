@@ -11,7 +11,7 @@ namespace XFramework
         /// <summary>
         /// 组件优先级，所有组件按优先级从小到大初始化和 Update，并按反序从大到小清理
         /// </summary>
-        internal abstract int Priority { get; }
+        internal virtual int Priority { get => 0; }
 
         /// <summary>
         /// 组件在 Awake 时注册到驱动器

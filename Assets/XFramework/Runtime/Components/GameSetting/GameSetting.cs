@@ -27,7 +27,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => Global.PriorityValue.GameSetting;
+            get => XFrameworkConstant.ComponentPriority.GameSetting;
         }
 
         /// <summary>

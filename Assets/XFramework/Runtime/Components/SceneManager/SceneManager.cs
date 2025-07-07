@@ -13,7 +13,7 @@ namespace XFramework
     {
         private readonly Dictionary<string, SceneHandle> _sceneHandleDict = new();
 
-        internal override int Priority => Global.PriorityValue.SceneManager;
+        internal override int Priority => XFrameworkConstant.ComponentPriority.SceneManager;
 
         internal override void Init()
         {

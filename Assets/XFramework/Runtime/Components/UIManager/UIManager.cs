@@ -18,7 +18,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => Global.PriorityValue.UIManager;
+            get => XFrameworkConstant.ComponentPriority.UIManager;
         }
 
         internal override void Clear()

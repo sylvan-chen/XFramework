@@ -22,7 +22,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => Global.PriorityValue.PoolManager;
+            get => XFrameworkConstant.ComponentPriority.PoolManager;
         }
 
         private void Update()
