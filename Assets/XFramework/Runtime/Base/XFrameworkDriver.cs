@@ -40,7 +40,7 @@ namespace XFramework
             }
         }
 
-        public void Register(XFrameworkComponent component)
+        internal void Register(XFrameworkComponent component)
         {
             if (component == null)
             {
@@ -55,7 +55,7 @@ namespace XFramework
             _cachedComponents.Add(component);
         }
 
-        public T FindComponent<T>() where T : XFrameworkComponent
+        internal T FindComponent<T>() where T : XFrameworkComponent
         {
             if (_componentDict.TryGetValue(typeof(T), out XFrameworkComponent component))
             {
@@ -68,7 +68,7 @@ namespace XFramework
             }
         }
 
-        public XFrameworkComponent FindComponent(Type componentType)
+        internal XFrameworkComponent FindComponent(Type componentType)
         {
             if (componentType == null)
             {

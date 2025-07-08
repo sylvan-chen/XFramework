@@ -12,14 +12,16 @@ public sealed class ProcedurePreload : ProcedureBase
 
     private async UniTask Preload()
     {
-        await Global.SceneManager.ChangeSceneAsync("Background");
-        await Global.SceneManager.AddSceneAsync("HomeScene");
-        await Global.SceneManager.AddSceneAsync("Popup");
-        await UniTask.Delay(2000);
-        await Global.SceneManager.RemoveSceneAsync("Popup");
-        await UniTask.Delay(2000);
-        await Global.SceneManager.AddSceneAsync("Popup");
-        await UniTask.Delay(2000);
-        await Global.SceneManager.RemoveAllScenesAsync("HomeScene");
+        await Global.SceneManager.LoadSceneAsync("Background");
+        await UniTask.Delay(10000);
+        await Global.SceneManager.LoadAdditiveSceneAsync("HomeScene");
+        await UniTask.Delay(10000);
+        await Global.SceneManager.LoadAdditiveSceneAsync("Popup");
+        await UniTask.Delay(10000);
+        await Global.SceneManager.UnloadSceneAsync("Popup");
+        await UniTask.Delay(10000);
+        await Global.SceneManager.LoadAdditiveSceneAsync("Popup");
+        await UniTask.Delay(10000);
+        await Global.SceneManager.UnloadAllScenesAsync("HomeScene");
     }
 }
