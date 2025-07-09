@@ -49,6 +49,7 @@ namespace XFramework
 
         private ResourcePackage _package;
         private string _packageVersion;
+        private InitResult _initResult;
 
         // 资源包初始化回调
         public event Action OnInitializeFinishedEvent;
@@ -97,24 +98,77 @@ namespace XFramework
             OnInitializeFinishedEvent = null;
             OnInitializeFailedEvent = null;
             OnInitializeSucceedEvent = null;
+
             _onDownloadFinishedEvent = null;
             _onDownloadErrorEvent = null;
             _onDownloadUpdateEvent = null;
             _onDownloadFileBeginEvent = null;
         }
 
-        #region 资源包初始化和销毁
+        #region 资源包初始化
 
-        public void InitPackageAsync()
+        async public UniTask<InitResult> InitPackageAsync()
         {
-            // 初始化资源包
-            StartCoroutine(InitPackageInternal());
+            _initResult = new();
+
+            DateTime startTime = DateTime.Now;
+
+            await InitPackageInternal();
+
+            TimeSpan duration = DateTime.Now - startTime;
+            _initResult.InitDuration = duration;
+
+            OnInitializeFinishedEvent?.Invoke();
+            if (_initResult.Succeed)
+            {
+                OnInitializeSucceedEvent?.Invoke();
+            }
+            else
+            {
+                OnInitializeFailedEvent?.Invoke();
+            }
+
+            return _initResult;
+        }
+
+        /// <summary>
+        /// 销毁资源包
+        /// </summary>
+        async public UniTask DestroyPackageAsync()
+        {
+            if (_package == null)
+            {
+                Log.Warning("[XFramework] [AssetManager] DestroyPackageAsync: Package is null, nothing to destroy.");
+                return;
+            }
+
+            string packageName = _package.PackageName;
+            DestroyOperation operation = _package.DestroyAsync();
+            await operation.ToUniTask();
+
+            if (operation.Status == EOperationStatus.Succeed)
+            {
+                Log.Debug($"[XFramework] [AssetManager] Destroy package ({packageName}) succeed.");
+            }
+            else
+            {
+                Log.Error($"[XFramework] [AssetManager] Destroy package ({packageName}) failed. {operation.Error}");
+            }
+
+            if (YooAssets.RemovePackage(_package))
+            {
+                Log.Debug($"[XFramework] [AssetManager] Remove package ({packageName}) from YooAssets succeed.");
+            }
+            else
+            {
+                Log.Warning($"[XFramework] [AssetManager] Remove package ({packageName}) from YooAssets failed, it may not exist.");
+            }
         }
 
         /// <summary>
         /// 初始化资源包
         /// </summary>
-        private IEnumerator InitPackageInternal()
+        async private UniTask InitPackageInternal()
         {
             InitializationOperation operation = null;
             switch (_buildMode)
@@ -156,94 +210,80 @@ namespace XFramework
                     Log.Error($"[XFramework] [AssetManager] Invalid package mode: {_buildMode}");
                     break;
             }
-            yield return operation;
+            await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
                 Log.Debug($"[XFramework] [AssetManager] Initialize package succeed. ({_buildMode})");
-                StartCoroutine(RequestPackageVersion());
+                await RequestPackageVersion();
             }
             else
             {
                 Log.Error($"[XFramework] [AssetManager] Initialize package failed. ({_buildMode}) {operation.Error}");
+                _initResult.Succeed = false;
+                _initResult.ErrorMessage = operation.Error;
             }
         }
-
-        /// <summary>
-        /// 销毁资源包
-        /// </summary>
-        private IEnumerator DestroyPackageInternal()
-        {
-            if (_package == null)
-            {
-                yield break;
-            }
-            string packageName = _package.PackageName;
-            DestroyOperation destroyOperation = _package.DestroyAsync();
-            yield return destroyOperation;
-
-            if (YooAssets.RemovePackage(_package))
-            {
-                Log.Debug($"[XFramework] [AssetManager] Destroy package ({packageName}) succeed.");
-            }
-        }
-
-        #endregion
-
-        #region 资源更新
 
         /// <summary>
         /// 获取资源版本
         /// </summary>
-        private IEnumerator RequestPackageVersion()
+        async private UniTask RequestPackageVersion()
         {
             var operation = _package.RequestPackageVersionAsync();
-            yield return operation;
+            await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
                 _packageVersion = operation.PackageVersion;
                 Log.Debug($"[XFramework] [AssetManager] Request package version succeed. {_packageVersion}");
-                StartCoroutine(UpdatePackageManifest());
+                await UpdatePackageManifest();
             }
             else
             {
                 Log.Error($"[XFramework] [AssetManager] Request package version failed. {operation.Error}");
+                _initResult.Succeed = false;
+                _initResult.ErrorMessage = operation.Error;
             }
         }
 
         /// <summary>
         /// 根据版本号更新资源清单
         /// </summary>
-        private IEnumerator UpdatePackageManifest()
+        async private UniTask UpdatePackageManifest()
         {
             var operation = _package.UpdatePackageManifestAsync(_packageVersion);
-            yield return operation;
+            await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
                 Log.Debug($"[XFramework] [AssetManager] Update package manifest succeed. Latest version: {_packageVersion}");
-                StartCoroutine(UpdatePackageFiles());
+                await UpdatePackageFiles();
             }
             else
             {
                 Log.Error($"[XFramework] [AssetManager] Update package manifest failed. (Latest version: {_packageVersion}) {operation.Error}");
+                _initResult.Succeed = false;
+                _initResult.ErrorMessage = operation.Error;
             }
         }
 
         /// <summary>
         /// 根据资源清单更新资源文件（下载到缓存资源）
         /// </summary>
-        private IEnumerator UpdatePackageFiles()
+        async private UniTask UpdatePackageFiles()
         {
             var downloader = _package.CreateResourceDownloader(_maxConcurrentDownloadCount, _failedDownloadRetryCount);
 
             if (downloader.TotalDownloadCount == 0)
             {
                 Log.Debug("[XFramework] [AssetManager] No package files need to update.");
-                OnInitializeFinishedEvent?.Invoke();
-                OnInitializeSucceedEvent?.Invoke();
-                yield break;
+                _initResult.Succeed = true;
+                _initResult.ErrorMessage = string.Empty;
+                _initResult.DownloadCount = 0;
+                _initResult.DownloadBytes = 0;
+                _initResult.DownloadDuration = TimeSpan.Zero;
+                return;
             }
 
             int totalDownloadCount = downloader.TotalDownloadCount;
@@ -266,20 +306,27 @@ namespace XFramework
                 _onDownloadFileBeginEvent?.Invoke(fileData);
             };
 
+            DateTime startTime = DateTime.Now;
+
             downloader.BeginDownload();
-            yield return downloader;
+            await downloader.ToUniTask();
+
+            TimeSpan duration = DateTime.Now - startTime;
 
             if (downloader.Status == EOperationStatus.Succeed)
             {
                 Log.Debug($"[XFramework] [AssetManager] Update package files succeed. Total download count: {totalDownloadCount}, Total download bytes: {totalDownloadBytes}");
-                OnInitializeFinishedEvent?.Invoke();
-                OnInitializeSucceedEvent?.Invoke();
+                _initResult.Succeed = true;
+                _initResult.ErrorMessage = string.Empty;
+                _initResult.DownloadCount = totalDownloadCount;
+                _initResult.DownloadBytes = totalDownloadBytes;
+                _initResult.DownloadDuration = duration;
             }
             else
             {
                 Log.Error($"[XFramework] [AssetManager] Update package files failed. {downloader.Error}");
-                OnInitializeFinishedEvent?.Invoke();
-                OnInitializeFailedEvent?.Invoke();
+                _initResult.Succeed = false;
+                _initResult.ErrorMessage = downloader.Error;
             }
         }
 
@@ -290,10 +337,10 @@ namespace XFramework
         /// <summary>
         /// 清理所有缓存资源文件
         /// </summary>
-        private IEnumerator ClearAllCacheBundleFiles()
+        async public UniTask ClearAllCacheBundleFiles()
         {
             var operation = _package.ClearCacheFilesAsync(EFileClearMode.ClearAllBundleFiles);
-            yield return operation;
+            await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
@@ -308,10 +355,10 @@ namespace XFramework
         /// <summary>
         /// 清理未使用的缓存资源文件
         /// </summary>
-        private IEnumerator ClearUnusedCacheBundleFiles()
+        async public UniTask ClearUnusedCacheBundleFiles()
         {
             var operation = _package.ClearCacheFilesAsync(EFileClearMode.ClearUnusedBundleFiles);
-            yield return operation;
+            await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
@@ -326,10 +373,10 @@ namespace XFramework
         /// <summary>
         /// 清理所有缓存清单文件
         /// </summary>
-        private IEnumerator ClearAllCacheManifestFiles()
+        async public UniTask ClearAllCacheManifestFiles()
         {
             var operation = _package.ClearCacheFilesAsync(EFileClearMode.ClearAllManifestFiles);
-            yield return operation;
+            await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
@@ -344,10 +391,10 @@ namespace XFramework
         /// <summary>
         /// 清理未使用的缓存清单文件
         /// </summary>
-        private IEnumerator ClearUnusedCacheManifestFiles()
+        async public UniTask ClearUnusedCacheManifestFiles()
         {
             var operation = _package.ClearCacheFilesAsync(EFileClearMode.ClearUnusedManifestFiles);
-            yield return operation;
+            await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
@@ -751,6 +798,48 @@ namespace XFramework
         #endregion
 
         #region 数据结构定义
+
+        public class InitResult
+        {
+            /// <summary>
+            /// 是否初始化成功
+            /// </summary>
+            public bool Succeed;
+
+            /// <summary>
+            /// 错误消息（如果失败）
+            /// </summary>
+            public string ErrorMessage;
+
+            /// <summary>
+            /// 下载的资源数量
+            /// </summary>
+            public int DownloadCount;
+
+            /// <summary>
+            /// 下载的总字节数
+            /// </summary>
+            public long DownloadBytes;
+
+            /// <summary>
+            /// 初始化操作总耗时
+            /// </summary>
+            public TimeSpan InitDuration;
+
+            /// <summary>
+            /// 下载操作总耗时
+            /// </summary>
+            public TimeSpan DownloadDuration;
+
+            public override string ToString()
+            {
+                return $"Success: {Succeed}, " +
+                       (Succeed ? "" : $", Error: {ErrorMessage}") +
+                       (DownloadCount > 0 ? $", Downloaded: {DownloadCount} files, {DownloadBytes / 1024.0:F2} KB" : "") +
+                       (InitDuration != default ? $", Init Duration: {InitDuration.TotalMilliseconds:F2}ms" : "") +
+                       (DownloadDuration != default ? $", Download Duration: {DownloadDuration.TotalMilliseconds:F2}ms" : "");
+            }
+        }
 
         /// <summary>
         /// 资源卸载操作结果
