@@ -39,7 +39,7 @@ public class Test : MonoBehaviour
 
         Pool<Image> imagePool = Global.PoolManager.CreatePool<Image>(1, 10f, 15f);
 
-        Global.AssetManager.LoadAssetAsync<Sprite>("bg", (handle) => { _bg = handle.AssetObject as Sprite; });
+        // Global.AssetManager.LoadAssetAsync<Sprite>("bg", (handle) => { _bg = handle.AssetObject as Sprite; });
 
         _eventBtn.onClick.AddListener(() =>
         {

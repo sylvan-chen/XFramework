@@ -6,6 +6,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace XFramework
 {
@@ -361,44 +362,24 @@ namespace XFramework
         #endregion
 
 
-        #region 资源卸载
+        #region 统计信息
 
         /// <summary>
-        /// 尝试卸载指定资源
+        /// 获取当前资源使用统计信息
         /// </summary>
-        /// <remarks>
-        /// 如果该资源还在被使用（存在句柄引用），该方法会无效
-        /// </remarks>
-        public void TryUnloadUnusedAsset(string address)
+        /// <returns>资源使用统计</returns>
+        public ResourceUsageStats GetResourceUsageStats()
         {
-            _package.TryUnloadUnusedAsset(address);
-        }
-
-        /// <summary>
-        /// 卸载所有引用句柄为零的资源
-        /// </summary>
-        /// <remarks>
-        /// 可以在切换场景之后调用资源释放方法或者写定时器间隔时间去释放
-        /// </remarks>
-        public async UniTask UnloadUnusedAssetsAsync()
-        {
-            var operation = _package.UnloadUnusedAssetsAsync();
-            await operation.Task.AsUniTask();
-        }
-
-        /// <summary>
-        /// 强制卸载所有资源
-        /// </summary>
-        /// <remarks>
-        /// Package 在销毁的时候也会自动调用该方法
-        /// </remarks>
-        public async UniTask ForceUnloadAllAssetsAsync()
-        {
-            var operation = _package.UnloadAllAssetsAsync();
-            await operation.Task.AsUniTask();
+            return new ResourceUsageStats(
+                _assetHandleCache.Count,
+                _sceneHandleCache.Count,
+                _handleRefCount.Values.Sum(),
+                _handleRefCount.Where(kvp => kvp.Value <= 0).Count()
+            );
         }
 
         #endregion
+
 
         #region 资源加载（无缓存策略）
 
@@ -411,7 +392,7 @@ namespace XFramework
         public async UniTask<AssetHandle> LoadAssetNoCacheAsync<T>(string address) where T : UnityEngine.Object
         {
             AssetHandle handle = _package.LoadAssetAsync<T>(address);
-            await handle.Task.AsUniTask();
+            await handle.ToUniTask();
 
             if (handle.Status == EOperationStatus.Succeed)
             {
@@ -427,6 +408,7 @@ namespace XFramework
         }
 
         #endregion
+
 
         #region 资源加载（引用计数策略）
 
@@ -457,7 +439,7 @@ namespace XFramework
 
             // 首次加载
             AssetHandle handle = _package.LoadAssetAsync<T>(address);
-            await handle.Task.AsUniTask();
+            await handle.ToUniTask();
 
             if (handle.Status == EOperationStatus.Succeed)
             {
@@ -522,6 +504,118 @@ namespace XFramework
 
         #endregion
 
+
+        #region 资源卸载
+
+        /// <summary>
+        /// 尝试卸载指定资源
+        /// </summary>
+        /// <param name="address">资源地址</param>
+        /// <remarks>
+        /// 如果该资源还在被使用（存在句柄引用），该方法会无效
+        /// </remarks>
+        /// <returns>是否成功卸载</returns>
+        public bool TryUnloadUnusedAsset(string address)
+        {
+            if (string.IsNullOrEmpty(address))
+            {
+                Log.Warning("[XFramework] [AssetManager] TryUnloadUnusedAsset: address is null or empty.");
+                return false;
+            }
+
+            // 检查是否在自己的缓存中
+            bool wasInCache = _assetHandleCache.ContainsKey(address);
+
+            // 调用 YooAsset 的卸载方法
+            _package.TryUnloadUnusedAsset(address);
+
+            // 如果在缓存中且引用计数为0，则从缓存中移除
+            if (wasInCache && _handleRefCount.TryGetValue(address, out int refCount) && refCount <= 0)
+            {
+                _assetHandleCache.Remove(address);
+                _handleRefCount.Remove(address);
+                Log.Debug($"[XFramework] [AssetManager] Removed unused asset from cache: {address}");
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 卸载所有引用句柄为零的资源
+        /// </summary>
+        /// <remarks>
+        /// 可以在切换场景之后调用资源释放方法或者写定时器间隔时间去释放
+        /// </remarks>
+        /// <returns>卸载操作的结果信息</returns>
+        public async UniTask<UnloadResult> UnloadUnusedAssetsAsync()
+        {
+            Log.Debug($"[XFramework] [AssetManager] Starting to unload unused assets...");
+
+            var startTime = DateTime.Now;
+
+            var operation = _package.UnloadUnusedAssetsAsync();
+            await operation.ToUniTask();
+
+            TimeSpan duration = DateTime.Now - startTime;
+            bool succeed = operation.Status == EOperationStatus.Succeed;
+            string errorMessage = string.Empty;
+
+            if (succeed)
+            {
+                Log.Debug($"[XFramework] [AssetManager] Unload unused assets completed successfully. " +
+                         $"Duration: {duration.TotalMilliseconds:F2}ms");
+            }
+            else
+            {
+                Log.Error($"[XFramework] [AssetManager] Unload unused assets failed: {operation.Error}");
+                errorMessage = operation.Error;
+            }
+
+            var result = new UnloadResult(succeed, errorMessage, duration);
+            return result;
+        }
+
+        /// <summary>
+        /// 强制卸载所有资源
+        /// </summary>
+        /// <remarks>
+        /// Package 在销毁的时候也会自动调用该方法
+        /// </remarks>
+        /// <returns>卸载操作的结果信息</returns>
+        public async UniTask<UnloadResult> ForceUnloadAllAssetsAsync()
+        {
+            Log.Debug($"[XFramework] [AssetManager] Starting to force unload all assets...");
+
+            var startTime = DateTime.Now;
+
+            // 清理所有缓存
+            ClearAssetHandleCache();
+            ClearSceneHandleCache();
+
+            var operation = _package.UnloadAllAssetsAsync();
+            await operation.ToUniTask();
+
+            TimeSpan duration = DateTime.Now - startTime;
+            bool succeed = operation.Status == EOperationStatus.Succeed;
+            string errorMessage = string.Empty;
+
+            if (succeed)
+            {
+                Log.Debug($"[XFramework] [AssetManager] Force unload all assets completed successfully. " +
+                         $"Duration: {duration.TotalMilliseconds:F2}ms");
+            }
+            else
+            {
+                Log.Error($"[XFramework] [AssetManager] Force unload all assets failed: {operation.Error}");
+                errorMessage = operation.Error;
+            }
+
+            var result = new UnloadResult(succeed, errorMessage, duration);
+            return result;
+        }
+
+        #endregion
+
+
         #region 场景资源管理
 
         private readonly Dictionary<string, SceneHandle> _sceneHandleCache = new();
@@ -532,7 +626,7 @@ namespace XFramework
         internal async UniTask<SceneHandle> LoadSceneAsync(string address, LoadSceneMode mode = LoadSceneMode.Single)
         {
             SceneHandle handle = _package.LoadSceneAsync(address, mode);
-            await handle.Task.AsUniTask();
+            await handle.ToUniTask();
             Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
             return handle;
         }
@@ -575,7 +669,7 @@ namespace XFramework
                 }
             }
 
-            await handle.Task.AsUniTask();
+            await handle.ToUniTask();
 
             if (handle.Status == EOperationStatus.Succeed)
             {
@@ -633,7 +727,7 @@ namespace XFramework
         {
             if (_sceneHandleCache.TryGetValue(address, out SceneHandle handle))
             {
-                await handle.UnloadAsync().Task.AsUniTask();
+                await handle.UnloadAsync().ToUniTask();
                 _sceneHandleCache.Remove(address);
                 Log.Debug($"[XFramework] [AssetManager] Unload scene ({address}) succeed.");
                 return true;
@@ -656,6 +750,82 @@ namespace XFramework
 
         #endregion
 
+        #region 数据结构定义
+
+        /// <summary>
+        /// 资源卸载操作结果
+        /// </summary>
+        public readonly struct UnloadResult
+        {
+            /// <summary>
+            /// 操作是否成功
+            /// </summary>
+            public readonly bool Succeed;
+
+            /// <summary>
+            /// 错误消息（如果失败）
+            /// </summary>
+            public readonly string ErrorMessage;
+
+            /// <summary>
+            /// 操作耗时
+            /// </summary>
+            public readonly TimeSpan Duration;
+
+            public UnloadResult(bool succeed, string errorMessage, TimeSpan duration)
+            {
+                Succeed = succeed;
+                ErrorMessage = errorMessage;
+                Duration = duration;
+            }
+
+            public override readonly string ToString()
+            {
+                return $"Success: {Succeed}, Duration: {Duration.TotalMilliseconds:F2}ms, " +
+                       (Succeed ? "" : $", Error: {ErrorMessage}");
+            }
+        }
+
+        /// <summary>
+        /// 资源使用统计信息
+        /// </summary>
+        public readonly struct ResourceUsageStats
+        {
+            /// <summary>
+            /// 缓存的资源数量
+            /// </summary>
+            public readonly int CachedAssetsCount;
+
+            /// <summary>
+            /// 缓存的场景数量
+            /// </summary>
+            public readonly int CachedScenesCount;
+
+            /// <summary>
+            /// 总引用计数
+            /// </summary>
+            public readonly int TotalReferenceCount;
+
+            /// <summary>
+            /// 引用计数为0的资源数量
+            /// </summary>
+            public readonly int ZeroRefAssetsCount;
+
+            public ResourceUsageStats(int cachedAssetsCount, int cachedScenesCount, int totalReferenceCount, int zeroRefAssetsCount)
+            {
+                CachedAssetsCount = cachedAssetsCount;
+                CachedScenesCount = cachedScenesCount;
+                TotalReferenceCount = totalReferenceCount;
+                ZeroRefAssetsCount = zeroRefAssetsCount;
+            }
+
+            public override readonly string ToString()
+            {
+                return $"Cached Assets: {CachedAssetsCount}, Cached Scenes: {CachedScenesCount}, " +
+                       $"Total Refs: {TotalReferenceCount}, Zero Refs: {ZeroRefAssetsCount}";
+            }
+        }
+
         public class RemoteServices : IRemoteServices
         {
             public RemoteServices(string defaultHostServer, string fallbackHostServer)
@@ -677,5 +847,7 @@ namespace XFramework
                 return $"{DefaultHostServer}/{fileName}";
             }
         }
+        #endregion
+
     }
 }

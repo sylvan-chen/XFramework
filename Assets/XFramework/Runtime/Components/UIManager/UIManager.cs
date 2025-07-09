@@ -41,21 +41,21 @@ namespace XFramework
                 return; // 防止重复打开
             }
 
-            Global.AssetManager.LoadAssetAsync<GameObject>(uiFormName, (handle) =>
-            {
-                _handleDict.Add(uiFormName, handle);
-                GameObject go = handle.InstantiateSync();
-                if (!go.TryGetComponent(out UIFormBase uiForm))
-                {
-                    throw new ArgumentException($"Open UIForm failed. {uiFormName} missing UIFormBase component.");
-                }
-                if (topUIForm != null)
-                {
-                    topUIForm.Pause();
-                }
-                _openedUIForms.Push(uiForm);
-                uiForm.Init(uiFormName);
-            });
+            // Global.AssetManager.LoadAssetAsync<GameObject>(uiFormName, (handle) =>
+            // {
+            //     _handleDict.Add(uiFormName, handle);
+            //     GameObject go = handle.InstantiateSync();
+            //     if (!go.TryGetComponent(out UIFormBase uiForm))
+            //     {
+            //         throw new ArgumentException($"Open UIForm failed. {uiFormName} missing UIFormBase component.");
+            //     }
+            //     if (topUIForm != null)
+            //     {
+            //         topUIForm.Pause();
+            //     }
+            //     _openedUIForms.Push(uiForm);
+            //     uiForm.Init(uiFormName);
+            // });
         }
 
         /// <summary>
