@@ -1,6 +1,5 @@
 using YooAsset;
 using UnityEngine;
-using System.Collections;
 using XFramework.Utils;
 using System;
 using Cysharp.Threading.Tasks;
