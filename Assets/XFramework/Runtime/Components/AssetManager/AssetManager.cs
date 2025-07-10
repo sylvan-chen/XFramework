@@ -50,16 +50,11 @@ namespace XFramework
         private string _packageVersion;
         private InitResult _initResult;
 
-        // 资源包初始化回调
-        public event Action OnInitializeFinishedEvent;
-        public event Action OnInitializeSucceedEvent;
-        public event Action OnInitializeFailedEvent;
-
         // 资源下载回调
-        private Action<DownloaderFinishData> _onDownloadFinishedEvent;
-        private Action<DownloadErrorData> _onDownloadErrorEvent;
-        private Action<DownloadUpdateData> _onDownloadUpdateEvent;
-        private Action<DownloadFileData> _onDownloadFileBeginEvent;
+        public Action<DownloaderFinishData> OnDownloadFinishedEvent;
+        public Action<DownloadErrorData> OnDownloadErrorEvent;
+        public Action<DownloadUpdateData> OnDownloadUpdateEvent;
+        public Action<DownloadFileData> OnDownloadFileBeginEvent;
 
         public delegate void ProgressCallBack(float progress);
 
@@ -94,14 +89,10 @@ namespace XFramework
             _package = null;
             _packageVersion = null;
 
-            OnInitializeFinishedEvent = null;
-            OnInitializeFailedEvent = null;
-            OnInitializeSucceedEvent = null;
-
-            _onDownloadFinishedEvent = null;
-            _onDownloadErrorEvent = null;
-            _onDownloadUpdateEvent = null;
-            _onDownloadFileBeginEvent = null;
+            OnDownloadFinishedEvent = null;
+            OnDownloadErrorEvent = null;
+            OnDownloadUpdateEvent = null;
+            OnDownloadFileBeginEvent = null;
         }
 
         #region 资源包初始化
@@ -116,16 +107,6 @@ namespace XFramework
 
             TimeSpan duration = DateTime.Now - startTime;
             _initResult.InitDuration = duration;
-
-            OnInitializeFinishedEvent?.Invoke();
-            if (_initResult.Succeed)
-            {
-                OnInitializeSucceedEvent?.Invoke();
-            }
-            else
-            {
-                OnInitializeFailedEvent?.Invoke();
-            }
 
             return _initResult;
         }
@@ -290,19 +271,19 @@ namespace XFramework
 
             downloader.DownloadFinishCallback = (finishData) =>
             {
-                _onDownloadFinishedEvent?.Invoke(finishData);
+                OnDownloadFinishedEvent?.Invoke(finishData);
             };
             downloader.DownloadErrorCallback = (errorData) =>
             {
-                _onDownloadErrorEvent?.Invoke(errorData);
+                OnDownloadErrorEvent?.Invoke(errorData);
             };
             downloader.DownloadUpdateCallback = (updateData) =>
             {
-                _onDownloadUpdateEvent?.Invoke(updateData);
+                OnDownloadUpdateEvent?.Invoke(updateData);
             };
             downloader.DownloadFileBeginCallback = (fileData) =>
             {
-                _onDownloadFileBeginEvent?.Invoke(fileData);
+                OnDownloadFileBeginEvent?.Invoke(fileData);
             };
 
             DateTime startTime = DateTime.Now;
