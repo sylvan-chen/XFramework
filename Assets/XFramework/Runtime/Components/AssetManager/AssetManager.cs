@@ -548,6 +548,106 @@ namespace XFramework
             _handleRefCount.Clear();
         }
 
+        /// <summary>
+        /// 批量加载资源
+        /// </summary>
+        /// <param name="addresses">资源地址列表</param>
+        /// <param name="progressCallback">进度回调</param>
+        /// <returns>批量加载结果</returns>
+        public async UniTask<BatchLoadResult<T>> LoadAssetsAsync<T>(IEnumerable<string> addresses, ProgressCallBack progressCallback = null) where T : UnityEngine.Object
+        {
+            var addressList = addresses.ToList();
+            var successfulAssetDict = new Dictionary<string, T>();
+            var failedAddresses = new List<string>();
+            var loadedCount = 0;
+            var totalCount = addressList.Count;
+
+            foreach (var address in addressList)
+            {
+                try
+                {
+                    var asset = await LoadAssetAsync<T>(address);
+                    if (asset != null)
+                    {
+                        successfulAssetDict[address] = asset;
+                    }
+                    else
+                    {
+                        failedAddresses.Add(address);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[XFramework] [AssetManager] Failed to load asset in batch: {address}. Error: {ex.Message}");
+                    failedAddresses.Add(address);
+                }
+
+                loadedCount++;
+                progressCallback?.Invoke((float)loadedCount / totalCount);
+            }
+
+            return new BatchLoadResult<T>(successfulAssetDict, failedAddresses);
+        }
+
+        /// <summary>
+        /// 批量释放资源
+        /// </summary>
+        /// <param name="addresses">资源地址列表</param>
+        public void ReleaseAssets(IEnumerable<string> addresses)
+        {
+            foreach (var address in addresses)
+            {
+                ReleaseAsset(address);
+            }
+        }
+
+        /// <summary>
+        /// 批量加载资源结果
+        /// </summary>
+        public readonly struct BatchLoadResult<T> where T : UnityEngine.Object
+        {
+            /// <summary>
+            /// 成功加载的资源字典
+            /// </summary>
+            public readonly Dictionary<string, T> SuccessfulAssetDict;
+
+            /// <summary>
+            /// 加载失败的资源地址列表
+            /// </summary>
+            public readonly List<string> FailedAddresses;
+
+            /// <summary>
+            /// 是否全部成功
+            /// </summary>
+            public readonly bool AllSuccessful => FailedAddresses.Count == 0;
+
+            /// <summary>
+            /// 成功数量
+            /// </summary>
+            public readonly int SuccessCount => SuccessfulAssetDict.Count;
+
+            /// <summary>
+            /// 失败数量
+            /// </summary>
+            public readonly int FailureCount => FailedAddresses.Count;
+
+            /// <summary>
+            /// 总数量
+            /// </summary>
+            public readonly int TotalCount => SuccessCount + FailureCount;
+
+            public BatchLoadResult(Dictionary<string, T> successfulAssetDict, List<string> failedAddresses)
+            {
+                SuccessfulAssetDict = successfulAssetDict ?? new Dictionary<string, T>();
+                FailedAddresses = failedAddresses ?? new List<string>();
+            }
+
+            public override readonly string ToString()
+            {
+                return $"Batch Load Result: {SuccessCount}/{TotalCount} successful, {FailureCount} failed";
+            }
+        }
+
         #endregion
 
 
