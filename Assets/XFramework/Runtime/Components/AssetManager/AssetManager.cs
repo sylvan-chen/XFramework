@@ -47,7 +47,6 @@ namespace XFramework
         private int _failedDownloadRetryCount = 3;
 
         private ResourcePackage _package;
-        private string _packageVersion;
         private InitResult _initResult;
 
         // 资源下载回调
@@ -87,7 +86,7 @@ namespace XFramework
             ClearSceneHandleCache();
 
             _package = null;
-            _packageVersion = null;
+            _initResult = null;
 
             OnDownloadFinishedEvent = null;
             OnDownloadErrorEvent = null;
@@ -215,8 +214,8 @@ namespace XFramework
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                _packageVersion = operation.PackageVersion;
-                Log.Debug($"[XFramework] [AssetManager] Request package version succeed. {_packageVersion}");
+                _initResult.PackageVersion = operation.PackageVersion;
+                Log.Debug($"[XFramework] [AssetManager] Request package version succeed. {_initResult.PackageVersion}");
                 await UpdatePackageManifest();
             }
             else
@@ -232,17 +231,17 @@ namespace XFramework
         /// </summary>
         async private UniTask UpdatePackageManifest()
         {
-            var operation = _package.UpdatePackageManifestAsync(_packageVersion);
+            var operation = _package.UpdatePackageManifestAsync(_initResult.PackageVersion);
             await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Update package manifest succeed. Latest version: {_packageVersion}");
+                Log.Debug($"[XFramework] [AssetManager] Update package manifest succeed. Latest version: {_initResult.PackageVersion}");
                 await UpdatePackageFiles();
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Update package manifest failed. (Latest version: {_packageVersion}) {operation.Error}");
+                Log.Error($"[XFramework] [AssetManager] Update package manifest failed. (Latest version: {_initResult.PackageVersion}) {operation.Error}");
                 _initResult.Succeed = false;
                 _initResult.ErrorMessage = operation.Error;
             }
@@ -1071,6 +1070,11 @@ namespace XFramework
             /// 错误消息（如果失败）
             /// </summary>
             public string ErrorMessage;
+
+            /// <summary>
+            /// 包版本号
+            /// </summary>
+            public string PackageVersion;
 
             /// <summary>
             /// 下载的资源数量
