@@ -1,5 +1,5 @@
+using Cysharp.Threading.Tasks;
 using XFramework;
-using XFramework.Utils;
 
 public sealed class ProcedureInitAssets : ProcedureBase
 {
@@ -12,7 +12,7 @@ public sealed class ProcedureInitAssets : ProcedureBase
         _fsm = fsm;
 
         Global.AssetManager.OnInitializeSucceedEvent += OnAssetManagerInitSucceed;
-        Global.AssetManager.InitPackageAsync();
+        Global.AssetManager.InitPackageAsync().Forget();
     }
 
     private void OnAssetManagerInitSucceed()

@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using UnityEngine.SceneManagement;
 using XFramework;
+using XFramework.Utils;
 
 public sealed class ProcedurePreload : ProcedureBase
 {
@@ -12,16 +14,26 @@ public sealed class ProcedurePreload : ProcedureBase
 
     private async UniTask Preload()
     {
-        await Global.SceneManager.LoadSceneAsync("Background");
-        await UniTask.Delay(10000);
-        await Global.SceneManager.LoadAdditiveSceneAsync("HomeScene");
-        await UniTask.Delay(10000);
-        await Global.SceneManager.LoadAdditiveSceneAsync("Popup");
-        await UniTask.Delay(10000);
-        await Global.SceneManager.UnloadSceneAsync("Popup");
-        await UniTask.Delay(10000);
-        await Global.SceneManager.LoadAdditiveSceneAsync("Popup");
-        await UniTask.Delay(10000);
-        await Global.SceneManager.UnloadAllScenesAsync("HomeScene");
+        await Global.AssetManager.LoadSceneAsync("Background");
+        await UniTask.Delay(6000);
+        await Global.AssetManager.LoadSceneAsync("HomeScene", LoadSceneMode.Additive, progressCallback: LoadHomeSceneProgressCallBack);
+        await UniTask.Delay(6000);
+        await Global.AssetManager.LoadSceneAsync("Popup", LoadSceneMode.Additive, progressCallback: LoadPopupProgressCallBack);
+        await UniTask.Delay(6000);
+        await Global.AssetManager.UnloadSceneAsync("Popup");
+        await UniTask.Delay(6000);
+        await Global.AssetManager.LoadSceneAsync("Popup", LoadSceneMode.Additive, progressCallback: LoadPopupProgressCallBack);
+        await UniTask.Delay(6000);
+        await Global.AssetManager.UnloadAllScenesExceptAsync("HomeScene");
+    }
+
+    void LoadHomeSceneProgressCallBack(float progress)
+    {
+        Log.Debug($"Load HomeScene Progress: {progress * 100}%");
+    }
+
+    void LoadPopupProgressCallBack(float progress)
+    {
+        Log.Debug($"Load Popup Progress: {progress * 100}%");
     }
 }

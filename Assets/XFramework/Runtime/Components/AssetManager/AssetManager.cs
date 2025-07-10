@@ -418,7 +418,7 @@ namespace XFramework
         {
             return new ResourceUsageStats(
                 _assetHandleCache.Count,
-                _sceneHandleCache.Count,
+                _sceneInfoCache.Count,
                 _handleRefCount.Values.Sum(),
                 _handleRefCount.Where(kvp => kvp.Value <= 0).Count()
             );
@@ -664,18 +664,7 @@ namespace XFramework
 
         #region 场景资源管理
 
-        private readonly Dictionary<string, SceneHandle> _sceneHandleCache = new();
-
-        /// <summary>
-        /// 加载场景
-        /// </summary>
-        internal async UniTask<SceneHandle> LoadSceneAsync(string address, LoadSceneMode mode = LoadSceneMode.Single)
-        {
-            SceneHandle handle = _package.LoadSceneAsync(address, mode);
-            await handle.ToUniTask();
-            Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
-            return handle;
-        }
+        private readonly Dictionary<string, SceneInfo> _sceneInfoCache = new();
 
         /// <summary>
         /// 加载场景
@@ -691,41 +680,51 @@ namespace XFramework
             LocalPhysicsMode physicsMode = LocalPhysicsMode.None, ProgressCallBack progressCallback = null,
             bool suspendLoad = false, uint priority = 0)
         {
-            SceneHandle handle;
-            // 检查是否已在加载中
-            if (_sceneHandleCache.ContainsKey(address))
+            // 检查当前状态
+            var currentState = GetSceneState(address);
+            if (currentState == SceneState.Loading)
             {
-                Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is already loaded or loading.");
-                handle = _sceneHandleCache[address];
+                Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is already loading.");
+                return false;
             }
-            else
+            else if (currentState == SceneState.LoadedActive || currentState == SceneState.LoadedInactive)
             {
-                handle = _package.LoadSceneAsync(address, sceneMode, physicsMode, suspendLoad, priority);
-                _sceneHandleCache[address] = handle;
+                Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is already loaded.");
+                return true;
+            }
 
-                // 监听进度
-                if (progressCallback != null)
+            SceneHandle handle;
+            SceneInfo sceneInfo;
+
+            // 开始加载
+            handle = _package.LoadSceneAsync(address, sceneMode, physicsMode, suspendLoad, priority);
+            sceneInfo = new SceneInfo(handle, SceneState.Loading, sceneMode);
+            _sceneInfoCache[address] = sceneInfo;
+
+            // 监听进度
+            if (progressCallback != null)
+            {
+                while (!handle.IsDone)
                 {
-                    while (!handle.IsDone)
-                    {
-                        progressCallback?.Invoke(handle.Progress);
-                        await UniTask.Delay(16); // 约 60 FPS 的更新频率
-                    }
-                    progressCallback?.Invoke(1.0f);
+                    progressCallback?.Invoke(handle.Progress);
+                    await UniTask.Delay(16); // 约 60 FPS 的更新频率
                 }
+                progressCallback?.Invoke(1.0f);
             }
 
             await handle.ToUniTask();
 
             if (handle.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed.");
+                // 更新状态
+                sceneInfo.State = suspendLoad ? SceneState.LoadedInactive : SceneState.LoadedActive;
+                Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed. State: {sceneInfo.State}");
                 return true;
             }
             else
             {
                 Log.Error($"[XFramework] [AssetManager] Load scene ({address}) failed: {handle.LastError}");
-                _sceneHandleCache.Remove(address);
+                _sceneInfoCache.Remove(address);
                 return false;
             }
         }
@@ -751,9 +750,16 @@ namespace XFramework
         /// <returns>是否激活成功</returns>
         public bool ActivatePreloadedScene(string address)
         {
-            if (_sceneHandleCache.TryGetValue(address, out SceneHandle handle))
+            if (_sceneInfoCache.TryGetValue(address, out SceneInfo sceneInfo))
             {
-                handle.ActivateScene();
+                if (sceneInfo.State != SceneState.LoadedInactive)
+                {
+                    Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is not in preloaded state. Current state: {sceneInfo.State}");
+                    return false;
+                }
+
+                sceneInfo.Handle.ActivateScene();
+                sceneInfo.State = SceneState.LoadedActive;
                 Log.Debug($"[XFramework] [AssetManager] Activate preloaded scene ({address}).");
                 return true;
             }
@@ -771,12 +777,33 @@ namespace XFramework
         /// <returns>卸载是否成功</returns>
         public async UniTask<bool> UnloadSceneAsync(string address)
         {
-            if (_sceneHandleCache.TryGetValue(address, out SceneHandle handle))
+            if (_sceneInfoCache.TryGetValue(address, out SceneInfo sceneInfo))
             {
-                await handle.UnloadAsync().ToUniTask();
-                _sceneHandleCache.Remove(address);
-                Log.Debug($"[XFramework] [AssetManager] Unload scene ({address}) succeed.");
-                return true;
+                if (sceneInfo.State == SceneState.Unloading)
+                {
+                    Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is already unloading.");
+                    return false;
+                }
+
+                // 更新状态为卸载中
+                sceneInfo.State = SceneState.Unloading;
+
+                var unloadOperation = sceneInfo.Handle.UnloadAsync();
+                await unloadOperation.ToUniTask();
+
+                if (unloadOperation.Status == EOperationStatus.Succeed)
+                {
+                    _sceneInfoCache.Remove(address);
+                    Log.Debug($"[XFramework] [AssetManager] Unload scene ({address}) succeed.");
+                    return true;
+                }
+                else
+                {
+                    // 卸载失败，恢复状态
+                    sceneInfo.State = SceneState.LoadedActive; // 或之前的状态
+                    Log.Error($"[XFramework] [AssetManager] Unload scene ({address}) failed: {unloadOperation.Error}");
+                    return false;
+                }
             }
             else
             {
@@ -785,16 +812,170 @@ namespace XFramework
             }
         }
 
+        /// <summary>
+        /// 批量卸载场景，请注意至少保留一个场景
+        /// </summary>
+        /// <param name="addresses">要卸载的场景地址列表</param>
+        /// <returns>卸载结果，包含成功和失败的场景列表</returns>
+        public async UniTask<SceneUnloadResult> UnloadScenesAsync(IEnumerable<string> addresses)
+        {
+            var successList = new List<string>();
+            var failedList = new List<string>();
+
+            foreach (var address in addresses)
+            {
+                bool success = await UnloadSceneAsync(address);
+                if (success)
+                    successList.Add(address);
+                else
+                    failedList.Add(address);
+            }
+
+            return new SceneUnloadResult(successList, failedList);
+        }
+
+        /// <summary>
+        /// 卸载所有场景（除了指定的保留场景）
+        /// </summary>
+        /// <param name="exceptAddresses">要保留的场景地址列表</param>
+        /// <returns>卸载结果</returns>
+        public async UniTask<SceneUnloadResult> UnloadAllScenesExceptAsync(params string[] exceptAddresses)
+        {
+            var toUnload = _sceneInfoCache.Keys
+                .Where(address => !exceptAddresses.Contains(address))
+                .ToList();
+
+            return await UnloadScenesAsync(toUnload);
+        }
+
+        /// <summary>
+        /// 获取场景诊断信息
+        /// </summary>
+        /// <returns>场景诊断信息</returns>
+        public SceneDiagnosticInfo GetSceneDiagnosticInfo()
+        {
+            var scenesByState = _sceneInfoCache.Values
+                .GroupBy(info => info.State)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var scenesByMode = _sceneInfoCache.Values
+                .GroupBy(info => info.LoadMode)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            return new SceneDiagnosticInfo(
+                totalScenes: _sceneInfoCache.Count,
+                scenesByState: scenesByState,
+                scenesByMode: scenesByMode,
+                oldestLoadTime: _sceneInfoCache.Values.Any() ? _sceneInfoCache.Values.Min(info => info.LoadTime) : DateTime.Now,
+                newestLoadTime: _sceneInfoCache.Values.Any() ? _sceneInfoCache.Values.Max(info => info.LoadTime) : DateTime.Now
+            );
+        }
+
         private void ClearSceneHandleCache()
         {
-            foreach (var handle in _sceneHandleCache.Values)
+            foreach (var sceneInfo in _sceneInfoCache.Values)
             {
-                handle?.Release();
+                sceneInfo.Handle?.Release();
             }
-            _sceneHandleCache.Clear();
+            _sceneInfoCache.Clear();
         }
 
         #endregion
+
+
+        #region 场景状态管理
+
+        /// <summary>
+        /// 场景状态枚举
+        /// </summary>
+        public enum SceneState
+        {
+            NotLoaded,      // 未加载
+            Loading,        // 加载中
+            LoadedInactive, // 已加载但未激活（预加载状态）
+            LoadedActive,   // 已加载且激活
+            Unloading      // 卸载中
+        }
+
+        /// <summary>
+        /// 场景信息
+        /// </summary>
+        public class SceneInfo
+        {
+            public SceneHandle Handle { get; set; }
+            public SceneState State { get; set; }
+            public LoadSceneMode LoadMode { get; set; }
+            public DateTime LoadTime { get; set; }
+
+            public SceneInfo(SceneHandle handle, SceneState state, LoadSceneMode mode)
+            {
+                Handle = handle;
+                State = state;
+                LoadMode = mode;
+                LoadTime = DateTime.Now;
+            }
+        }
+
+        /// <summary>
+        /// 获取场景状态
+        /// </summary>
+        /// <param name="address">场景地址</param>
+        /// <returns>场景状态</returns>
+        public SceneState GetSceneState(string address)
+        {
+            if (_sceneInfoCache.TryGetValue(address, out SceneInfo info))
+            {
+                return info.State;
+            }
+            return SceneState.NotLoaded;
+        }
+
+        /// <summary>
+        /// 获取所有场景信息
+        /// </summary>
+        /// <returns>场景信息字典</returns>
+        public Dictionary<string, SceneInfo> GetAllScenesInfo()
+        {
+            return new Dictionary<string, SceneInfo>(_sceneInfoCache);
+        }
+
+        /// <summary>
+        /// 检查场景是否可以安全卸载
+        /// </summary>
+        /// <param name="address">场景地址</param>
+        /// <returns>是否可以安全卸载</returns>
+        public bool CanUnloadScene(string address)
+        {
+            if (!_sceneInfoCache.TryGetValue(address, out SceneInfo sceneInfo))
+                return false;
+
+            // 正在卸载中或未加载的场景不能再次卸载
+            return sceneInfo.State != SceneState.Unloading && sceneInfo.State != SceneState.NotLoaded;
+        }
+
+        /// <summary>
+        /// 获取活跃场景数量
+        /// </summary>
+        /// <returns>活跃场景数量</returns>
+        public int GetActiveSceneCount()
+        {
+            return _sceneInfoCache.Values.Count(info => info.State == SceneState.LoadedActive);
+        }
+
+        /// <summary>
+        /// 获取所有已加载场景的地址
+        /// </summary>
+        /// <returns>已加载场景地址列表</returns>
+        public List<string> GetLoadedSceneAddresses()
+        {
+            return _sceneInfoCache
+                .Where(kvp => kvp.Value.State == SceneState.LoadedActive || kvp.Value.State == SceneState.LoadedInactive)
+                .Select(kvp => kvp.Key)
+                .ToList();
+        }
+
+        #endregion
+
 
         #region 数据结构定义
 
@@ -914,6 +1095,96 @@ namespace XFramework
             }
         }
 
+        /// <summary>
+        /// 场景批量卸载结果
+        /// </summary>
+        public readonly struct SceneUnloadResult
+        {
+            /// <summary>
+            /// 成功卸载的场景列表
+            /// </summary>
+            public readonly List<string> SuccessfulScenes;
+
+            /// <summary>
+            /// 卸载失败的场景列表
+            /// </summary>
+            public readonly List<string> FailedScenes;
+
+            /// <summary>
+            /// 是否全部成功
+            /// </summary>
+            public readonly bool AllSuccessful => FailedScenes.Count == 0;
+
+            /// <summary>
+            /// 成功数量
+            /// </summary>
+            public readonly int SuccessCount => SuccessfulScenes.Count;
+
+            /// <summary>
+            /// 失败数量
+            /// </summary>
+            public readonly int FailureCount => FailedScenes.Count;
+
+            public SceneUnloadResult(List<string> successfulScenes, List<string> failedScenes)
+            {
+                SuccessfulScenes = successfulScenes ?? new List<string>();
+                FailedScenes = failedScenes ?? new List<string>();
+            }
+
+            public override readonly string ToString()
+            {
+                return $"Scene Unload Result: {SuccessCount} successful, {FailureCount} failed";
+            }
+        }
+
+        /// <summary>
+        /// 场景诊断信息
+        /// </summary>
+        public readonly struct SceneDiagnosticInfo
+        {
+            /// <summary>
+            /// 总场景数量
+            /// </summary>
+            public readonly int TotalScenes;
+
+            /// <summary>
+            /// 按状态分组的场景数量
+            /// </summary>
+            public readonly Dictionary<SceneState, int> ScenesByState;
+
+            /// <summary>
+            /// 按加载模式分组的场景数量
+            /// </summary>
+            public readonly Dictionary<LoadSceneMode, int> ScenesByMode;
+
+            /// <summary>
+            /// 最早加载时间
+            /// </summary>
+            public readonly DateTime OldestLoadTime;
+
+            /// <summary>
+            /// 最新加载时间
+            /// </summary>
+            public readonly DateTime NewestLoadTime;
+
+            public SceneDiagnosticInfo(int totalScenes, Dictionary<SceneState, int> scenesByState,
+                Dictionary<LoadSceneMode, int> scenesByMode, DateTime oldestLoadTime, DateTime newestLoadTime)
+            {
+                TotalScenes = totalScenes;
+                ScenesByState = scenesByState ?? new Dictionary<SceneState, int>();
+                ScenesByMode = scenesByMode ?? new Dictionary<LoadSceneMode, int>();
+                OldestLoadTime = oldestLoadTime;
+                NewestLoadTime = newestLoadTime;
+            }
+
+            public override readonly string ToString()
+            {
+                var stateInfo = string.Join(", ", ScenesByState.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+                var modeInfo = string.Join(", ", ScenesByMode.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+                return $"Total: {TotalScenes}, States: [{stateInfo}], Modes: [{modeInfo}]";
+            }
+        }
+
         public class RemoteServices : IRemoteServices
         {
             public RemoteServices(string defaultHostServer, string fallbackHostServer)
@@ -936,6 +1207,5 @@ namespace XFramework
             }
         }
         #endregion
-
     }
 }

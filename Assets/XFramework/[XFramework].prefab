@@ -31,7 +31,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7337108408715809196}
-  - {fileID: 190376331108603661}
   - {fileID: 6125165520137693512}
   - {fileID: 6475741385483587223}
   - {fileID: 7431465082254177704}
@@ -142,50 +141,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 995ec6e30039ae94d8825750f6fb283a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!1 &4519567974868186021
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 190376331108603661}
-  - component: {fileID: 8405229462111110163}
-  m_Layer: 0
-  m_Name: SceneManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &190376331108603661
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4519567974868186021}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 5290019072366894118}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8405229462111110163
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4519567974868186021}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bfa48f2f07710874d89b1d5c3184daab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &4887999123752521599
@@ -417,6 +372,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buildMode: 0
+  _mainPackageName: DefaultPackage
   _defaultHostServer: http://<Server>/CDN/<Platform>/<Version>
   _fallbackHostServer: http://<Server>/CDN/<Platform>/<Version>
   _maxConcurrentDownloadCount: 10
