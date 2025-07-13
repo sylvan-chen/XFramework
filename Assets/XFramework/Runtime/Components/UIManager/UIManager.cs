@@ -21,7 +21,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => XFrameworkConstant.ComponentPriority.UIManager;
+            get => Consts.XFrameworkConsts.ComponentPriority.UIManager;
         }
 
         internal override void Init()

@@ -59,7 +59,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => XFrameworkConstant.ComponentPriority.AssetManager;
+            get => Consts.XFrameworkConsts.ComponentPriority.AssetManager;
         }
 
         internal override void Init()

@@ -1,0 +1,22 @@
+{
+    "panels": [
+        {
+            "id": 1001,
+            "name": "MainMenu",
+            "address": "mainmenu",
+            "panel_type": "Default"
+        },
+        {
+            "id": 1002,
+            "name": "GameHUD",
+            "address": "gamehud",
+            "panel_type": "Background"
+        },
+        {
+            "id": 1003,
+            "name": "SettingsPanel",
+            "address": "settingspanel",
+            "panel_type": "Popup"
+        }
+    ]
+}

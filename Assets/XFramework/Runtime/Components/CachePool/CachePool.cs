@@ -17,7 +17,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => XFrameworkConstant.ComponentPriority.CachePool;
+            get => Consts.XFrameworkConsts.ComponentPriority.CachePool;
         }
 
         internal override void Clear()

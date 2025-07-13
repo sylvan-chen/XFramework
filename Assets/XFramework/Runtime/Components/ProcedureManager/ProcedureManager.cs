@@ -33,7 +33,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => XFrameworkConstant.ComponentPriority.ProcedureManager;
+            get => Consts.XFrameworkConsts.ComponentPriority.ProcedureManager;
         }
 
         internal override void Init()

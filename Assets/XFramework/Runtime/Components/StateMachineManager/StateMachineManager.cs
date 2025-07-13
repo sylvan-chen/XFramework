@@ -18,7 +18,7 @@ namespace XFramework
 
         internal override int Priority
         {
-            get => XFrameworkConstant.ComponentPriority.StateMachineManager;
+            get => Consts.XFrameworkConsts.ComponentPriority.StateMachineManager;
         }
 
         private void Update()
