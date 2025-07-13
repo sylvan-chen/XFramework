@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5290019072366894118}
   - component: {fileID: 3953859595987593469}
   m_Layer: 0
-  m_Name: '[XFramework]'
+  m_Name: '[GameLauncher]'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -21,9 +21,9 @@ namespace XFramework
         {
             get
             {
-                if (_cachePool == null && XFrameworkDriver.Instance != null)
+                if (_cachePool == null && GameLauncher.Instance != null)
                 {
-                    _cachePool = XFrameworkDriver.Instance.FindComponent<CachePool>();
+                    _cachePool = GameLauncher.Instance.FindComponent<CachePool>();
                 }
                 return _cachePool;
             }
@@ -33,9 +33,9 @@ namespace XFramework
         {
             get
             {
-                if (_eventManager == null && XFrameworkDriver.Instance != null)
+                if (_eventManager == null && GameLauncher.Instance != null)
                 {
-                    _eventManager = XFrameworkDriver.Instance.FindComponent<EventManager>();
+                    _eventManager = GameLauncher.Instance.FindComponent<EventManager>();
                 }
                 return _eventManager;
             }
@@ -45,9 +45,9 @@ namespace XFramework
         {
             get
             {
-                if (_gameSetting == null && XFrameworkDriver.Instance != null)
+                if (_gameSetting == null && GameLauncher.Instance != null)
                 {
-                    _gameSetting = XFrameworkDriver.Instance.FindComponent<GameSetting>();
+                    _gameSetting = GameLauncher.Instance.FindComponent<GameSetting>();
                 }
                 return _gameSetting;
             }
@@ -57,9 +57,9 @@ namespace XFramework
         {
             get
             {
-                if (_stateMachineManager == null && XFrameworkDriver.Instance != null)
+                if (_stateMachineManager == null && GameLauncher.Instance != null)
                 {
-                    _stateMachineManager = XFrameworkDriver.Instance.FindComponent<StateMachineManager>();
+                    _stateMachineManager = GameLauncher.Instance.FindComponent<StateMachineManager>();
                 }
                 return _stateMachineManager;
             }
@@ -69,9 +69,9 @@ namespace XFramework
         {
             get
             {
-                if (_poolManager == null && XFrameworkDriver.Instance != null)
+                if (_poolManager == null && GameLauncher.Instance != null)
                 {
-                    _poolManager = XFrameworkDriver.Instance.FindComponent<PoolManager>();
+                    _poolManager = GameLauncher.Instance.FindComponent<PoolManager>();
                 }
                 return _poolManager;
             }
@@ -81,9 +81,9 @@ namespace XFramework
         {
             get
             {
-                if (_procedureManager == null && XFrameworkDriver.Instance != null)
+                if (_procedureManager == null && GameLauncher.Instance != null)
                 {
-                    _procedureManager = XFrameworkDriver.Instance.FindComponent<ProcedureManager>();
+                    _procedureManager = GameLauncher.Instance.FindComponent<ProcedureManager>();
                 }
                 return _procedureManager;
             }
@@ -93,9 +93,9 @@ namespace XFramework
         {
             get
             {
-                if (_assetManager == null && XFrameworkDriver.Instance != null)
+                if (_assetManager == null && GameLauncher.Instance != null)
                 {
-                    _assetManager = XFrameworkDriver.Instance.FindComponent<AssetManager>();
+                    _assetManager = GameLauncher.Instance.FindComponent<AssetManager>();
                 }
                 return _assetManager;
             }
@@ -105,9 +105,9 @@ namespace XFramework
         {
             get
             {
-                if (_uiManager == null && XFrameworkDriver.Instance != null)
+                if (_uiManager == null && GameLauncher.Instance != null)
                 {
-                    _uiManager = XFrameworkDriver.Instance.FindComponent<UIManager>();
+                    _uiManager = GameLauncher.Instance.FindComponent<UIManager>();
                 }
                 return _uiManager;
             }

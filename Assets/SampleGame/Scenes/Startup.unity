@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1001 &1106860019
+--- !u!1001 &126037741
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -129,7 +129,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 377896662865898680, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
       propertyPath: m_Name
-      value: '[XFramework]'
+      value: '[GameLauncher]'
       objectReference: {fileID: 0}
     - target: {fileID: 5290019072366894118, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -191,10 +191,6 @@ PrefabInstance:
       propertyPath: '_availableProcedureTypeNames.Array.data[3]'
       value: ProcedureStartup
       objectReference: {fileID: 0}
-    - target: {fileID: 7408786778229363993, guid: 10cf7a79d80ff7943b1139574cd57be8, type: 3}
-      propertyPath: '_availableProcedureTypeNames.Array.data[4]'
-      value: ProcedureStartup
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -204,4 +200,4 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1106860019}
+  - {fileID: 126037741}

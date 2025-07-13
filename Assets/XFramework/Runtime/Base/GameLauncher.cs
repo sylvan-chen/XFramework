@@ -12,8 +12,8 @@ namespace XFramework
     /// 管理框架的各个组件，并保证框架的安全关闭
     /// </remarks>
     [DisallowMultipleComponent]
-    [AddComponentMenu("XFramework/XFramework Driver")]
-    internal sealed class XFrameworkDriver : MonoSingletonPersistent<XFrameworkDriver>
+    [AddComponentMenu("XFramework/Game Launcher")]
+    internal sealed class GameLauncher : MonoSingletonPersistent<GameLauncher>
     {
         private readonly Dictionary<Type, XFrameworkComponent> _componentDict = new();
         private readonly List<XFrameworkComponent> _cachedComponents = new();

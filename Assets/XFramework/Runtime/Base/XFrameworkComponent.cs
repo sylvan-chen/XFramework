@@ -19,11 +19,11 @@ namespace XFramework
         protected virtual void Awake()
         {
             Log.Debug($"[XFramework] [XFrameworkComponent] Register component {GetType().Name}.");
-            XFrameworkDriver.Instance.Register(this);
+            GameLauncher.Instance.Register(this);
             // 确保组件挂载在驱动器节点上作为子节点，以保证框架的正常运行
-            if (transform.parent != XFrameworkDriver.Instance.transform)
+            if (transform.parent != GameLauncher.Instance.transform)
             {
-                transform.SetParent(XFrameworkDriver.Instance.transform);
+                transform.SetParent(GameLauncher.Instance.transform);
             }
         }
 
