@@ -13,6 +13,8 @@ namespace XFramework
         private readonly UILayerType _layerType;
 
         public UILayerType LayerType => _layerType;
+        public Canvas Canvas => _canvas;
+        public Transform Transform => _canvas.transform;
 
         public UILayer(Transform uiRoot, UILayerType layerType, Camera uiCamera = null)
         {
@@ -26,11 +28,12 @@ namespace XFramework
             _layerType = layerType;
 
             // 设置 Canvas 的其他必要组件
+            layerObj.AddComponent<CanvasRenderer>();
+            layerObj.AddComponent<GraphicRaycaster>();
             var canvasScaler = layerObj.AddComponent<CanvasScaler>();
             // TODO：后续增加系统配置类来设定
             canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             canvasScaler.referenceResolution = new Vector2(1920, 1080);
-            layerObj.AddComponent<GraphicRaycaster>();
         }
     }
 }

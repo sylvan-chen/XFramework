@@ -14,7 +14,7 @@ public sealed class ProcedurePreload : ProcedureBase
 
     private async UniTask Preload()
     {
-        await Global.AssetManager.LoadSceneAsync("Background");
+        await Global.AssetManager.LoadSceneAsync("Background", LoadSceneMode.Additive);
         await UniTask.Delay(6000);
         await Global.AssetManager.LoadSceneAsync("HomeScene", LoadSceneMode.Additive, progressCallback: LoadHomeSceneProgressCallBack);
         await UniTask.Delay(6000);
@@ -24,7 +24,7 @@ public sealed class ProcedurePreload : ProcedureBase
         await UniTask.Delay(6000);
         await Global.AssetManager.LoadSceneAsync("Popup", LoadSceneMode.Additive, progressCallback: LoadPopupProgressCallBack);
         await UniTask.Delay(6000);
-        await Global.AssetManager.UnloadAllScenesExceptAsync("HomeScene");
+        await Global.AssetManager.UnloadAllScenesExceptAsync("Startup", "HomeScene");
     }
 
     void LoadHomeSceneProgressCallBack(float progress)

@@ -12,11 +12,10 @@ namespace XFramework
     [AddComponentMenu("XFramework/UI Manager")]
     public sealed class UIManager : XFrameworkComponent
     {
-        [Header("UI 根节点")]
-        [SerializeField] private Transform _uiRoot;
         [Header("UI 摄像机，为空时默认使用主摄像机")]
         [SerializeField] private Camera _uiCamera;
 
+        private Transform _uiRoot;
         private readonly List<UILayer> _layers = new();
 
         internal override int Priority
@@ -30,8 +29,11 @@ namespace XFramework
 
             if (_uiRoot == null)
             {
-                Log.Error("[XFramework] UIManager requires a UI Root transform to be set.");
-                return;
+                _uiRoot = new GameObject("[UIRoot]").transform;
+                _uiRoot.SetParent(null);
+                _uiRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                DontDestroyOnLoad(_uiRoot.gameObject);
+                Log.Debug("[XFramework] UI root created at runtime.");
             }
 
             InitUILayers();
@@ -51,6 +53,13 @@ namespace XFramework
                 // 创建新的 UILayer 对象
                 var uiLayer = new UILayer(_uiRoot, layerType, Camera.main);
                 _layers.Add(uiLayer);
+            }
+
+            // 按照 UILayerType 的顺序排序
+            _layers.Sort((a, b) => a.LayerType.CompareTo(b.LayerType));
+            for (int i = 0; i < _layers.Count; i++)
+            {
+                _layers[i].Transform.SetSiblingIndex(i);
             }
         }
     }
