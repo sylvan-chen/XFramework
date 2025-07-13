@@ -1,105 +1,56 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
+using Cysharp.Threading.Tasks;
 using XFramework.Utils;
-using YooAsset;
+using UnityEngine.UI;
 
 namespace XFramework
 {
-    /// <summary>
-    /// UI 管理器
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/UI Manager")]
     public sealed class UIManager : XFrameworkComponent
     {
-        private Stack<UIFormBase> _openedUIForms = new(); // 打开的 UIForm 栈
-        private Dictionary<string, AssetHandle> _handleDict = new(); // 资源句柄字典
+        [Header("UI 根节点")]
+        [SerializeField] private Transform _uiRoot;
+        [Header("UI 摄像机，为空时默认使用主摄像机")]
+        [SerializeField] private Camera _uiCamera;
+
+        private readonly List<UILayer> _layers = new();
 
         internal override int Priority
         {
             get => XFrameworkConstant.ComponentPriority.UIManager;
         }
 
-        internal override void Clear()
+        internal override void Init()
         {
-            base.Clear();
+            base.Init();
 
-            CloseAll();
-            _openedUIForms.Clear();
-            _handleDict.Clear();
-        }
-
-        /// <summary>
-        /// 打开 UIForm
-        /// </summary>
-        public void Open(string uiFormName)
-        {
-            UIFormBase topUIForm = _openedUIForms.Peek();
-            if (topUIForm != null && topUIForm.UIFormName == uiFormName)
+            if (_uiRoot == null)
             {
-                return; // 防止重复打开
-            }
-
-            // Global.AssetManager.LoadAssetAsync<GameObject>(uiFormName, (handle) =>
-            // {
-            //     _handleDict.Add(uiFormName, handle);
-            //     GameObject go = handle.InstantiateSync();
-            //     if (!go.TryGetComponent(out UIFormBase uiForm))
-            //     {
-            //         throw new ArgumentException($"Open UIForm failed. {uiFormName} missing UIFormBase component.");
-            //     }
-            //     if (topUIForm != null)
-            //     {
-            //         topUIForm.Pause();
-            //     }
-            //     _openedUIForms.Push(uiForm);
-            //     uiForm.Init(uiFormName);
-            // });
-        }
-
-        /// <summary>
-        /// 关闭 UIForm
-        /// </summary>
-        /// <param name="uiFormName">要关闭的 UIForm 的 ID</param>
-        public void Close(string uiFormName)
-        {
-            if (!_handleDict.ContainsKey(uiFormName))
-            {
-                Log.Error($"Close UIForm failed. {uiFormName} not found.");
-                return;
-            }
-            if (_openedUIForms.Peek().UIFormName != uiFormName)
-            {
-                Log.Error($"Close UIForm {uiFormName} failed. You can only close the top UIForm.");
+                Log.Error("[XFramework] UIManager requires a UI Root transform to be set.");
                 return;
             }
 
-            if (_handleDict.TryGetValue(uiFormName, out AssetHandle handle))
-            {
-                Destroy(_openedUIForms.Pop().gameObject);
-                UIFormBase topUIForm = _openedUIForms.Peek();
-                if (topUIForm != null)
-                {
-                    topUIForm.Resume();
-                }
-                handle.Release();
-                _handleDict.Remove(uiFormName);
-            }
+            InitUILayers();
         }
 
-        public void CloseAll()
+        private void InitUILayers()
         {
-            while (_openedUIForms.Count > 0)
+            foreach (var layerType in Enum.GetValues(typeof(UILayerType)).Cast<UILayerType>())
             {
-                UIFormBase uiForm = _openedUIForms.Pop();
-                if (_handleDict.TryGetValue(uiForm.UIFormName, out AssetHandle handle))
+                // 检查是否已经存在该层级
+                if (_layers.Any(layer => layer.LayerType == layerType))
                 {
-                    Destroy(uiForm.gameObject);
-                    handle.Release();
-                    _handleDict.Remove(uiForm.UIFormName);
+                    Log.Warning($"[XFramework] UILayer '{layerType}' already exists, skipping initialization.");
+                    continue;
                 }
 
+                // 创建新的 UILayer 对象
+                var uiLayer = new UILayer(_uiRoot, layerType, Camera.main);
+                _layers.Add(uiLayer);
             }
         }
     }

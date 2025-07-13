@@ -1,32 +1,31 @@
 using UnityEngine;
+using XFramework.Utils;
 
-public abstract class UIPanelBase : MonoBehaviour
+namespace XFramework
 {
-    private UIPanelInfo _info;
-
-    public void Init(UIPanelInfo info)
+    public enum UIPanelType
     {
-        _info = info;
-        OnInit();
+        /// <summary>
+        /// 全屏界面 - 参与覆盖逻辑，会暂停其他全屏界面
+        /// </summary>
+        FullScreen,
+
+        /// <summary>
+        /// 弹窗界面 - 不参与覆盖逻辑，可以与其他界面共存
+        /// </summary>
+        Popup,
+
+        /// <summary>
+        /// 固定界面 - 常驻界面，不参与覆盖逻辑
+        /// </summary>
+        Fixed
     }
 
-    protected virtual void OnInit()
+    /// <summary>
+    /// UI 界面基类
+    /// </summary>
+    public abstract class UIPanelBase : MonoBehaviour
     {
-    }
 
-    protected virtual void OnOpen()
-    {
-    }
-
-    protected virtual void OnClose()
-    {
-    }
-
-    protected virtual void OnShow()
-    {
-    }
-
-    protected virtual void OnHide()
-    {
     }
 }
