@@ -82,7 +82,7 @@ namespace XFramework
         {
             base.Clear();
 
-            ClearAssetHandleCache();
+            ClearAssetHandlerCache();
             ClearSceneHandleCache();
 
             _package = null;
@@ -397,135 +397,62 @@ namespace XFramework
         public ResourceUsageStats GetResourceUsageStats()
         {
             return new ResourceUsageStats(
-                _assetHandleCache.Count,
+                _assetHandlerCache.Count,
                 _sceneInfoCache.Count,
-                _handleRefCount.Values.Sum(),
-                _handleRefCount.Where(kvp => kvp.Value <= 0).Count()
+                _assetHandlerCache.Values.Sum(handler => handler.RefCount),
+                _assetHandlerCache.Where(kvp => kvp.Value.RefCount <= 0).Count()
             );
         }
 
         #endregion
 
+        #region 资源加载
 
-        #region 资源加载（无缓存策略）
-
-        /// <summary>
-        /// 加载资源（无缓存策略）
-        /// </summary>
-        /// <remarks>
-        /// 每次都返回新的句柄，调用者必须自己Release
-        /// </remarks>
-        public async UniTask<AssetHandle> LoadAssetNoCacheAsync<T>(string address) where T : UnityEngine.Object
-        {
-            AssetHandle handle = _package.LoadAssetAsync<T>(address);
-            await handle.ToUniTask();
-
-            if (handle.Status == EOperationStatus.Succeed)
-            {
-                Log.Debug($"[XFramework] [AssetManager] Load asset ({address}) succeed - direct handle.");
-                return handle;
-            }
-            else
-            {
-                Log.Error($"[XFramework] [AssetManager] Failed to load asset: {address}. Error: {handle.LastError}");
-                handle.Release(); // 释放失败的句柄
-                return null;
-            }
-        }
-
-        #endregion
-
-
-        #region 资源加载（引用计数策略）
-
-        private readonly Dictionary<string, int> _handleRefCount = new();
-        private readonly Dictionary<string, AssetHandle> _assetHandleCache = new();
+        private readonly Dictionary<string, AssetHandler> _assetHandlerCache = new();
 
         /// <summary>
-        /// 获取资源
+        /// 获取资源句柄
         /// </summary>
         /// <remarks>
         /// AssetManager 负责引用计数管理，调用者使用完毕后调用 ReleaseAsset
         /// </remarks>
-        public async UniTask<T> LoadAssetAsync<T>(string address) where T : UnityEngine.Object
+        /// <returns>资源句柄</returns>
+        public async UniTask<AssetHandler> LoadAssetAsync<T>(string address) where T : UnityEngine.Object
         {
-            // 增加引用计数
-            if (!_handleRefCount.ContainsKey(address))
-            {
-                _handleRefCount[address] = 0;
-            }
-            _handleRefCount[address]++;
-
             // 检查是否已经加载
-            if (_assetHandleCache.TryGetValue(address, out AssetHandle cachedHandle))
+            if (_assetHandlerCache.TryGetValue(address, out AssetHandler cachedHandler))
             {
-                Log.Debug($"[XFramework] [AssetManager] Reuse cached asset ({address}), ref count: {_handleRefCount[address]}");
-                return cachedHandle.AssetObject as T;
+                cachedHandler.RefCount++;
+                Log.Debug($"[XFramework] [AssetManager] Reuse cached asset ({address}), ref count: {cachedHandler.RefCount}");
+                return cachedHandler;
             }
 
             // 首次加载
-            AssetHandle handle = _package.LoadAssetAsync<T>(address);
-            await handle.ToUniTask();
+            AssetHandle yooHandle = _package.LoadAssetAsync<T>(address);
+            await yooHandle.ToUniTask();
 
-            if (handle.Status == EOperationStatus.Succeed)
+            if (yooHandle.Status == EOperationStatus.Succeed)
             {
-                _assetHandleCache[address] = handle;
-                Log.Debug($"[XFramework] [AssetManager] Load asset ({address}) succeed, ref count: {_handleRefCount[address]}");
-                return handle.AssetObject as T;
+                var handler = new AssetHandler(yooHandle, address);
+                _assetHandlerCache[address] = handler;
+                Log.Debug($"[XFramework] [AssetManager] Load asset ({address}) succeed, ref count: {handler.RefCount}");
+                return handler;
             }
             else
             {
-                // 加载失败，回退引用计数
-                _handleRefCount[address]--;
-                if (_handleRefCount[address] <= 0)
-                {
-                    _handleRefCount.Remove(address);
-                }
-
-                Log.Error($"[XFramework] [AssetManager] Failed to load asset: {address}. Error: {handle.LastError}");
-                handle.Release();
+                Log.Error($"[XFramework] [AssetManager] Failed to load asset: {address}. Error: {yooHandle.LastError}");
+                yooHandle.Release();
                 return null;
             }
         }
 
-        /// <summary>
-        /// 释放资源句柄
-        /// </summary>
-        /// <remarks>
-        /// 与 LoadAssetAsync 配对使用
-        /// </remarks>
-        public void ReleaseAsset(string address)
+        private void ClearAssetHandlerCache()
         {
-            if (!_handleRefCount.ContainsKey(address))
+            foreach (var handler in _assetHandlerCache.Values)
             {
-                Log.Warning($"[XFramework] [AssetManager] Try to release asset ({address}) that was never loaded or with no cache.");
-                return;
+                handler?.Release();
             }
-
-            _handleRefCount[address]--;
-            Log.Debug($"[XFramework] [AssetManager] Release asset ({address}), ref count: {_handleRefCount[address]}");
-
-            // 引用计数归零时真正释放
-            if (_handleRefCount[address] <= 0)
-            {
-                if (_assetHandleCache.TryGetValue(address, out AssetHandle handle))
-                {
-                    handle.Release();
-                    _assetHandleCache.Remove(address);
-                    Log.Debug($"[XFramework] [AssetManager] Actually released asset ({address})");
-                }
-                _handleRefCount.Remove(address);
-            }
-        }
-
-        private void ClearAssetHandleCache()
-        {
-            foreach (var handle in _assetHandleCache.Values)
-            {
-                handle?.Release();
-            }
-            _assetHandleCache.Clear();
-            _handleRefCount.Clear();
+            _assetHandlerCache.Clear();
         }
 
         /// <summary>
@@ -534,10 +461,10 @@ namespace XFramework
         /// <param name="addresses">资源地址列表</param>
         /// <param name="progressCallback">进度回调</param>
         /// <returns>批量加载结果</returns>
-        public async UniTask<BatchLoadResult<T>> LoadAssetsAsync<T>(IEnumerable<string> addresses, ProgressCallBack progressCallback = null) where T : UnityEngine.Object
+        public async UniTask<BatchLoadResult> LoadAssetsAsync<T>(IEnumerable<string> addresses, ProgressCallBack progressCallback = null) where T : UnityEngine.Object
         {
             var addressList = addresses.ToList();
-            var successfulAssetDict = new Dictionary<string, T>();
+            var successfulAssetHandlers = new Dictionary<string, AssetHandler>();
             var failedAddresses = new List<string>();
             var loadedCount = 0;
             var totalCount = addressList.Count;
@@ -549,7 +476,7 @@ namespace XFramework
                     var asset = await LoadAssetAsync<T>(address);
                     if (asset != null)
                     {
-                        successfulAssetDict[address] = asset;
+                        successfulAssetHandlers[address] = asset;
                     }
                     else
                     {
@@ -566,66 +493,7 @@ namespace XFramework
                 progressCallback?.Invoke((float)loadedCount / totalCount);
             }
 
-            return new BatchLoadResult<T>(successfulAssetDict, failedAddresses);
-        }
-
-        /// <summary>
-        /// 批量释放资源
-        /// </summary>
-        /// <param name="addresses">资源地址列表</param>
-        public void ReleaseAssets(IEnumerable<string> addresses)
-        {
-            foreach (var address in addresses)
-            {
-                ReleaseAsset(address);
-            }
-        }
-
-        /// <summary>
-        /// 批量加载资源结果
-        /// </summary>
-        public readonly struct BatchLoadResult<T> where T : UnityEngine.Object
-        {
-            /// <summary>
-            /// 成功加载的资源字典
-            /// </summary>
-            public readonly Dictionary<string, T> SuccessfulAssetDict;
-
-            /// <summary>
-            /// 加载失败的资源地址列表
-            /// </summary>
-            public readonly List<string> FailedAddresses;
-
-            /// <summary>
-            /// 是否全部成功
-            /// </summary>
-            public readonly bool AllSuccessful => FailedAddresses.Count == 0;
-
-            /// <summary>
-            /// 成功数量
-            /// </summary>
-            public readonly int SuccessCount => SuccessfulAssetDict.Count;
-
-            /// <summary>
-            /// 失败数量
-            /// </summary>
-            public readonly int FailureCount => FailedAddresses.Count;
-
-            /// <summary>
-            /// 总数量
-            /// </summary>
-            public readonly int TotalCount => SuccessCount + FailureCount;
-
-            public BatchLoadResult(Dictionary<string, T> successfulAssetDict, List<string> failedAddresses)
-            {
-                SuccessfulAssetDict = successfulAssetDict ?? new Dictionary<string, T>();
-                FailedAddresses = failedAddresses ?? new List<string>();
-            }
-
-            public override readonly string ToString()
-            {
-                return $"Batch Load Result: {SuccessCount}/{TotalCount} successful, {FailureCount} failed";
-            }
+            return new BatchLoadResult(successfulAssetHandlers, failedAddresses);
         }
 
         #endregion
@@ -649,20 +517,14 @@ namespace XFramework
                 return false;
             }
 
-            // 检查是否在自己的缓存中
-            bool wasInCache = _assetHandleCache.ContainsKey(address);
-
-            // 调用 YooAsset 的卸载方法
-            _package.TryUnloadUnusedAsset(address);
-
             // 如果在缓存中且引用计数为0，则从缓存中移除
-            if (wasInCache && _handleRefCount.TryGetValue(address, out int refCount) && refCount <= 0)
+            if (_assetHandlerCache.TryGetValue(address, out AssetHandler handler) && handler.RefCount <= 0)
             {
-                _assetHandleCache.Remove(address);
-                _handleRefCount.Remove(address);
-                Log.Debug($"[XFramework] [AssetManager] Removed unused asset from cache: {address}");
+                _assetHandlerCache.Remove(address);
+                _package.TryUnloadUnusedAsset(address);
+                return true;
             }
-            return true;
+            return false;
         }
 
         /// <summary>
@@ -714,7 +576,7 @@ namespace XFramework
             var startTime = DateTime.Now;
 
             // 清理所有缓存
-            ClearAssetHandleCache();
+            ClearAssetHandlerCache();
             ClearSceneHandleCache();
 
             var operation = _package.UnloadAllAssetsAsync();
@@ -753,7 +615,7 @@ namespace XFramework
         /// <param name="sceneMode">场景加载模式</param>
         /// <param name="physicsMode">物理模式</param>
         /// <param name="progressCallback">进度回调</param>
-        /// <param name="suspendLoad">是否暂停加载</param>
+        /// <param name="suspendLoad">是否暂停加载（不激活）</param>
         /// <param name="priority">加载优先级</param>
         /// <returns>加载是否成功</returns>
         public async UniTask<bool> LoadSceneAsync(string address, LoadSceneMode sceneMode = LoadSceneMode.Single,
@@ -804,6 +666,7 @@ namespace XFramework
             else
             {
                 Log.Error($"[XFramework] [AssetManager] Load scene ({address}) failed: {handle.LastError}");
+                handle.Release();
                 _sceneInfoCache.Remove(address);
                 return false;
             }
@@ -1064,37 +927,37 @@ namespace XFramework
             /// <summary>
             /// 是否初始化成功
             /// </summary>
-            public bool Succeed;
+            public bool Succeed { get; internal set; }
 
             /// <summary>
             /// 错误消息（如果失败）
             /// </summary>
-            public string ErrorMessage;
+            public string ErrorMessage { get; internal set; }
 
             /// <summary>
             /// 包版本号
             /// </summary>
-            public string PackageVersion;
+            public string PackageVersion { get; internal set; }
 
             /// <summary>
             /// 下载的资源数量
             /// </summary>
-            public int DownloadCount;
+            public int DownloadCount { get; internal set; }
 
             /// <summary>
             /// 下载的总字节数
             /// </summary>
-            public long DownloadBytes;
+            public long DownloadBytes { get; internal set; }
 
             /// <summary>
             /// 初始化操作总耗时
             /// </summary>
-            public TimeSpan InitDuration;
+            public TimeSpan InitDuration { get; internal set; }
 
             /// <summary>
             /// 下载操作总耗时
             /// </summary>
-            public TimeSpan DownloadDuration;
+            public TimeSpan DownloadDuration { get; internal set; }
 
             public override string ToString()
             {
@@ -1103,6 +966,53 @@ namespace XFramework
                        (DownloadCount > 0 ? $", Downloaded: {DownloadCount} files, {DownloadBytes / 1024.0:F2} KB" : "") +
                        (InitDuration != default ? $", Init Duration: {InitDuration.TotalMilliseconds:F2}ms" : "") +
                        (DownloadDuration != default ? $", Download Duration: {DownloadDuration.TotalMilliseconds:F2}ms" : "");
+            }
+        }
+
+        /// <summary>
+        /// 批量加载资源结果
+        /// </summary>
+        public readonly struct BatchLoadResult
+        {
+            /// <summary>
+            /// 成功加载的资源句柄字典
+            /// </summary>
+            public readonly Dictionary<string, AssetHandler> SuccessfulAssetHandlers;
+
+            /// <summary>
+            /// 加载失败的资源地址列表
+            /// </summary>
+            public readonly List<string> FailedAddresses;
+
+            /// <summary>
+            /// 是否全部成功
+            /// </summary>
+            public readonly bool AllSuccessful => FailedAddresses.Count == 0;
+
+            /// <summary>
+            /// 成功数量
+            /// </summary>
+            public readonly int SuccessCount => SuccessfulAssetHandlers.Count;
+
+            /// <summary>
+            /// 失败数量
+            /// </summary>
+            public readonly int FailureCount => FailedAddresses.Count;
+
+            /// <summary>
+            /// 总数量
+            /// </summary>
+            public readonly int TotalCount => SuccessCount + FailureCount;
+
+            public BatchLoadResult(Dictionary<string, AssetHandler> successfulAssetHandlers, List<string> failedAddresses)
+            {
+                SuccessfulAssetHandlers = successfulAssetHandlers ?? new Dictionary<string, AssetHandler>();
+                FailedAddresses = failedAddresses ?? new List<string>();
+            }
+
+            public override readonly string ToString()
+            {
+                return $"Batch Load Result: {SuccessCount}/{TotalCount} successful, {FailureCount} failed";
             }
         }
 
