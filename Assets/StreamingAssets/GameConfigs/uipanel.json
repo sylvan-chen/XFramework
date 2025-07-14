@@ -4,19 +4,22 @@
             "id": 1001,
             "name": "MainMenu",
             "address": "mainmenu",
-            "panel_type": "Default"
+            "layertype": "Default",
+            "paneltype": "Fullscreen"
         },
         {
             "id": 1002,
-            "name": "GameHUD",
-            "address": "gamehud",
-            "panel_type": "Background"
+            "name": "Background",
+            "address": "background",
+            "layertype": "Background",
+            "paneltype": "Fixed"
         },
         {
             "id": 1003,
-            "name": "SettingsPanel",
-            "address": "settingspanel",
-            "panel_type": "Popup"
+            "name": "Info",
+            "address": "info",
+            "layertype": "Popup",
+            "paneltype": "Popup"
         }
     ]
 }

@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+using UnityEngine;
 using XFramework.Utils;
 using YooAsset;
 
@@ -11,15 +13,19 @@ namespace XFramework
     /// </remarks>
     public class AssetHandler
     {
+        private AssetHandle _handle;
+        private readonly string _address;
+
+        internal int RefCount { get; set; }
+
         /// <summary>
         /// 实际资源对象
         /// </summary>
         public UnityEngine.Object AssetObject => _handle?.AssetObject;
 
-        private AssetHandle _handle;
-        private readonly string _address;
-
-        internal int RefCount { get; set; }
+        /// <summary>
+        /// 资源地址
+        /// </summary>
         public string Address => _address;
 
         internal AssetHandler(AssetHandle handle, string address)
@@ -27,6 +33,22 @@ namespace XFramework
             _handle = handle;
             _address = address;
             RefCount = 1; // 初始化引用计数为 1
+        }
+
+        public async UniTask<GameObject> InstantiateAsync()
+        {
+            var option = _handle.InstantiateAsync();
+            await option.ToUniTask();
+            if (option.Status == EOperationStatus.Succeed)
+            {
+                Log.Debug($"[XFramework] Successfully instantiated asset '{_address}'.");
+                return option.Result;
+            }
+            else
+            {
+                Log.Error($"[XFramework] Failed to instantiate asset '{_address}': {option.Error}");
+                return null;
+            }
         }
 
         /// <summary>

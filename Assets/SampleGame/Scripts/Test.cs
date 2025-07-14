@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using XFramework;
 using XFramework.Utils;
 
-public class Test : MonoBehaviour
+public class Test : UIPanelBase
 {
 
     [SerializeField]

@@ -14,17 +14,20 @@ public sealed class ProcedurePreload : ProcedureBase
 
     private async UniTask Preload()
     {
-        await Global.AssetManager.LoadSceneAsync("Background", LoadSceneMode.Additive);
-        await UniTask.Delay(6000);
-        await Global.AssetManager.LoadSceneAsync("HomeScene", LoadSceneMode.Additive, progressCallback: LoadHomeSceneProgressCallBack);
-        await UniTask.Delay(6000);
-        await Global.AssetManager.LoadSceneAsync("Popup", LoadSceneMode.Additive, progressCallback: LoadPopupProgressCallBack);
-        await UniTask.Delay(6000);
-        await Global.AssetManager.UnloadSceneAsync("Popup");
-        await UniTask.Delay(6000);
-        await Global.AssetManager.LoadSceneAsync("Popup", LoadSceneMode.Additive, progressCallback: LoadPopupProgressCallBack);
-        await UniTask.Delay(6000);
-        await Global.AssetManager.UnloadAllScenesExceptAsync("Startup", "HomeScene");
+        var uiPanelConfigTable = await ConfigHelper.LoadConfigAsync<UIPanelConfigTable>("uipanel");
+        var uiPanelConfig = uiPanelConfigTable.GetConfigById(1);
+        // Global.UIManager
+        // await Global.AssetManager.LoadSceneAsync("Background", LoadSceneMode.Additive);
+        // await UniTask.Delay(6000);
+        // await Global.AssetManager.LoadSceneAsync("HomeScene", LoadSceneMode.Additive, progressCallback: LoadHomeSceneProgressCallBack);
+        // await UniTask.Delay(6000);
+        // await Global.AssetManager.LoadSceneAsync("Popup", LoadSceneMode.Additive, progressCallback: LoadPopupProgressCallBack);
+        // await UniTask.Delay(6000);
+        // await Global.AssetManager.UnloadSceneAsync("Popup");
+        // await UniTask.Delay(6000);
+        // await Global.AssetManager.LoadSceneAsync("Popup", LoadSceneMode.Additive, progressCallback: LoadPopupProgressCallBack);
+        // await UniTask.Delay(6000);
+        // await Global.AssetManager.UnloadAllScenesExceptAsync("Startup", "HomeScene");
     }
 
     void LoadHomeSceneProgressCallBack(float progress)

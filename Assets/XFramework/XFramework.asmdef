@@ -1,5 +1,5 @@
 {
-    "name": "XFramework.Runtime",
+    "name": "XFramework",
     "rootNamespace": "",
     "references": [
         "YooAsset",
