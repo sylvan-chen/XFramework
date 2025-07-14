@@ -99,7 +99,7 @@ namespace XFramework
                 panel.Init(configTable.GetConfigByAddress(panelAddress));
                 // 添加到对应层级
                 GetUILayer(panel.Config.LayerType).AddPanel(panel);
-
+                // 缓存界面
                 _loadedPanels[panelAddress] = panel;
                 _openedPanels[panelAddress] = panel;
                 Log.Debug($"[XFramework] Opened panel '{panelAddress}' of type '{typeof(T).Name}'.");
