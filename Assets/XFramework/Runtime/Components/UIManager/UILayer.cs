@@ -1,4 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using UnityEngine;
 using UnityEngine.UI;
 using XFramework.Utils;
@@ -13,32 +17,49 @@ namespace XFramework
     /// </remarks>
     public class UILayer
     {
+        public enum StackSwitchType
+        {
+            None = 0,
+            Hide = 1,
+            Pause = 2,
+            HideAndPause = 3,
+        }
+
+        private readonly int _id;
+        private readonly string _name;
+        private readonly StackSwitchType _switchType;
         private readonly Canvas _canvas;
-        private readonly UILayerType _layerType;
         private readonly Stack<UIPanelBase> _panelStack = new();
 
-        public UILayerType LayerType => _layerType;
+        public int Id => _id;
+        public string Name => _name;
+        public StackSwitchType SwitchType => _switchType;
         public Canvas Canvas => _canvas;
         public Transform Transform => _canvas.transform;
 
-        public UILayer(Transform uiRoot, UILayerType layerType, Camera uiCamera = null)
+        public UILayer(Transform uiRoot, Camera uiCamera, UILayerConfig config)
         {
-            var layerObj = new GameObject(layerType.ToString());
+            _id = config.Id;
+            _name = config.Name;
+            _switchType = (StackSwitchType)config.StackSwitchType;
+
+            var layerObj = new GameObject(config.Name);
             layerObj.transform.SetParent(uiRoot, false);
+
             _canvas = layerObj.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            _canvas.worldCamera = uiCamera == null ? Camera.main : uiCamera;
+            _canvas.worldCamera = uiCamera;
             _canvas.overrideSorting = true;
-            _canvas.sortingOrder = (int)layerType;
-            _layerType = layerType;
+            _canvas.sortingOrder = config.SortingOrder;
 
             // 设置 Canvas 的其他必要组件
             layerObj.AddComponent<CanvasRenderer>();
             layerObj.AddComponent<GraphicRaycaster>();
             var canvasScaler = layerObj.AddComponent<CanvasScaler>();
-            // TODO：后续增加系统配置类来设定
             canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            canvasScaler.referenceResolution = new Vector2(1920, 1080);
+            canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            canvasScaler.matchWidthOrHeight = 0.5f;
+            canvasScaler.referenceResolution = Consts.SystemConsts.ScreenResolution;
 
             // 初始化栈
             _panelStack.Clear();
@@ -51,7 +72,7 @@ namespace XFramework
         {
             if (panel == null)
             {
-                Log.Error($"[XFramework] [UILayer] Cannot push null panel to stack '{LayerType}'.");
+                Log.Error($"[XFramework] [UILayer] Cannot push null panel to stack '{Name}'.");
                 return;
             }
 
@@ -74,7 +95,7 @@ namespace XFramework
         {
             if (panel == null)
             {
-                Log.Error($"[XFramework] [UILayer] Cannot remove null panel from stack '{LayerType}'.");
+                Log.Error($"[XFramework] [UILayer] Cannot remove null panel from stack '{Name}'.");
                 return;
             }
 

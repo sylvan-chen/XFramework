@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 using XFramework;
 
 [Serializable]
@@ -9,8 +10,7 @@ public class UIPanelConfig
     public int Id;
     public string Name;
     public string Address;
-    public UILayerType LayerType;
-    public UIPanelType PanelType;
+    public int ParentLayer;
 }
 
 [Serializable]

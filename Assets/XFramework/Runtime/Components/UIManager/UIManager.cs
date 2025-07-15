@@ -16,10 +16,12 @@ namespace XFramework
         [SerializeField] private Camera _uiCamera;
 
         private Transform _uiRoot;
-        private readonly Dictionary<UILayerType, UILayer> _layers = new();
-        private readonly Dictionary<string, UIPanelBase> _loadedPanels = new();
-        private readonly Dictionary<string, UIPanelBase> _openedPanels = new();
+        private readonly Dictionary<int, UILayer> _layers = new();
+        private readonly Dictionary<int, UIPanelBase> _loadedPanels = new();
+        private readonly Dictionary<int, UIPanelBase> _openedPanels = new();
         private readonly List<AssetHandler> _assetHandlers = new();
+
+        private UILayerConfigTable _layerConfigTable;
 
         internal override int Priority
         {
@@ -39,54 +41,61 @@ namespace XFramework
                 Log.Debug("[XFramework] UI root created at runtime.");
             }
 
-            InitUILayers();
+            InitUILayersAsync().Forget();
         }
 
-        private void InitUILayers()
+        private async UniTask InitUILayersAsync()
         {
-            var layerTypes = Enum.GetValues(typeof(UILayerType)).Cast<UILayerType>().ToArray();
-            foreach (var layerType in layerTypes)
+            _layerConfigTable = await ConfigHelper.LoadConfigAsync<UILayerConfigTable>("uilayer");
+            foreach (var config in _layerConfigTable.Configs)
             {
                 // 检查是否已经存在该层级
-                if (_layers.Values.Any(layer => layer.LayerType == layerType))
+                if (_layers.ContainsKey(config.Id))
                 {
-                    Log.Warning($"[XFramework] UILayer '{layerType}' already exists, skipping initialization.");
+                    Log.Warning($"[XFramework] UILayer '{config.Id} - {config.Name}' already exists, skipping initialization.");
                     continue;
                 }
 
                 // 创建新的 UILayer 对象
-                var uiLayer = new UILayer(_uiRoot, layerType, Camera.main);
-                _layers.Add(layerType, uiLayer);
+                var uiLayer = new UILayer(_uiRoot, _uiCamera != null ? _uiCamera : Camera.main, config);
+                _layers.Add(config.Id, uiLayer);
             }
 
             // 按照 UILayerType 的顺序排序
-            var sortedLayers = _layers.Values.OrderBy(layer => layer.LayerType).ToArray();
+            var sortedLayers = _layers.Values.OrderBy(layer => layer.Canvas.sortingOrder).ToArray();
             for (int i = 0; i < sortedLayers.Length; i++)
             {
                 sortedLayers[i].Transform.SetSiblingIndex(i);
             }
         }
 
-        private UILayer GetUILayer(UILayerType layerType)
+        private UILayer GetUILayer(int Id)
         {
-            if (_layers.TryGetValue(layerType, out var layer))
+            if (_layers.TryGetValue(Id, out var layer))
             {
                 return layer;
             }
-            Log.Error($"[XFramework] UILayer '{layerType}' not found.");
+            Log.Error($"[XFramework] UILayer '{Id}' not found.");
             return null;
         }
 
         public async UniTask<T> OpenPanelAsync<T>(string panelAddress) where T : UIPanelBase
         {
-            if (string.IsNullOrEmpty(panelAddress))
-            {
-                throw new ArgumentException("Panel address cannot be null or empty.", nameof(panelAddress));
-            }
+            var configTable = await ConfigHelper.LoadConfigAsync<UIPanelConfigTable>("uipanel");
+            var config = configTable.GetConfigByAddress(panelAddress);
             // 检查缓存
-            if (_openedPanels.ContainsKey(panelAddress))
+            if (_openedPanels.TryGetValue(config.Id, out var openedPanel))
             {
-                return _openedPanels[panelAddress] as T;
+                return openedPanel as T;
+            }
+            else if (_loadedPanels.TryGetValue(config.Id, out var loadedPanel))
+            {
+                if (_layers.TryGetValue(loadedPanel.Config.ParentLayer, out var layer))
+                {
+                    layer.AddPanel(loadedPanel);
+                    _openedPanels[config.Id] = loadedPanel;
+                }
+                return loadedPanel as T;
             }
             // 加载新界面
             var assetHandler = await Global.AssetManager.LoadAssetAsync<T>(panelAddress);
@@ -94,14 +103,14 @@ namespace XFramework
             var panelObj = await assetHandler.InstantiateAsync();
             if (panelObj.TryGetComponent<T>(out var panel))
             {
-                var configTable = await ConfigHelper.LoadConfigAsync<UIPanelConfigTable>("uipanel");
-                // 初始化
                 panel.Init(configTable.GetConfigByAddress(panelAddress));
-                // 添加到对应层级
-                GetUILayer(panel.Config.LayerType).AddPanel(panel);
+                if (_layers.TryGetValue(panel.Config.ParentLayer, out var layer))
+                {
+                    layer.AddPanel(panel);
+                }
                 // 缓存界面
-                _loadedPanels[panelAddress] = panel;
-                _openedPanels[panelAddress] = panel;
+                _loadedPanels[config.Id] = panel;
+                _openedPanels[config.Id] = panel;
                 Log.Debug($"[XFramework] Opened panel '{panelAddress}' of type '{typeof(T).Name}'.");
             }
             return panel;

@@ -43,7 +43,7 @@ namespace XFramework.Utils
         /// <summary>
         /// 预加载配置文件
         /// </summary>
-        public static async UniTask PreloadConfigsAsync(string[] fileNames)
+        public static async UniTask PreloadConfigsAsync(params string[] fileNames)
         {
             var tasks = new List<UniTask<string>>();
             foreach (var fileName in fileNames)
