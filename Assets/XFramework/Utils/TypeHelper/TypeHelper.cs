@@ -9,7 +9,7 @@ namespace XFramework.Utils
         public static readonly string[] RuntimeAssemblyNames =
         {
             "Assembly-CSharp",
-            "XFramework.Runtime",
+            "XFramework",
         };
 
         public static readonly string[] EditorAssemblyNames =
@@ -90,7 +90,7 @@ namespace XFramework.Utils
                 }
                 catch (Exception)
                 {
-                    Log.Warning($"[XFramework] [TypeHelper] Failed to load assembly {assemblyName}.");
+                    Log.Error($"[XFramework] [TypeHelper] Failed to load assembly {assemblyName}.");
                     continue;
                 }
 

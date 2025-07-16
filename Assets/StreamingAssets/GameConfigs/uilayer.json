@@ -15,19 +15,19 @@
         {
             "id": 110003,
             "name": "Window",
-            "sortingorder": -1000,
+            "sortingorder": 1000,
             "stackswitchtype": 2
         },
         {
             "id": 110004,
             "name": "Popup",
-            "sortingorder": 1000,
+            "sortingorder": 2000,
             "stackswitchtype": 0
         },
         {
             "id": 110005,
             "name": "Top",
-            "sortingorder": 10000,
+            "sortingorder": 5000,
             "stackswitchtype": 0
         }
     ]

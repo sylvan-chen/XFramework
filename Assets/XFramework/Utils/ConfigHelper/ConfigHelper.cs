@@ -13,7 +13,7 @@ namespace XFramework.Utils
     public static class ConfigTableHelper
     {
         private static readonly Dictionary<Type, string> _tableCache = new();
-        private static readonly string _configTableDirectory = Path.Combine(Application.streamingAssetsPath, "GameConfig");
+        private static readonly string _configTableDirectory = Path.Combine(Application.streamingAssetsPath, "GameConfigs");
         private static readonly string _configTableFileExtension = ".json";
 
         /// <summary>
