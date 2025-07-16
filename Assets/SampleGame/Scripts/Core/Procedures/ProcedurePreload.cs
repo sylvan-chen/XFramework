@@ -9,14 +9,12 @@ public sealed class ProcedurePreload : ProcedureBase
     {
         base.OnEnter(fsm);
 
-        Preload();
+        Preload().Forget();
     }
 
-    private void Preload()
+    private async UniTask Preload()
     {
-        // var uiPanelConfigTable = await ConfigTableHelper.LoadConfigAsync<UIPanelConfigTable>("uipanel");
-        // var uiPanelConfig = uiPanelConfigTable.GetConfigById(1);
-        // Global.UIManager
+        await Global.UIManager.OpenPanelAsync(100001);
         // await Global.AssetManager.LoadSceneAsync("Background", LoadSceneMode.Additive);
         // await UniTask.Delay(6000);
         // await Global.AssetManager.LoadSceneAsync("HomeScene", LoadSceneMode.Additive, progressCallback: LoadHomeSceneProgressCallBack);
@@ -28,15 +26,5 @@ public sealed class ProcedurePreload : ProcedureBase
         // await Global.AssetManager.LoadSceneAsync("Popup", LoadSceneMode.Additive, progressCallback: LoadPopupProgressCallBack);
         // await UniTask.Delay(6000);
         // await Global.AssetManager.UnloadAllScenesExceptAsync("Startup", "HomeScene");
-    }
-
-    void LoadHomeSceneProgressCallBack(float progress)
-    {
-        Log.Debug($"Load HomeScene Progress: {progress * 100}%");
-    }
-
-    void LoadPopupProgressCallBack(float progress)
-    {
-        Log.Debug($"Load Popup Progress: {progress * 100}%");
     }
 }

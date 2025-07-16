@@ -78,6 +78,7 @@ namespace XFramework
 
         public async UniTask<UIPanelBase> OpenPanelAsync(int id)
         {
+            UILayer layer;
             // 检查缓存
             if (_openedPanels.TryGetValue(id, out var openedPanel))
             {
@@ -85,11 +86,14 @@ namespace XFramework
             }
             else if (_loadedPanels.TryGetValue(id, out var loadedPanel))
             {
-                if (_layers.TryGetValue(loadedPanel.ParentLayerId, out var layer))
+                layer = GetUILayer(loadedPanel.ParentLayerId);
+                if (layer == null)
                 {
-                    layer.AddPanel(loadedPanel);
-                    _openedPanels[id] = loadedPanel;
+                    Log.Error($"[XFramework] UILayer for panel '{id}' not found.");
+                    return null;
                 }
+                layer.AddPanel(loadedPanel);
+                _openedPanels[id] = loadedPanel;
                 return loadedPanel;
             }
             var configTable = ConfigTableHelper.GetTable<UIPanelConfigTable>();
@@ -98,18 +102,23 @@ namespace XFramework
             var assetHandler = await Global.AssetManager.LoadAssetAsync<GameObject>(config.Address);
             _assetHandlers.Add(assetHandler);
             var panelObj = await assetHandler.InstantiateAsync();
-            if (panelObj.TryGetComponent<UIPanelBase>(out var panel))
+            if (!panelObj.TryGetComponent<UIPanelBase>(out var panel))
             {
-                panel.Init(config);
-                if (_layers.TryGetValue(config.ParentLayer, out var layer))
-                {
-                    layer.AddPanel(panel);
-                }
-                // 缓存界面
-                _loadedPanels[config.Id] = panel;
-                _openedPanels[config.Id] = panel;
-                Log.Debug($"[XFramework] Opened panel '{panel.Name}' ({panel.Id}).");
+                Log.Error($"[XFramework] UIPanelBase component not found in panel object for '{id}'.");
+                return null;
             }
+            panel.Init(config);
+            layer = GetUILayer(config.ParentLayer);
+            if (layer == null)
+            {
+                Log.Error($"[XFramework] UILayer for panel '{id}' not found.");
+                return null;
+            }
+            layer.AddPanel(panel);
+            // 缓存界面
+            _loadedPanels[config.Id] = panel;
+            _openedPanels[config.Id] = panel;
+            Log.Debug($"[XFramework] Opened panel '{panel.Name}' ({panel.Id}).");
             return panel;
         }
 
