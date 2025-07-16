@@ -9,13 +9,13 @@ public sealed class ProcedurePreload : ProcedureBase
     {
         base.OnEnter(fsm);
 
-        Preload().Forget();
+        Preload();
     }
 
-    private async UniTask Preload()
+    private void Preload()
     {
-        var uiPanelConfigTable = await ConfigHelper.LoadConfigAsync<UIPanelConfigTable>("uipanel");
-        var uiPanelConfig = uiPanelConfigTable.GetConfigById(1);
+        // var uiPanelConfigTable = await ConfigTableHelper.LoadConfigAsync<UIPanelConfigTable>("uipanel");
+        // var uiPanelConfig = uiPanelConfigTable.GetConfigById(1);
         // Global.UIManager
         // await Global.AssetManager.LoadSceneAsync("Background", LoadSceneMode.Additive);
         // await UniTask.Delay(6000);

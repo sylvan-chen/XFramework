@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using XFramework.Utils;
 
@@ -18,11 +19,12 @@ namespace XFramework
         private readonly Dictionary<Type, XFrameworkComponent> _componentDict = new();
         private readonly List<XFrameworkComponent> _cachedComponents = new();
 
-        protected override void Awake()
-        {
-            base.Awake();
+        private Coroutine _initCoroutine;
 
-            Init();
+        private void Start()
+        {
+            UniTask initTask = InitGameAsync();
+            _initCoroutine = StartCoroutine(initTask.ToCoroutine());
         }
 
         private void OnDestroy()
@@ -30,14 +32,28 @@ namespace XFramework
             ShutdownFramework();
         }
 
-        private void Init()
+        /// <summary>
+        /// 初始化游戏
+        /// </summary>
+        private async UniTask InitGameAsync()
         {
-            Log.Info("[XFramework] [XFrameworkDriver] Init All XFramework Components...");
+            // 先预加载配置表
+            await PreloadConfigTablesAsync();
+            // 再初始化所有组件
+            Log.Info("[XFramework] [GameLauncher] Init All XFramework Components...");
             _cachedComponents.Sort((a, b) => a.Priority.CompareTo(b.Priority));
             foreach (XFrameworkComponent component in _cachedComponents)
             {
                 component.Init();
             }
+            _initCoroutine = null;
+        }
+
+        private async UniTask PreloadConfigTablesAsync()
+        {
+            Log.Info("[XFramework] [GameLauncher] Preload Config Tables...");
+            await ConfigTableHelper.PreloadConfigAsync<UILayerConfigTable>("uilayer");
+            await ConfigTableHelper.PreloadConfigAsync<UIPanelConfigTable>("uipanel");
         }
 
         internal void Register(XFrameworkComponent component)
@@ -63,7 +79,7 @@ namespace XFramework
             }
             else
             {
-                Log.Warning($"[XFramework] [XFrameworkDriver] Can not find component of type {typeof(T).Name}");
+                Log.Warning($"[XFramework] [GameLauncher] Can not find component of type {typeof(T).Name}");
                 return null;
             }
         }
@@ -84,7 +100,7 @@ namespace XFramework
             }
             else
             {
-                Log.Warning($"[XFramework] [XFrameworkDriver] Can not find component of type {componentType.Name}");
+                Log.Warning($"[XFramework] [GameLauncher] Can not find component of type {componentType.Name}");
                 return null;
             }
         }
@@ -94,7 +110,12 @@ namespace XFramework
         /// </summary>
         private void ShutdownFramework()
         {
-            Log.Info("[XFramework] [XFrameworkDriver] Shutdown XFramework...");
+            if (_initCoroutine != null)
+            {
+                StopCoroutine(_initCoroutine);
+                _initCoroutine = null;
+            }
+            Log.Info("[XFramework] [GameLauncher] Shutdown XFramework...");
             _cachedComponents.Reverse();
             foreach (XFrameworkComponent manager in _cachedComponents)
             {

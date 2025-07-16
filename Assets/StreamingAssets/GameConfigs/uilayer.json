@@ -1,0 +1,34 @@
+{
+    "configs": [
+        {
+            "id": 110001,
+            "name": "Background",
+            "sortingorder": -1000,
+            "stackswitchtype": 3
+        },
+        {
+            "id": 110002,
+            "name": "Default",
+            "sortingorder": 0,
+            "stackswitchtype": 3
+        },
+        {
+            "id": 110003,
+            "name": "Window",
+            "sortingorder": -1000,
+            "stackswitchtype": 2
+        },
+        {
+            "id": 110004,
+            "name": "Popup",
+            "sortingorder": 1000,
+            "stackswitchtype": 0
+        },
+        {
+            "id": 110005,
+            "name": "Top",
+            "sortingorder": 10000,
+            "stackswitchtype": 0
+        }
+    ]
+}

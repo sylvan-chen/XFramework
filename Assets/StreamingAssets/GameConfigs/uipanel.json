@@ -1,25 +1,22 @@
 {
-    "panels": [
+    "configs": [
         {
-            "id": 1001,
+            "id": 100001,
             "name": "MainMenu",
             "address": "mainmenu",
-            "layertype": "Default",
-            "paneltype": "Fullscreen"
+            "parentlayer": 110003
         },
         {
-            "id": 1002,
+            "id": 100002,
             "name": "Background",
             "address": "background",
-            "layertype": "Background",
-            "paneltype": "Fixed"
+            "parentlayer": 110001
         },
         {
-            "id": 1003,
+            "id": 100003,
             "name": "Info",
             "address": "info",
-            "layertype": "Popup",
-            "paneltype": "Popup"
+            "parentlayer": 110004
         }
     ]
 }

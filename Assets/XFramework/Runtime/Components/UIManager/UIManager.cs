@@ -1,10 +1,8 @@
 using UnityEngine;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using XFramework.Utils;
-using UnityEngine.UI;
 
 namespace XFramework
 {
@@ -20,8 +18,6 @@ namespace XFramework
         private readonly Dictionary<int, UIPanelBase> _loadedPanels = new();
         private readonly Dictionary<int, UIPanelBase> _openedPanels = new();
         private readonly List<AssetHandler> _assetHandlers = new();
-
-        private UILayerConfigTable _layerConfigTable;
 
         internal override int Priority
         {
@@ -41,13 +37,13 @@ namespace XFramework
                 Log.Debug("[XFramework] UI root created at runtime.");
             }
 
-            InitUILayersAsync().Forget();
+            InitUILayers();
         }
 
-        private async UniTask InitUILayersAsync()
+        public void InitUILayers()
         {
-            _layerConfigTable = await ConfigHelper.LoadConfigAsync<UILayerConfigTable>("uilayer");
-            foreach (var config in _layerConfigTable.Configs)
+            var configTable = ConfigTableHelper.GetTable<UILayerConfigTable>();
+            foreach (var config in configTable.Configs)
             {
                 // 检查是否已经存在该层级
                 if (_layers.ContainsKey(config.Id))
@@ -57,11 +53,12 @@ namespace XFramework
                 }
 
                 // 创建新的 UILayer 对象
-                var uiLayer = new UILayer(_uiRoot, _uiCamera != null ? _uiCamera : Camera.main, config);
+                var camera = _uiCamera != null ? _uiCamera : Camera.main;
+                var uiLayer = new UILayer(_uiRoot, camera, config);
                 _layers.Add(config.Id, uiLayer);
             }
 
-            // 按照 UILayerType 的顺序排序
+            // 按照层级顺序排序节点
             var sortedLayers = _layers.Values.OrderBy(layer => layer.Canvas.sortingOrder).ToArray();
             for (int i = 0; i < sortedLayers.Length; i++)
             {
@@ -69,51 +66,64 @@ namespace XFramework
             }
         }
 
-        private UILayer GetUILayer(int Id)
+        public UILayer GetUILayer(int id)
         {
-            if (_layers.TryGetValue(Id, out var layer))
+            if (_layers.TryGetValue(id, out var layer))
             {
                 return layer;
             }
-            Log.Error($"[XFramework] UILayer '{Id}' not found.");
+            Log.Error($"[XFramework] UILayer '{id}' not found.");
             return null;
         }
 
-        public async UniTask<T> OpenPanelAsync<T>(string panelAddress) where T : UIPanelBase
+        public async UniTask<UIPanelBase> OpenPanelAsync(int id)
         {
-            var configTable = await ConfigHelper.LoadConfigAsync<UIPanelConfigTable>("uipanel");
-            var config = configTable.GetConfigByAddress(panelAddress);
             // 检查缓存
-            if (_openedPanels.TryGetValue(config.Id, out var openedPanel))
+            if (_openedPanels.TryGetValue(id, out var openedPanel))
             {
-                return openedPanel as T;
+                return openedPanel;
             }
-            else if (_loadedPanels.TryGetValue(config.Id, out var loadedPanel))
+            else if (_loadedPanels.TryGetValue(id, out var loadedPanel))
             {
-                if (_layers.TryGetValue(loadedPanel.Config.ParentLayer, out var layer))
+                if (_layers.TryGetValue(loadedPanel.ParentLayerId, out var layer))
                 {
                     layer.AddPanel(loadedPanel);
-                    _openedPanels[config.Id] = loadedPanel;
+                    _openedPanels[id] = loadedPanel;
                 }
-                return loadedPanel as T;
+                return loadedPanel;
             }
+            var configTable = ConfigTableHelper.GetTable<UIPanelConfigTable>();
+            var config = configTable.GetConfigById(id);
             // 加载新界面
-            var assetHandler = await Global.AssetManager.LoadAssetAsync<T>(panelAddress);
+            var assetHandler = await Global.AssetManager.LoadAssetAsync<GameObject>(config.Address);
             _assetHandlers.Add(assetHandler);
             var panelObj = await assetHandler.InstantiateAsync();
-            if (panelObj.TryGetComponent<T>(out var panel))
+            if (panelObj.TryGetComponent<UIPanelBase>(out var panel))
             {
-                panel.Init(configTable.GetConfigByAddress(panelAddress));
-                if (_layers.TryGetValue(panel.Config.ParentLayer, out var layer))
+                panel.Init(config);
+                if (_layers.TryGetValue(config.ParentLayer, out var layer))
                 {
                     layer.AddPanel(panel);
                 }
                 // 缓存界面
                 _loadedPanels[config.Id] = panel;
                 _openedPanels[config.Id] = panel;
-                Log.Debug($"[XFramework] Opened panel '{panelAddress}' of type '{typeof(T).Name}'.");
+                Log.Debug($"[XFramework] Opened panel '{panel.Name}' ({panel.Id}).");
             }
             return panel;
+        }
+
+        public void ClosePanel(int id)
+        {
+            if (_openedPanels.TryGetValue(id, out var openedPanel))
+            {
+                var layer = GetUILayer(openedPanel.ParentLayerId);
+                layer.RemovePanel(openedPanel);
+                _openedPanels.Remove(id);
+                _loadedPanels.Remove(id);
+                Destroy(openedPanel.gameObject);
+                Log.Debug($"[XFramework] Closed panel '{openedPanel.Name}' ({openedPanel.Id}).");
+            }
         }
     }
 }

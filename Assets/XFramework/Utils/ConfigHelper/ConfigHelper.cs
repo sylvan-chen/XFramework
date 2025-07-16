@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Cysharp.Threading.Tasks;
@@ -6,75 +7,56 @@ using UnityEngine;
 
 namespace XFramework.Utils
 {
-    public static class ConfigHelper
+    /// <summary>
+    /// 配置表助手类，需要先预加载才能获取配置表类
+    /// </summary>
+    public static class ConfigTableHelper
     {
-        private static readonly Dictionary<string, string> _configCache = new();
-        private static readonly string _configDirectory = Path.Combine(Application.streamingAssetsPath, "GameConfig");
-        private static readonly string _configFileExtension = ".json";
+        private static readonly Dictionary<Type, string> _tableCache = new();
+        private static readonly string _configTableDirectory = Path.Combine(Application.streamingAssetsPath, "GameConfig");
+        private static readonly string _configTableFileExtension = ".json";
 
         /// <summary>
-        /// 异步加载配置文件
+        /// 获取配置表类
         /// </summary>
-        /// <typeparam name="T">配置文件类型</typeparam>
-        /// <param name="fileName">配置文件名（不包含扩展名）</param>
-        /// <returns>配置文件数据</returns>
-        public static async UniTask<T> LoadConfigAsync<T>(string fileName) where T : class, new()
+        /// <typeparam name="T">配置表类型</typeparam>
+        /// <returns>配置文件实例</returns>
+        public static T GetTable<T>() where T : ConfigTableBase
         {
-            string jsonContent;
+            Type tableType = typeof(T);
 
-            if (_configCache.TryGetValue(fileName, out var cachedConfig)) // 检查缓存
+            if (_tableCache.TryGetValue(tableType, out var jsonContent))
             {
-                Log.Debug($"[XFramework] [ConfigLoader] Config loaded from cache: {fileName}");
-                jsonContent = cachedConfig;
-            }
-            else // 未缓存则读取文件
-            {
-                jsonContent = await ReadConfigFileAsync(fileName);
-                if (string.IsNullOrEmpty(jsonContent))
-                {
-                    Log.Error($"[XFramework] [ConfigLoader] Failed to load config file: {fileName}");
-                    return null;
-                }
-            }
-
-            return JsonConvert.DeserializeObject<T>(jsonContent);
-        }
-
-        /// <summary>
-        /// 预加载配置文件
-        /// </summary>
-        public static async UniTask PreloadConfigsAsync(params string[] fileNames)
-        {
-            var tasks = new List<UniTask<string>>();
-            foreach (var fileName in fileNames)
-            {
-                tasks.Add(ReadConfigFileAsync(fileName));
-            }
-
-            await UniTask.WhenAll(tasks);
-
-            Log.Debug($"[XFramework] [ConfigLoader] All specified config files (count: {tasks.Count}) preloaded.");
-        }
-
-        /// <summary>
-        /// 清除配置文件缓存
-        /// </summary>
-        /// <param name="fileName">要清空的配置文件名</param>
-        public static void ClearConfigCache(string fileName)
-        {
-            if (string.IsNullOrEmpty(fileName))
-            {
-                Log.Error("[XFramework] [ConfigLoader] ClearConfigCache called with empty or null fileName.");
-                return;
-            }
-
-            if (_configCache.Remove(fileName))
-            {
-                Log.Debug($"[XFramework] [ConfigLoader] Config cache cleared: {fileName}");
+                return JsonConvert.DeserializeObject<T>(jsonContent);
             }
             else
             {
-                Log.Warning($"[XFramework] [ConfigLoader] Config cache not found for: {fileName}");
+                Log.Error($"[XFramework] [ConfigLoader] Config not found in cache: {tableType}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 异步预加载配置文件
+        /// </summary>
+        /// <typeparam name="T">配置文件类型</typeparam>
+        /// <param name="fileName">配置文件名（不包含扩展名）</param>
+        public static async UniTask PreloadConfigAsync<T>(string fileName) where T : ConfigTableBase
+        {
+            Type configType = typeof(T);
+
+            if (_tableCache.TryGetValue(configType, out var _)) // 检查缓存
+            {
+                Log.Warning($"[XFramework] [ConfigLoader] Config already loaded but still trying to preload:" +
+                    $"Type: {configType}, File: {fileName}");
+            }
+            else
+            {
+                string jsonContent = await ReadConfigTableFileAsync(fileName, configType);
+                if (string.IsNullOrEmpty(jsonContent))
+                {
+                    Log.Error($"[XFramework] [ConfigLoader] Failed to preload config file: {fileName}");
+                }
             }
         }
 
@@ -83,14 +65,14 @@ namespace XFramework.Utils
         /// </summary>
         public static void ClearAllConfigCache()
         {
-            _configCache.Clear();
+            _tableCache.Clear();
             Log.Debug("[XFramework] [ConfigLoader] All config caches cleared.");
         }
 
-        private static async UniTask<string> ReadConfigFileAsync(string fileName)
+        private static async UniTask<string> ReadConfigTableFileAsync(string fileName, Type tableType)
         {
             string jsonContent;
-            string filePath = Path.Combine(_configDirectory, $"{fileName}{_configFileExtension}");
+            string filePath = Path.Combine(_configTableDirectory, $"{fileName}{_configTableFileExtension}");
             if (!FileHelper.Exists(filePath))
             {
                 Log.Error($"[XFramework] [ConfigLoader] Config file not found: {filePath}");
@@ -117,7 +99,7 @@ namespace XFramework.Utils
                 jsonContent = await FileHelper.ReadAllTextAsync(filePath);
             }
 
-            _configCache[fileName] = jsonContent; // 缓存配置内容
+            _tableCache[tableType] = jsonContent; // 缓存配置内容
             Log.Debug($"[XFramework] [ConfigLoader] Config file cached: {fileName}");
             return jsonContent;
         }

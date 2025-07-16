@@ -76,12 +76,17 @@ namespace XFramework
                 return;
             }
 
-            // 暂停并隐藏当前栈顶面板
             if (_panelStack.Count > 0)
             {
                 var topPanel = _panelStack.Peek();
-                topPanel.Pause();
-                topPanel.Hide();
+                if (_switchType == StackSwitchType.Hide || _switchType == StackSwitchType.HideAndPause)
+                {
+                    topPanel.Hide();
+                }
+                if (_switchType == StackSwitchType.Pause || _switchType == StackSwitchType.HideAndPause)
+                {
+                    topPanel.Pause();
+                }
             }
 
             _panelStack.Push(panel);
@@ -104,15 +109,21 @@ namespace XFramework
                 return;
             }
 
-            if (_panelStack.Peek() == panel) // 如果要移除的面板是栈顶面板，则隐藏并恢复上一个面板
+            if (_panelStack.Peek() == panel) // 如果要移除的面板是栈顶面板，则恢复上一个面板
             {
                 panel.Hide();
                 _panelStack.Pop();
                 if (_panelStack.Count > 0)
                 {
                     var topPanel = _panelStack.Peek();
-                    topPanel.Resume();
-                    topPanel.Show();
+                    if (_switchType == StackSwitchType.Hide || _switchType == StackSwitchType.HideAndPause)
+                    {
+                        topPanel.Show();
+                    }
+                    if (_switchType == StackSwitchType.Pause || _switchType == StackSwitchType.HideAndPause)
+                    {
+                        topPanel.Resume();
+                    }
                 }
             }
             else // 如果要移除的面板不是栈顶面板，则直接从栈中移除
