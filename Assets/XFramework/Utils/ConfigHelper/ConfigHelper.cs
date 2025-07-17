@@ -42,11 +42,20 @@ namespace XFramework.Utils
         /// <param name="fileName">配置文件名（包含扩展名）</param>
         public static async UniTask PreloadConfigAsync(Type configType, string fileName)
         {
+            if (configType == null)
+            {
+                throw new ArgumentNullException(nameof(configType), "Config type cannot be null.");
+            }
+            
+            if (string.IsNullOrEmpty(fileName))
+            {
+                throw new ArgumentException("Config file name cannot be null or empty.", nameof(fileName));
+            }
+            
             // 检查配置类型是否为 ConfigTableBase 的子类
             if (!typeof(ConfigTableBase).IsAssignableFrom(configType))
             {
-                Log.Error($"[XFramework] [ConfigLoader] Preload config failed (Type: {configType}). Config type must be a subclass of <ConfigTableBase>. ");
-                return;
+                throw new ArgumentException($"Config type must be a subclass of ConfigTableBase. Type: {configType}", nameof(configType));
             }
 
             if (_tableCache.TryGetValue(configType, out var _)) // 检查缓存

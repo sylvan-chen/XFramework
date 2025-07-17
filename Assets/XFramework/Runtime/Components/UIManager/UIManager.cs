@@ -72,7 +72,7 @@ namespace XFramework
             {
                 return layer;
             }
-            Log.Error($"[XFramework] UILayer '{id}' not found.");
+            Log.Error($"[XFramework] [UIManager] UILayer '{id}' not found.");
             return null;
         }
 
@@ -89,36 +89,40 @@ namespace XFramework
                 layer = GetUILayer(loadedPanel.ParentLayerId);
                 if (layer == null)
                 {
-                    Log.Error($"[XFramework] UILayer for panel '{id}' not found.");
+                    Log.Error($"[XFramework] [UIManager] UILayer for panel '{id}' not found.");
                     return null;
                 }
                 layer.AddPanel(loadedPanel);
                 _openedPanels[id] = loadedPanel;
                 return loadedPanel;
             }
+
             var configTable = ConfigTableHelper.GetTable<UIPanelConfigTable>();
             var config = configTable.GetConfigById(id);
+
             // 加载新界面
             var assetHandler = await Global.AssetManager.LoadAssetAsync<GameObject>(config.Address);
             _assetHandlers.Add(assetHandler);
             var panelObj = await assetHandler.InstantiateAsync();
             if (!panelObj.TryGetComponent<UIPanelBase>(out var panel))
             {
-                Log.Error($"[XFramework] UIPanelBase component not found in panel object for '{id}'.");
+                Log.Error($"[XFramework] [UIManager] UIPanelBase component not found in panel object for '{id}'.");
+                Destroy(panelObj);
                 return null;
             }
             panel.Init(config);
             layer = GetUILayer(config.ParentLayer);
             if (layer == null)
             {
-                Log.Error($"[XFramework] UILayer for panel '{id}' not found.");
+                Log.Error($"[XFramework] [UIManager] UILayer for panel '{id}' not found.");
+                Destroy(panelObj);
                 return null;
             }
             layer.AddPanel(panel);
             // 缓存界面
             _loadedPanels[config.Id] = panel;
             _openedPanels[config.Id] = panel;
-            Log.Debug($"[XFramework] Opened panel '{panel.Name}' ({panel.Id}).");
+            Log.Debug($"[XFramework] [UIManager] Opened panel '{panel.Name}' ({panel.Id}).");
             return panel;
         }
 
@@ -127,11 +131,15 @@ namespace XFramework
             if (_openedPanels.TryGetValue(id, out var openedPanel))
             {
                 var layer = GetUILayer(openedPanel.ParentLayerId);
-                layer.RemovePanel(openedPanel);
+                layer?.RemovePanel(openedPanel);
                 _openedPanels.Remove(id);
                 _loadedPanels.Remove(id);
                 Destroy(openedPanel.gameObject);
-                Log.Debug($"[XFramework] Closed panel '{openedPanel.Name}' ({openedPanel.Id}).");
+                Log.Debug($"[XFramework] [UIManager] Closed panel '{openedPanel.Name}' ({openedPanel.Id}).");
+            }
+            else
+            {
+                Log.Warning($"[XFramework] [UIManager] Attempted to close panel '{id}' that is not currently opened.");
             }
         }
     }

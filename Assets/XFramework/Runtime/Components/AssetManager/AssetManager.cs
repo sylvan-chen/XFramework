@@ -419,6 +419,17 @@ namespace XFramework
         /// <returns>资源句柄</returns>
         public async UniTask<AssetHandler> LoadAssetAsync<T>(string address) where T : UnityEngine.Object
         {
+            if (string.IsNullOrEmpty(address))
+            {
+                throw new ArgumentException("Asset address cannot be null or empty.", nameof(address));
+            }
+            
+            if (_package == null)
+            {
+                Log.Error($"[XFramework] [AssetManager] Cannot load asset '{address}'. Package is not initialized.");
+                return null;
+            }
+            
             // 检查是否已经加载
             if (_assetHandlerCache.TryGetValue(address, out AssetHandler cachedHandler))
             {

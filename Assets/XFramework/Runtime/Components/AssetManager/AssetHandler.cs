@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using XFramework.Utils;
@@ -30,6 +31,15 @@ namespace XFramework
 
         internal AssetHandler(AssetHandle handle, string address)
         {
+            if (handle == null)
+            {
+                throw new ArgumentNullException(nameof(handle), "AssetHandle cannot be null.");
+            }
+            if (string.IsNullOrEmpty(address))
+            {
+                throw new ArgumentException("Asset address cannot be null or empty.", nameof(address));
+            }
+            
             _handle = handle;
             _address = address;
             RefCount = 1; // 初始化引用计数为 1

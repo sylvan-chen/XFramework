@@ -54,6 +54,12 @@ namespace XFramework
         {
             Log.Info("[XFramework] [GameLauncher] Preload Config Tables...");
             var fieldInfos = typeof(Consts.ConfigConsts).GetFields(BindingFlags.Public | BindingFlags.Static);
+            if (fieldInfos == null || fieldInfos.Length == 0)
+            {
+                Log.Warning("[XFramework] [GameLauncher] No config constants found to preload.");
+                return;
+            }
+
             foreach (var fieldInfo in fieldInfos)
             {
                 // 筛选字符串常量字段

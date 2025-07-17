@@ -40,17 +40,39 @@ namespace XFramework
         {
             base.Init();
 
+            if (_availableProcedureTypeNames == null || _availableProcedureTypeNames.Length == 0)
+            {
+                throw new InvalidOperationException("ProcedureManager init failed. No procedures configured.");
+            }
+
+            if (string.IsNullOrEmpty(_startupProcedureTypeName))
+            {
+                throw new InvalidOperationException("ProcedureManager init failed. Startup procedure type name is not configured.");
+            }
+
             ProcedureBase[] procedures = new ProcedureBase[_availableProcedureTypeNames.Length];
             // 注册所有流程为状态
             for (int i = 0; i < _availableProcedureTypeNames.Length; i++)
             {
                 string typeName = _availableProcedureTypeNames[i];
+                if (string.IsNullOrEmpty(typeName))
+                {
+                    Log.Error($"[XFramework] [ProcedureManager] Procedure type name at index {i} is null or empty.");
+                    continue;
+                }
+
                 Type type = TypeHelper.GetType(typeName);
                 if (type == null)
                 {
-                    Debug.LogError($"Can not find type {typeName}");
+                    Log.Error($"[XFramework] [ProcedureManager] Cannot find procedure type: {typeName}");
                     continue;
                 }
+                if (!typeof(ProcedureBase).IsAssignableFrom(type))
+                {
+                    Log.Error($"[XFramework] [ProcedureManager] Type {typeName} is not a valid ProcedureBase subclass.");
+                    continue;
+                }
+
                 procedures[i] = Activator.CreateInstance(type) as ProcedureBase;
                 if (typeName == _startupProcedureTypeName)
                 {
@@ -60,7 +82,7 @@ namespace XFramework
 
             if (_startupProcedure == null)
             {
-                throw new InvalidOperationException("ProcedureManager init failed. Startup procedure is null.");
+                throw new InvalidOperationException($"ProcedureManager init failed. Startup procedure '{_startupProcedureTypeName}' not found or failed to initialize.");
             }
 
             _procedureStateMachine = Global.StateMachineManager.Create(this, procedures);
