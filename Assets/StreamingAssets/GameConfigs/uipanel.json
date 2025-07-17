@@ -15,7 +15,7 @@
         {
             "id": 100003,
             "name": "Info",
-            "address": "info",
+            "address": "popup",
             "parentlayer": 110004
         }
     ]

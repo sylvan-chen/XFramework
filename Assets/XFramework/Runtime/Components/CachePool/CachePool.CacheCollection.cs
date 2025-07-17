@@ -67,7 +67,8 @@ namespace XFramework
                 }
                 if (_cache.Contains(cache))
                 {
-                    throw new InvalidOperationException("Unspawn cache failed. Cache already unspawned.");
+                    Log.Warning($"[XFramework] [CachePool] Unspawn cache failed. Cache {cache.GetType().Name} already exists in the pool.");
+                    return;
                 }
 
                 cache.Clear();

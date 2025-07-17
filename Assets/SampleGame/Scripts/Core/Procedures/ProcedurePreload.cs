@@ -15,6 +15,10 @@ public sealed class ProcedurePreload : ProcedureBase
     private async UniTask Preload()
     {
         await Global.UIManager.OpenPanelAsync(100001);
+        await UniTask.Delay(5000);
+        await Global.UIManager.OpenPanelAsync(100003);
+        await UniTask.Delay(5000);
+        Global.UIManager.ClosePanel(100003);
         // await Global.AssetManager.LoadSceneAsync("Background", LoadSceneMode.Additive);
         // await UniTask.Delay(6000);
         // await Global.AssetManager.LoadSceneAsync("HomeScene", LoadSceneMode.Additive, progressCallback: LoadHomeSceneProgressCallBack);
