@@ -25,7 +25,7 @@ namespace XFramework.Utils
         /// </summary>
         /// <param name="typeName">类型名称</param>
         /// <returns>获取到的类型</returns>
-        public static Type GetType(string typeName)
+        public static Type GetType(string typeName, string assemblyName = null)
         {
             if (string.IsNullOrEmpty(typeName))
             {
@@ -41,6 +41,11 @@ namespace XFramework.Utils
             foreach (Assembly assembly in AllAssemblies)
             {
                 // Log.Debug($"[XFramework] [TypeHelper] Searching for type {typeName} in assembly {assembly.GetName().Name}...");
+                if (!string.IsNullOrEmpty(assemblyName) && assembly.GetName().Name != assemblyName)
+                {
+                    continue;
+                }
+
                 type = assembly.GetType(typeName);
                 if (type != null)
                 {

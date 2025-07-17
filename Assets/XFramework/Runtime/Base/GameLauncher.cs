@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using XFramework.Utils;
@@ -52,8 +53,21 @@ namespace XFramework
         private async UniTask PreloadConfigTablesAsync()
         {
             Log.Info("[XFramework] [GameLauncher] Preload Config Tables...");
-            await ConfigTableHelper.PreloadConfigAsync<UILayerConfigTable>("uilayer");
-            await ConfigTableHelper.PreloadConfigAsync<UIPanelConfigTable>("uipanel");
+            var fieldInfos = typeof(Consts.ConfigConsts).GetFields(BindingFlags.Public | BindingFlags.Static);
+            foreach (var fieldInfo in fieldInfos)
+            {
+                // 筛选字符串常量字段
+                if (fieldInfo != null && fieldInfo.FieldType == typeof(string) && fieldInfo.IsLiteral)
+                {
+                    Type configType = TypeHelper.GetType(fieldInfo.Name, "XFramework");
+                    if (configType == null)
+                    {
+                        Log.Error($"[XFramework] [GameLauncher] Config type {fieldInfo.Name} not found.");
+                        continue;
+                    }
+                    await ConfigTableHelper.PreloadConfigAsync(configType, fieldInfo.GetValue(null) as string);
+                }
+            }
         }
 
         internal void Register(XFrameworkComponent component)
