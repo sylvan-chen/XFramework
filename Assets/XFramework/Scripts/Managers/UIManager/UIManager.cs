@@ -10,9 +10,7 @@ namespace XFramework
     [AddComponentMenu("XFramework/UI Manager")]
     public sealed class UIManager : XFrameworkComponent
     {
-        [Header("UI 摄像机，为空时默认使用主摄像机")]
-        [SerializeField] private Camera _uiCamera;
-
+        private Camera _uiCamera;
         private Transform _uiRoot;
         private readonly Dictionary<int, UILayer> _layers = new();
         private readonly Dictionary<int, UIPanelBase> _loadedPanels = new();
@@ -36,8 +34,24 @@ namespace XFramework
                 DontDestroyOnLoad(_uiRoot.gameObject);
                 Log.Debug("[XFramework] UI root created at runtime.");
             }
-
+            InitUICamera();
             InitUILayers();
+        }
+
+        private void InitUICamera()
+        {
+            // 创建专用的UI摄像机
+            var cameraObj = new GameObject("[UICamera]");
+            cameraObj.layer = LayerMask.NameToLayer("UI");
+            cameraObj.transform.SetParent(_uiRoot);
+            cameraObj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+
+            _uiCamera = cameraObj.AddComponent<Camera>();
+            _uiCamera.clearFlags = CameraClearFlags.Depth;             // 使用深度清除
+            _uiCamera.cullingMask = 1 << LayerMask.NameToLayer("UI");  // 只渲染UI层
+            _uiCamera.orthographic = true;                             // 使用正交投影
+            _uiCamera.depth = 100;                                     // 确保在其他摄像机之上
+            _uiCamera.useOcclusionCulling = false;                     // 不需要遮挡剔除，节约性能
         }
 
         public void InitUILayers()
@@ -63,6 +77,12 @@ namespace XFramework
             for (int i = 0; i < sortedLayers.Length; i++)
             {
                 sortedLayers[i].Transform.SetSiblingIndex(i);
+            }
+
+            // 设置所有层级的层级
+            foreach (var layer in _layers.Values)
+            {
+                layer.Transform.gameObject.layer = LayerMask.NameToLayer("UI");
             }
         }
 
