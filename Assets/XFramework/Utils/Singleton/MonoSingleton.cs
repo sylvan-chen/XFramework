@@ -18,7 +18,11 @@ namespace XFramework.Utils
 #else
                     _instance = FindObjectOfType<T>();
 #endif
-
+                    if (_instance == null)
+                    {
+                        var singletonObject = new GameObject(typeof(T).Name);
+                        _instance = singletonObject.AddComponent<T>();
+                    }
                 }
                 return _instance;
             }

@@ -22,44 +22,19 @@ namespace XFramework
         /// </summary>
         private readonly XLinkedList<DelayEventWrapper> _delayedEvents = new();
 
-        public int SubscribedEventCount
+        public int SubscribedEventCount => _handlerChainDict.Count;
+        public int DelayedEventCount => _delayedEvents.Count;
+
+        internal override int Priority => Consts.XFrameworkConsts.ComponentPriority.EventManager;
+
+        internal override void Init()
         {
-            get => _handlerChainDict.Count;
+            base.Init();
         }
 
-        public int DelayedEventCount
+        internal override void Shutdown()
         {
-            get => _delayedEvents.Count;
-        }
-
-        internal override int Priority
-        {
-            get => Consts.XFrameworkConsts.ComponentPriority.EventManager;
-        }
-
-        private void Update()
-        {
-            lock (_delayedEvents)
-            {
-                var node = _delayedEvents.First;
-                while (node != null)
-                {
-                    DelayEventWrapper wrapper = node.Value;
-                    wrapper.DelayFrame--;
-                    if (wrapper.DelayFrame <= 0)
-                    {
-                        wrapper.HandlerChain.Fire(wrapper.Event);
-                        _delayedEvents.Remove(node);
-                        wrapper.Destroy();
-                    }
-                    node = node.Next;
-                }
-            }
-        }
-
-        internal override void Clear()
-        {
-            base.Clear();
+            base.Shutdown();
 
             foreach (EventHandlerChain handlerChain in _handlerChainDict.Values)
             {
@@ -71,6 +46,28 @@ namespace XFramework
             }
             _handlerChainDict.Clear();
             _delayedEvents.Clear();
+        }
+
+        internal override void Update(float deltaTime, float unscaledDeltaTime)
+        {
+            base.Update(deltaTime, unscaledDeltaTime);
+
+            lock (_delayedEvents)
+            {
+                var node = _delayedEvents.First;
+                while (node != null)
+                {
+                    DelayEventWrapper wrapper = node.Value;
+                    wrapper.DelaySeconds -= deltaTime;
+                    if (wrapper.DelaySeconds <= 0)
+                    {
+                        wrapper.HandlerChain.Fire(wrapper.Event);
+                        _delayedEvents.Remove(node);
+                        wrapper.Destroy();
+                    }
+                    node = node.Next;
+                }
+            }
         }
 
         public void Subscribe(int id, Action<IEvent> handler)
@@ -128,7 +125,7 @@ namespace XFramework
             evt.Destroy();
         }
 
-        public void PublishLater(int id, IEvent evt, int delayFrame = 1)
+        public void PublishLater(int id, IEvent evt, float delaySeconds = 1f)
         {
             if (evt == null)
             {
@@ -138,7 +135,7 @@ namespace XFramework
             {
                 if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChain))
                 {
-                    _delayedEvents.AddLast(DelayEventWrapper.Create(evt, handlerChain, delayFrame));
+                    _delayedEvents.AddLast(DelayEventWrapper.Create(evt, handlerChain, delaySeconds));
                 }
                 else
                 {

@@ -17,7 +17,7 @@ namespace XFramework
     [AddComponentMenu("XFramework/Asset Manager")]
     public sealed class AssetManager : XFrameworkComponent
     {
-        internal enum BuildMode
+        public enum BuildMode
         {
             Editor,  // 编辑器模式，编辑器下模拟运行游戏，只在编辑器下有效
             Offline, // 单机运行模式，不需要热更新资源的游戏
@@ -25,26 +25,12 @@ namespace XFramework
             WebGL,   // 针对 WebGL 的特殊模式
         }
 
-        [Header("资源构建模式")]
-        [SerializeField]
-        BuildMode _buildMode;
-
-        [Header("主要 Package 名称")]
-        [SerializeField]
-        private string _mainPackageName = "DefaultPackage";
-
-        [Header("资源下载配置")]
-        [SerializeField]
-        private string _defaultHostServer = "http://<Server>/CDN/<Platform>/<Version>";
-
-        [SerializeField]
-        private string _fallbackHostServer = "http://<Server>/CDN/<Platform>/<Version>";
-
-        [SerializeField]
-        private int _maxConcurrentDownloadCount = 10;
-
-        [SerializeField]
-        private int _failedDownloadRetryCount = 3;
+        private readonly BuildMode _buildMode = Consts.XFrameworkConsts.AssetManagerProperty.BuildMode;
+        private readonly string _mainPackageName = Consts.XFrameworkConsts.AssetManagerProperty.MainPackageName;
+        private readonly string _defaultHostServer = Consts.XFrameworkConsts.AssetManagerProperty.DefaultHostServer;
+        private readonly string _fallbackHostServer = Consts.XFrameworkConsts.AssetManagerProperty.FallbackHostServer;
+        private readonly int _maxConcurrentDownloadCount = Consts.XFrameworkConsts.AssetManagerProperty.MaxConcurrentDownloadCount;
+        private readonly int _failedDownloadRetryCount = Consts.XFrameworkConsts.AssetManagerProperty.FailedDownloadRetryCount;
 
         private ResourcePackage _package;
         private InitResult _initResult;
@@ -57,10 +43,7 @@ namespace XFramework
 
         public delegate void ProgressCallBack(float progress);
 
-        internal override int Priority
-        {
-            get => Consts.XFrameworkConsts.ComponentPriority.AssetManager;
-        }
+        internal override int Priority => Consts.XFrameworkConsts.ComponentPriority.AssetManager;
 
         internal override void Init()
         {
@@ -78,9 +61,9 @@ namespace XFramework
             YooAssets.SetDefaultPackage(_package);
         }
 
-        internal override void Clear()
+        internal override void Shutdown()
         {
-            base.Clear();
+            base.Shutdown();
 
             ClearAssetHandlerCache();
             ClearSceneHandleCache();
@@ -92,6 +75,11 @@ namespace XFramework
             OnDownloadErrorEvent = null;
             OnDownloadUpdateEvent = null;
             OnDownloadFileBeginEvent = null;
+        }
+
+        internal override void Update(float deltaTime, float unscaledDeltaTime)
+        {
+            base.Update(deltaTime, unscaledDeltaTime);
         }
 
         #region 资源包初始化
@@ -423,13 +411,13 @@ namespace XFramework
             {
                 throw new ArgumentException("Asset address cannot be null or empty.", nameof(address));
             }
-            
+
             if (_package == null)
             {
                 Log.Error($"[XFramework] [AssetManager] Cannot load asset '{address}'. Package is not initialized.");
                 return null;
             }
-            
+
             // 检查是否已经加载
             if (_assetHandlerCache.TryGetValue(address, out AssetHandler cachedHandler))
             {
@@ -461,7 +449,10 @@ namespace XFramework
         {
             foreach (var handler in _assetHandlerCache.Values)
             {
-                handler?.Release();
+                if (handler.RefCount >= 1)
+                {
+                    handler.ForceRelease();
+                }
             }
             _assetHandlerCache.Clear();
         }

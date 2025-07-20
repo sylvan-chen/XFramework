@@ -16,28 +16,32 @@ namespace XFramework
 
         private const string DefaultStateMachineName = "default";
 
-        internal override int Priority
+        internal override int Priority => Consts.XFrameworkConsts.ComponentPriority.StateMachineManager;
+
+        internal override void Init()
         {
-            get => Consts.XFrameworkConsts.ComponentPriority.StateMachineManager;
+            base.Init();
         }
 
-        private void Update()
+        internal override void Shutdown()
         {
-            foreach (StateMachineBase stateMachine in _stateMachines.Values)
-            {
-                stateMachine.Update(Time.deltaTime, Time.unscaledDeltaTime);
-            }
-        }
-
-        internal override void Clear()
-        {
-            base.Clear();
+            base.Shutdown();
 
             foreach (StateMachineBase stateMachine in _stateMachines.Values)
             {
                 stateMachine.Destroy();
             }
             _stateMachines.Clear();
+        }
+
+        internal override void Update(float deltaTime, float unscaledDeltaTime)
+        {
+            base.Update(deltaTime, unscaledDeltaTime);
+
+            foreach (StateMachineBase stateMachine in _stateMachines.Values)
+            {
+                stateMachine.Update(deltaTime, unscaledDeltaTime);
+            }
         }
 
         public StateMachine<T> Create<T>(string name, T owner, params StateBase<T>[] states) where T : class

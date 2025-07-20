@@ -2,7 +2,7 @@ using UnityEditor;
 
 namespace XFramework.Editor
 {
-    [CustomEditor(typeof(EventManager))]
+    [CustomEditor(typeof(EventManagerDebugger))]
     internal sealed class EventManagerInspector : InspectorBase
     {
         public override void OnInspectorGUI()
@@ -15,9 +15,10 @@ namespace XFramework.Editor
                 return;
             }
 
-            EventManager targetObject = target as EventManager;
-            EditorGUILayout.LabelField("Subscribed Event Count", targetObject.SubscribedEventCount.ToString());
-            EditorGUILayout.LabelField("Delayed Event Count", targetObject.DelayedEventCount.ToString());
+            var targetObject = target as EventManagerDebugger;
+            var targetComponent = targetObject.Component as EventManager;
+            EditorGUILayout.LabelField("Subscribed Event Count", targetComponent.SubscribedEventCount.ToString());
+            EditorGUILayout.LabelField("Delayed Event Count", targetComponent.DelayedEventCount.ToString());
 
             Repaint();
         }

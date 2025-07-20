@@ -12,29 +12,16 @@ namespace XFramework
     [AddComponentMenu("XFramework/Procedure Manager")]
     public sealed class ProcedureManager : XFrameworkComponent
     {
-        [SerializeField]
-        private string[] _availableProcedureTypeNames;
-
-        [SerializeField]
-        private string _startupProcedureTypeName;
+        private readonly string[] _availableProcedureTypeNames = Consts.XFrameworkConsts.ProcedureManagerProperty.AvailableProcedureTypeNames;
+        private readonly string _startupProcedureTypeName = Consts.XFrameworkConsts.ProcedureManagerProperty.StartupProcedureTypeName;
 
         private StateMachine<ProcedureManager> _procedureStateMachine;
         private ProcedureBase _startupProcedure;
 
-        public ProcedureBase CurrentProcedure
-        {
-            get => _procedureStateMachine?.CurrentState as ProcedureBase;
-        }
+        public ProcedureBase CurrentProcedure => _procedureStateMachine?.CurrentState as ProcedureBase;
+        public float CurrentProcedureTime => _procedureStateMachine?.CurrentStateTime ?? 0;
 
-        public float CurrentProcedureTime
-        {
-            get => _procedureStateMachine == null ? 0 : _procedureStateMachine.CurrentStateTime;
-        }
-
-        internal override int Priority
-        {
-            get => Consts.XFrameworkConsts.ComponentPriority.ProcedureManager;
-        }
+        internal override int Priority => Consts.XFrameworkConsts.ComponentPriority.ProcedureManager;
 
         internal override void Init()
         {
@@ -45,7 +32,7 @@ namespace XFramework
             for (int i = 0; i < _availableProcedureTypeNames.Length; i++)
             {
                 string typeName = _availableProcedureTypeNames[i];
-                Type type = TypeHelper.GetType(typeName);
+                Type type = TypeHelper.GetType(typeName) ?? throw new InvalidOperationException($"ProcedureManager init failed. Type '{typeName}' not found.");
                 procedures[i] = Activator.CreateInstance(type) as ProcedureBase;
                 if (typeName == _startupProcedureTypeName)
                 {
@@ -59,15 +46,25 @@ namespace XFramework
             }
 
             _procedureStateMachine = Global.StateMachineManager.Create(this, procedures);
-            StartCoroutine(StartProcedureStateMachine());
         }
 
-        internal override void Clear()
+        internal override void Shutdown()
         {
-            base.Clear();
+            base.Shutdown();
+
             Global.StateMachineManager.Destroy<ProcedureManager>();
             _procedureStateMachine = null;
             _startupProcedure = null;
+        }
+
+        internal override void Update(float deltaTime, float unscaledDeltaTime)
+        {
+            base.Update(deltaTime, unscaledDeltaTime);
+        }
+
+        public void StartProcedure()
+        {
+            _procedureStateMachine.Start(_startupProcedure.GetType());
         }
 
         public T GetProcedure<T>() where T : ProcedureBase
@@ -78,16 +75,6 @@ namespace XFramework
         public bool HasProcedure<T>() where T : ProcedureBase
         {
             return _procedureStateMachine.HasState<T>();
-        }
-
-        /// <summary>
-        /// 启动流程状态机
-        /// </summary>
-        private IEnumerator StartProcedureStateMachine()
-        {
-            // 等到帧末，确保所有必要组件都启动完毕
-            yield return new WaitForEndOfFrame();
-            _procedureStateMachine.Start(_startupProcedure.GetType());
         }
     }
 }

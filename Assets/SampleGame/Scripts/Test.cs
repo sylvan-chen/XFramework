@@ -43,7 +43,7 @@ public class Test : UIPanelBase
 
         _eventBtn.onClick.AddListener(() =>
         {
-            Global.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 60);
+            Global.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 3f);
         });
         int index = 0;
 
@@ -104,10 +104,7 @@ public class Test : UIPanelBase
 
     private void OnDestroy()
     {
-        if (Global.EventManager != null)
-        {
-            Global.EventManager.Unsubscribe(TestEvent.ID, OnEventBtnClick);
-        }
+        Global.EventManager?.Unsubscribe(TestEvent.ID, OnEventBtnClick);
     }
 
     private void OnEventBtnClick(IEvent args)

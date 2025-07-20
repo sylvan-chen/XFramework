@@ -21,11 +21,17 @@ namespace XFramework
         {
             get
             {
-                if (_cachePool == null && GameLauncher.Instance != null)
+                if (_cachePool == null)
                 {
-                    _cachePool = GameLauncher.Instance.FindComponent<CachePool>();
+                    _cachePool = new CachePool();
+                    _cachePool.Init();
+                    GameLauncher.Instance.Register(_cachePool);
+#if UNITY_EDITOR
+                    var cachePoolDebugger = new GameObject("CachePoolDebugger").AddComponent<CachePoolDebugger>();
+                    cachePoolDebugger.Init(_cachePool);
+#endif
                 }
-                return _cachePool;
+                return _cachePool.IsShutDown ? null : _cachePool;
             }
         }
 
@@ -33,11 +39,17 @@ namespace XFramework
         {
             get
             {
-                if (_eventManager == null && GameLauncher.Instance != null)
+                if (_eventManager == null)
                 {
-                    _eventManager = GameLauncher.Instance.FindComponent<EventManager>();
+                    _eventManager = new EventManager();
+                    _eventManager.Init();
+                    GameLauncher.Instance.Register(_eventManager);
+#if UNITY_EDITOR
+                    var eventManagerDebugger = new GameObject("EventManagerDebugger").AddComponent<EventManagerDebugger>();
+                    eventManagerDebugger.Init(_eventManager);
+#endif
                 }
-                return _eventManager;
+                return _eventManager.IsShutDown ? null : _eventManager;
             }
         }
 
@@ -45,11 +57,13 @@ namespace XFramework
         {
             get
             {
-                if (_gameSetting == null && GameLauncher.Instance != null)
+                if (_gameSetting == null)
                 {
-                    _gameSetting = GameLauncher.Instance.FindComponent<GameSetting>();
+                    _gameSetting = new GameSetting();
+                    _gameSetting.Init();
+                    GameLauncher.Instance.Register(_gameSetting);
                 }
-                return _gameSetting;
+                return _gameSetting.IsShutDown ? null : _gameSetting;
             }
         }
 
@@ -57,11 +71,13 @@ namespace XFramework
         {
             get
             {
-                if (_stateMachineManager == null && GameLauncher.Instance != null)
+                if (_stateMachineManager == null)
                 {
-                    _stateMachineManager = GameLauncher.Instance.FindComponent<StateMachineManager>();
+                    _stateMachineManager = new StateMachineManager();
+                    _stateMachineManager.Init();
+                    GameLauncher.Instance.Register(_stateMachineManager);
                 }
-                return _stateMachineManager;
+                return _stateMachineManager.IsShutDown ? null : _stateMachineManager;
             }
         }
 
@@ -69,11 +85,17 @@ namespace XFramework
         {
             get
             {
-                if (_poolManager == null && GameLauncher.Instance != null)
+                if (_poolManager == null)
                 {
-                    _poolManager = GameLauncher.Instance.FindComponent<PoolManager>();
+                    _poolManager = new PoolManager();
+                    _poolManager.Init();
+                    GameLauncher.Instance.Register(_poolManager);
+#if UNITY_EDITOR
+                    var poolManagerDebugger = new GameObject("PoolManagerDebugger").AddComponent<PoolManagerDebugger>();
+                    poolManagerDebugger.Init(_poolManager);
+#endif
                 }
-                return _poolManager;
+                return _poolManager.IsShutDown ? null : _poolManager;
             }
         }
 
@@ -81,11 +103,17 @@ namespace XFramework
         {
             get
             {
-                if (_procedureManager == null && GameLauncher.Instance != null)
+                if (_procedureManager == null)
                 {
-                    _procedureManager = GameLauncher.Instance.FindComponent<ProcedureManager>();
+                    _procedureManager = new ProcedureManager();
+                    _procedureManager.Init();
+                    GameLauncher.Instance.Register(_procedureManager);
+#if UNITY_EDITOR
+                    var procedureManagerDebugger = new GameObject("ProcedureManagerDebugger").AddComponent<ProcedureManagerDebugger>();
+                    procedureManagerDebugger.Init(_procedureManager);
+#endif
                 }
-                return _procedureManager;
+                return _procedureManager.IsShutDown ? null : _procedureManager;
             }
         }
 
@@ -93,11 +121,13 @@ namespace XFramework
         {
             get
             {
-                if (_assetManager == null && GameLauncher.Instance != null)
+                if (_assetManager == null)
                 {
-                    _assetManager = GameLauncher.Instance.FindComponent<AssetManager>();
+                    _assetManager = new AssetManager();
+                    _assetManager.Init();
+                    GameLauncher.Instance.Register(_assetManager);
                 }
-                return _assetManager;
+                return _assetManager.IsShutDown ? null : _assetManager;
             }
         }
 
@@ -105,11 +135,13 @@ namespace XFramework
         {
             get
             {
-                if (_uiManager == null && GameLauncher.Instance != null)
+                if (_uiManager == null)
                 {
-                    _uiManager = GameLauncher.Instance.FindComponent<UIManager>();
+                    _uiManager = new UIManager();
+                    _uiManager.Init();
+                    GameLauncher.Instance.Register(_uiManager);
                 }
-                return _uiManager;
+                return _uiManager.IsShutDown ? null : _uiManager;
             }
         }
 

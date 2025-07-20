@@ -68,7 +68,7 @@ namespace XFramework
         /// <summary>
         /// 将面板推入当前层的栈顶
         /// </summary>
-        public void AddPanel(UIPanelBase panel)
+        public void OpenPanel(UIPanelBase panel)
         {
             if (panel == null)
             {
@@ -89,6 +89,7 @@ namespace XFramework
                 }
             }
 
+            panel.Show();
             _panelStack.Push(panel);
             panel.transform.SetParent(Transform, false);
         }
@@ -96,7 +97,7 @@ namespace XFramework
         /// <summary>
         /// 移除指定的面板
         /// </summary>
-        public void RemovePanel(UIPanelBase panel)
+        public void ClosePanel(UIPanelBase panel)
         {
             if (panel == null)
             {

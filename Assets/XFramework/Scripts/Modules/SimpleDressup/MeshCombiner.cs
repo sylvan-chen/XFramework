@@ -16,7 +16,7 @@ namespace SimpleDressup
         /// </summary>
         public struct CombineInstance
         {
-            public DressupMesh MeshData;           // 网格数据
+            public DressupMesh MeshData;          // 网格数据
             public Material[] Materials;          // 材质数组
             public int[] TargetSubmeshIndices;    // 目标子网格索引映射
 
@@ -24,7 +24,14 @@ namespace SimpleDressup
             {
                 MeshData = meshData;
                 Materials = materials;
-                TargetSubmeshIndices = new int[meshData?.SubMeshes?.Length ?? 0];
+                if (meshData != null)
+                {
+                    TargetSubmeshIndices = new int[meshData.SubMeshes?.Length ?? 0];
+                }
+                else
+                {
+                    TargetSubmeshIndices = new int[0];
+                }
             }
         }
 
@@ -60,11 +67,11 @@ namespace SimpleDressup
 
             if (instances == null || instances.Count == 0)
             {
-                Log.Warning("MeshCombiner: 合并实例列表为空");
+                Log.Warning("[MeshCombiner] Combine instances list is empty.");
                 return result;
             }
 
-            Log.Debug($"MeshCombiner: 开始合并 {instances.Count} 个网格");
+            Log.Debug($"[MeshCombiner] Start combining {instances.Count} meshes.");
 
             try
             {
@@ -88,12 +95,12 @@ namespace SimpleDressup
                     result.BindPoses = _combinedBindPoses.ToArray();
                     result.RootBone = rootBone ?? (_combinedBones.Count > 0 ? _combinedBones[0] : null);
 
-                    Log.Debug($"MeshCombiner: 合并成功 - 顶点数:{_combinedVertices.Count}, 子网格数:{_combinedTriangles.Length}");
+                    Log.Debug($"[MeshCombiner] Combine success - Vertices: {_combinedVertices.Count}, SubMeshes: {_combinedTriangles.Length}.");
                 }
             }
             catch (System.Exception e)
             {
-                Log.Error($"MeshCombiner: 合并过程出错 - {e.Message}");
+                Log.Error($"[MeshCombiner] Combine process error - {e.Message}");
             }
 
             return result;
@@ -173,7 +180,7 @@ namespace SimpleDressup
                 AddBindPoseForBone(bone, instances);
             }
 
-            Log.Debug($"MeshCombiner: 构建了 {_combinedBones.Count} 个骨骼的映射");
+            Log.Debug($"[MeshCombiner] Built mapping for {_combinedBones.Count} bones.");
         }
 
         /// <summary>
@@ -374,7 +381,7 @@ namespace SimpleDressup
             }
             catch (System.Exception e)
             {
-                Log.Error($"MeshCombiner: 创建网格失败 - {e.Message}");
+                Log.Error($"[MeshCombiner] Failed to create mesh - {e.Message}.");
                 if (mesh != null)
                     Object.DestroyImmediate(mesh);
                 return null;

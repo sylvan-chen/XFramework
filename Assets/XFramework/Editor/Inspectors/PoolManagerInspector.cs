@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace XFramework.Editor
 {
-    [CustomEditor(typeof(PoolManager))]
+    [CustomEditor(typeof(PoolManagerDebugger))]
     internal sealed class PoolManagerInspector : InspectorBase
     {
         private readonly HashSet<string> _expandedFoldout = new();
@@ -21,11 +21,12 @@ namespace XFramework.Editor
                 return;
             }
 
-            PoolManager targetObject = target as PoolManager;
+            var targetObject = target as PoolManagerDebugger;
+            var targetComponent = targetObject.Component as PoolManager;
 
-            EditorGUILayout.LabelField("Pool Count", targetObject.Count.ToString());
+            EditorGUILayout.LabelField("Pool Count", targetComponent.Count.ToString());
 
-            PoolBase[] pools = targetObject.GetAllPools();
+            PoolBase[] pools = targetComponent.GetAllPools();
             for (int i = 0; i < pools.Length; i++)
             {
                 DrawPool(pools[i], pools[i].GetAllPoolObjectInfos());
@@ -101,7 +102,7 @@ namespace XFramework.Editor
                                     {
                                         stateText = "Idle";
                                         double remainingTime = (poolObjectInfo.LastUseTime - DateTime.MinValue).TotalSeconds + pool.ObjectExpiredTime;
-                                        if (remainingTime.CompareTo(PoolManager.InfinityObjectExpiredTime) >= 0)
+                                        if (remainingTime.CompareTo(PoolManager.DefaultObjectExpiredTime) >= 0)
                                         {
                                             idleTimeText = "INF";
                                         }

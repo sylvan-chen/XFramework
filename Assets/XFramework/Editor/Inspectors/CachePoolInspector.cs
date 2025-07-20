@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using XFramework.Utils;
 
 namespace XFramework.Editor
 {
-    [CustomEditor(typeof(CachePool))]
+    [CustomEditor(typeof(CachePoolDebugger))]
     internal class CachePoolInspector : InspectorBase
     {
         private readonly Dictionary<string, List<CacheCollectionInfo>> _cacheCollectionInfosDict = new();
@@ -23,12 +22,14 @@ namespace XFramework.Editor
             }
 
             // 选项：是否显示完整类型名
-            CachePool targetObject = target as CachePool;
+            var targetObject = target as CachePoolDebugger;
+            var targetComponent = targetObject.Component as CachePool;
+
             _showFullTypeName = EditorGUILayout.Toggle("Show Full Type Name", _showFullTypeName);
 
             // 获取缓存池信息
             _cacheCollectionInfosDict.Clear();
-            CacheCollectionInfo[] cacheCollectionInfoArray = Global.CachePool.GetAllCacheCollectionInfos();
+            CacheCollectionInfo[] cacheCollectionInfoArray = targetComponent.GetAllCacheCollectionInfos();
             foreach (CacheCollectionInfo cacheCollectionInfo in cacheCollectionInfoArray)
             {
                 string assemblyName = cacheCollectionInfo.CacheType.Assembly.GetName().Name;

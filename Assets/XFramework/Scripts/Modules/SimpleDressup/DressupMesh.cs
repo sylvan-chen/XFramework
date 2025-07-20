@@ -11,6 +11,22 @@ namespace SimpleDressup
     [CreateAssetMenu(fileName = "New Dressup Mesh", menuName = "SimpleDressup/Dressup Mesh")]
     public class DressupMesh : ScriptableObject
     {
+        /// <summary>
+        /// 子网格信息 - 材质和子网格一一对应
+        /// </summary>
+        [Serializable]
+        public struct SubMeshInfo
+        {
+            [Tooltip("子网格的三角形索引起始位置")]
+            public int IndexStart;
+
+            [Tooltip("子网格的三角形索引数量")]
+            public int IndexCount;
+
+            [Tooltip("对应的材质索引")]
+            public int MaterialIndex;
+        }
+
         [Header("基础信息")]
         public string MeshName;
         public DressupSlotType SlotType;
@@ -50,7 +66,7 @@ namespace SimpleDressup
         {
             if (renderer == null || renderer.sharedMesh == null)
             {
-                Log.Error("DressupMesh: SkinnedMeshRenderer or Mesh is null");
+                Log.Error("[DressupMesh] SkinnedMeshRenderer or Mesh is null.");
                 return;
             }
 
@@ -83,7 +99,7 @@ namespace SimpleDressup
                 };
             }
 
-            Log.Debug($"DressupMesh: 成功提取网格数据 - 顶点数:{Vertices.Length}, 子网格数:{subMeshCount}");
+            Log.Debug($"[DressupMesh] Extract mesh from renderer successfully - Vertices: {Vertices.Length}, SubMeshes: {subMeshCount}");
         }
 
         /// <summary>
@@ -94,22 +110,6 @@ namespace SimpleDressup
             return Vertices != null && Vertices.Length > 0 &&
                    Triangles != null && Triangles.Length > 0 &&
                    SubMeshes != null && SubMeshes.Length > 0;
-        }
-
-        /// <summary>
-        /// 子网格信息 - 每个材质对应一个子网格
-        /// </summary>
-        [Serializable]
-        public struct SubMeshInfo
-        {
-            [Tooltip("子网格的三角形索引起始位置")]
-            public int IndexStart;
-
-            [Tooltip("子网格的三角形索引数量")]
-            public int IndexCount;
-
-            [Tooltip("对应的材质索引")]
-            public int MaterialIndex;
         }
     }
 }

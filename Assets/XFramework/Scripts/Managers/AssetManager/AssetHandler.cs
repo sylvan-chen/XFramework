@@ -39,7 +39,7 @@ namespace XFramework
             {
                 throw new ArgumentException("Asset address cannot be null or empty.", nameof(address));
             }
-            
+
             _handle = handle;
             _address = address;
             RefCount = 1; // 初始化引用计数为 1
@@ -73,15 +73,22 @@ namespace XFramework
             else if (RefCount == 1)
             {
                 Log.Debug($"[XFramework] [AssetHandler] Releasing asset '{_address}'");
-                RefCount = 0; // 释放时将引用计数置为 0
                 _handle?.Release();
                 _handle = null;
+                RefCount = 0;
             }
             else
             {
                 Log.Debug($"[XFramework] [AssetHandler] Decreasing ref count for asset '{_address}', current count: {RefCount}");
                 RefCount--; // 仅减少引用计数
             }
+        }
+
+        internal void ForceRelease()
+        {
+            _handle?.Release();
+            _handle = null;
+            RefCount = 0;
         }
     }
 }

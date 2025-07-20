@@ -12,15 +12,13 @@ namespace XFramework
     {
         private Camera _uiCamera;
         private Transform _uiRoot;
+        private Transform _loadedPanelRoot;
         private readonly Dictionary<int, UILayer> _layers = new();
         private readonly Dictionary<int, UIPanelBase> _loadedPanels = new();
         private readonly Dictionary<int, UIPanelBase> _openedPanels = new();
         private readonly List<AssetHandler> _assetHandlers = new();
 
-        internal override int Priority
-        {
-            get => Consts.XFrameworkConsts.ComponentPriority.UIManager;
-        }
+        internal override int Priority => Consts.XFrameworkConsts.ComponentPriority.UIManager;
 
         internal override void Init()
         {
@@ -31,11 +29,38 @@ namespace XFramework
                 _uiRoot = new GameObject("[UIRoot]").transform;
                 _uiRoot.SetParent(null);
                 _uiRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-                DontDestroyOnLoad(_uiRoot.gameObject);
-                Log.Debug("[XFramework] UI root created at runtime.");
+                Object.DontDestroyOnLoad(_uiRoot.gameObject);
+                _loadedPanelRoot = new GameObject("[LoadedPanels]").transform;
+                _loadedPanelRoot.SetParent(_uiRoot, false);
             }
             InitUICamera();
             InitUILayers();
+        }
+
+        internal override void Shutdown()
+        {
+            base.Shutdown();
+
+            foreach (var handler in _assetHandlers)
+            {
+                handler.Release();
+            }
+            _assetHandlers.Clear();
+            _loadedPanels.Clear();
+            _openedPanels.Clear();
+            _layers.Clear();
+
+            if (_uiRoot != null)
+            {
+                Object.Destroy(_uiRoot.gameObject);
+                _uiRoot = null;
+                Log.Debug("[XFramework] UI root destroyed.");
+            }
+        }
+
+        internal override void Update(float deltaTime, float unscaledDeltaTime)
+        {
+            base.Update(deltaTime, unscaledDeltaTime);
         }
 
         private void InitUICamera()
@@ -54,7 +79,7 @@ namespace XFramework
             _uiCamera.useOcclusionCulling = false;                     // 不需要遮挡剔除，节约性能
         }
 
-        public void InitUILayers()
+        private void InitUILayers()
         {
             var configTable = ConfigTableHelper.GetTable<UILayerConfigTable>();
             foreach (var config in configTable.Configs)
@@ -96,54 +121,54 @@ namespace XFramework
             return null;
         }
 
-        public async UniTask<UIPanelBase> OpenPanelAsync(int id)
+        public async UniTask<UIPanelBase> LoadPanelAsync(int id)
         {
-            UILayer layer;
             // 检查缓存
-            if (_openedPanels.TryGetValue(id, out var openedPanel))
+            if (_loadedPanels.TryGetValue(id, out var loadedPanel))
             {
-                return openedPanel;
-            }
-            else if (_loadedPanels.TryGetValue(id, out var loadedPanel))
-            {
-                layer = GetUILayer(loadedPanel.ParentLayerId);
-                if (layer == null)
-                {
-                    Log.Error($"[XFramework] [UIManager] UILayer for panel '{id}' not found.");
-                    return null;
-                }
-                layer.AddPanel(loadedPanel);
-                _openedPanels[id] = loadedPanel;
                 return loadedPanel;
             }
 
             var configTable = ConfigTableHelper.GetTable<UIPanelConfigTable>();
             var config = configTable.GetConfigById(id);
-
-            // 加载新界面
             var assetHandler = await Global.AssetManager.LoadAssetAsync<GameObject>(config.Address);
             _assetHandlers.Add(assetHandler);
             var panelObj = await assetHandler.InstantiateAsync();
             if (!panelObj.TryGetComponent<UIPanelBase>(out var panel))
             {
                 Log.Error($"[XFramework] [UIManager] UIPanelBase component not found in panel object for '{id}'.");
-                Destroy(panelObj);
+                Object.Destroy(panelObj);
                 return null;
             }
             panel.Init(config);
-            layer = GetUILayer(config.ParentLayer);
-            if (layer == null)
+            panel.transform.SetParent(_loadedPanelRoot, false);
+            _loadedPanels[config.Id] = panel;
+            return panel;
+        }
+
+        public UIPanelBase OpenPanel(int id)
+        {
+            if (_openedPanels.TryGetValue(id, out var openedPanel))        // 已经打开
             {
-                Log.Error($"[XFramework] [UIManager] UILayer for panel '{id}' not found.");
-                Destroy(panelObj);
+                return openedPanel;
+            }
+            else if (_loadedPanels.TryGetValue(id, out var loadedPanel))   // 已经加载但未打开
+            {
+                var layer = GetUILayer(loadedPanel.ParentLayerId);
+                if (layer == null)
+                {
+                    Log.Error($"[XFramework] [UIManager] UILayer({loadedPanel.ParentLayerId}) for panel({id}) not found.");
+                    return null;
+                }
+                layer.OpenPanel(loadedPanel);
+                _openedPanels[id] = loadedPanel;
+                return loadedPanel;
+            }
+            else
+            {
+                Log.Error($"[XFramework] [UIManager] Panel({id}) is unloaded.");
                 return null;
             }
-            layer.AddPanel(panel);
-            // 缓存界面
-            _loadedPanels[config.Id] = panel;
-            _openedPanels[config.Id] = panel;
-            Log.Debug($"[XFramework] [UIManager] Opened panel '{panel.Name}' ({panel.Id}).");
-            return panel;
         }
 
         public void ClosePanel(int id)
@@ -151,15 +176,18 @@ namespace XFramework
             if (_openedPanels.TryGetValue(id, out var openedPanel))
             {
                 var layer = GetUILayer(openedPanel.ParentLayerId);
-                layer?.RemovePanel(openedPanel);
+                layer?.ClosePanel(openedPanel);
                 _openedPanels.Remove(id);
-                _loadedPanels.Remove(id);
-                Destroy(openedPanel.gameObject);
-                Log.Debug($"[XFramework] [UIManager] Closed panel '{openedPanel.Name}' ({openedPanel.Id}).");
             }
-            else
+        }
+
+        public void UnloadPanel(int id)
+        {
+            if (_loadedPanels.TryGetValue(id, out var loadedPanel))
             {
-                Log.Warning($"[XFramework] [UIManager] Attempted to close panel '{id}' that is not currently opened.");
+                ClosePanel(id);
+                _loadedPanels.Remove(id);
+                Object.Destroy(loadedPanel.gameObject);
             }
         }
     }

@@ -11,14 +11,14 @@ namespace XFramework
         {
             public IEvent Event;
             public EventHandlerChain HandlerChain;
-            public int DelayFrame;
+            public float DelaySeconds;
 
-            public static DelayEventWrapper Create(IEvent evt, EventHandlerChain handlerChain, int delayFrame)
+            public static DelayEventWrapper Create(IEvent evt, EventHandlerChain handlerChain, float delaySeconds)
             {
                 var wrapper = Global.CachePool.Spawn<DelayEventWrapper>();
                 wrapper.Event = evt ?? throw new ArgumentNullException(nameof(evt), "Spawn DelayEventWrapper failed. Args is null.");
                 wrapper.HandlerChain = handlerChain ?? throw new ArgumentNullException(nameof(handlerChain), "Spawn DelayEventWrapper failed. HandlerChain is null.");
-                wrapper.DelayFrame = delayFrame;
+                wrapper.DelaySeconds = delaySeconds;
                 return wrapper;
             }
 
@@ -32,7 +32,7 @@ namespace XFramework
                 Event.Destroy();
                 Event = null;
                 HandlerChain = null;
-                DelayFrame = 0;
+                DelaySeconds = 0;
             }
         }
     }

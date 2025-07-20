@@ -15,20 +15,27 @@ namespace XFramework
         /// </summary>
         public int CacheCollectionCount => _cacheCollections.Count;
 
-        internal override int Priority
+        internal override int Priority => Consts.XFrameworkConsts.ComponentPriority.CachePool;
+
+        internal override void Init()
         {
-            get => Consts.XFrameworkConsts.ComponentPriority.CachePool;
+            base.Init();
         }
 
-        internal override void Clear()
+        internal override void Shutdown()
         {
-            base.Clear();
+            base.Shutdown();
 
             foreach (CacheCollection cacheCollection in _cacheCollections.Values)
             {
                 cacheCollection.DiscardAll();
             }
             _cacheCollections.Clear();
+        }
+
+        internal override void Update(float deltaTime, float unscaledDeltaTime)
+        {
+            base.Update(deltaTime, unscaledDeltaTime);
         }
 
         public CacheCollectionInfo[] GetAllCacheCollectionInfos()

@@ -30,8 +30,8 @@ namespace XFramework
             _address = config.Address;
             _parentLayerId = config.ParentLayer;
 
-            gameObject.SetActive(true);
-            _isVisible = true;
+            gameObject.SetActive(false); // 初始状态为隐藏
+            _isVisible = false;
             _isPaused = false;
 
             OnInit();

@@ -9,39 +9,39 @@ namespace XFramework
     [AddComponentMenu("XFramework/Pool Manager")]
     public sealed class PoolManager : XFrameworkComponent
     {
-        public const int MaxCapacity = int.MaxValue;
-        public const float InfinityObjectExpiredTime = float.MaxValue;
-        public const float InfinityAutoClearInterval = float.MaxValue;
+        public const int DefaultCapacity = int.MaxValue;
+        public const float DefaultObjectExpiredTime = float.MaxValue;
+        public const float DefaultAutoClearInterval = float.MaxValue;
 
         private readonly Dictionary<Type, PoolBase> _poolDict = new();
 
-        public int Count
+        public int Count => _poolDict.Count;
+
+        internal override int Priority => Consts.XFrameworkConsts.ComponentPriority.PoolManager;
+
+        internal override void Init()
         {
-            get => _poolDict.Count;
+            base.Init();
         }
 
-        internal override int Priority
+        internal override void Shutdown()
         {
-            get => Consts.XFrameworkConsts.ComponentPriority.PoolManager;
-        }
-
-        private void Update()
-        {
-            foreach (PoolBase pool in _poolDict.Values)
-            {
-                pool.Update(Time.deltaTime, Time.unscaledDeltaTime);
-            }
-        }
-
-        internal override void Clear()
-        {
-            base.Clear();
-
+            base.Shutdown();
             foreach (PoolBase pool in _poolDict.Values)
             {
                 pool.Destroy();
             }
             _poolDict.Clear();
+        }
+
+        internal override void Update(float deltaTime, float unscaledDeltaTime)
+        {
+            base.Update(deltaTime, unscaledDeltaTime);
+
+            foreach (PoolBase pool in _poolDict.Values)
+            {
+                pool.Update(deltaTime, unscaledDeltaTime);
+            }
         }
 
         public PoolBase[] GetAllPools()
@@ -113,17 +113,17 @@ namespace XFramework
 
         public Pool<T> CreatePool<T>() where T : class
         {
-            return CreatePoolInternal<T>(false, MaxCapacity, InfinityObjectExpiredTime, InfinityAutoClearInterval);
+            return CreatePoolInternal<T>(false, DefaultCapacity, DefaultObjectExpiredTime, DefaultAutoClearInterval);
         }
 
         public Pool<T> CreatePool<T>(int capacity) where T : class
         {
-            return CreatePoolInternal<T>(false, capacity, InfinityObjectExpiredTime, InfinityAutoClearInterval);
+            return CreatePoolInternal<T>(false, capacity, DefaultObjectExpiredTime, DefaultAutoClearInterval);
         }
 
         public Pool<T> CreatePool<T>(float objectExpiredTime, float autoClearInterval) where T : class
         {
-            return CreatePoolInternal<T>(false, MaxCapacity, objectExpiredTime, autoClearInterval);
+            return CreatePoolInternal<T>(false, DefaultCapacity, objectExpiredTime, autoClearInterval);
         }
 
         public Pool<T> CreatePool<T>(int capacity, float objectExpiredTime, float autoClearInterval) where T : class
@@ -133,17 +133,17 @@ namespace XFramework
 
         public PoolBase CreatePool(Type objectType)
         {
-            return CreatePoolInternal(objectType, false, MaxCapacity, InfinityObjectExpiredTime, InfinityAutoClearInterval);
+            return CreatePoolInternal(objectType, false, DefaultCapacity, DefaultObjectExpiredTime, DefaultAutoClearInterval);
         }
 
         public PoolBase CreatePool(Type objectType, int capacity)
         {
-            return CreatePoolInternal(objectType, false, capacity, InfinityObjectExpiredTime, InfinityAutoClearInterval);
+            return CreatePoolInternal(objectType, false, capacity, DefaultObjectExpiredTime, DefaultAutoClearInterval);
         }
 
         public PoolBase CreatePool(Type objectType, float objectExpiredTime, float autoClearInterval)
         {
-            return CreatePoolInternal(objectType, false, MaxCapacity, objectExpiredTime, autoClearInterval);
+            return CreatePoolInternal(objectType, false, DefaultCapacity, objectExpiredTime, autoClearInterval);
         }
 
         public PoolBase CreatePool(Type objectType, int capacity, float objectExpiredTime, float autoClearInterval)
@@ -153,17 +153,17 @@ namespace XFramework
 
         public Pool<T> CreateMultiReferencePool<T>() where T : class
         {
-            return CreatePoolInternal<T>(true, MaxCapacity, InfinityObjectExpiredTime, InfinityAutoClearInterval);
+            return CreatePoolInternal<T>(true, DefaultCapacity, DefaultObjectExpiredTime, DefaultAutoClearInterval);
         }
 
         public Pool<T> CreateMultiReferencePool<T>(int capacity) where T : class
         {
-            return CreatePoolInternal<T>(true, capacity, InfinityObjectExpiredTime, InfinityAutoClearInterval);
+            return CreatePoolInternal<T>(true, capacity, DefaultObjectExpiredTime, DefaultAutoClearInterval);
         }
 
         public Pool<T> CreateMultiReferencePool<T>(float objectExpiredTime, float autoClearInterval) where T : class
         {
-            return CreatePoolInternal<T>(true, MaxCapacity, objectExpiredTime, autoClearInterval);
+            return CreatePoolInternal<T>(true, DefaultCapacity, objectExpiredTime, autoClearInterval);
         }
 
         public Pool<T> CreateMultiReferencePool<T>(int capacity, float objectExpiredTime, float autoClearInterval) where T : class
@@ -173,17 +173,17 @@ namespace XFramework
 
         public PoolBase CreateMultiReferencePool(Type objectType)
         {
-            return CreatePoolInternal(objectType, true, MaxCapacity, InfinityObjectExpiredTime, InfinityAutoClearInterval);
+            return CreatePoolInternal(objectType, true, DefaultCapacity, DefaultObjectExpiredTime, DefaultAutoClearInterval);
         }
 
         public PoolBase CreateMultiReferencePool(Type objectType, int capacity)
         {
-            return CreatePoolInternal(objectType, true, capacity, InfinityObjectExpiredTime, InfinityAutoClearInterval);
+            return CreatePoolInternal(objectType, true, capacity, DefaultObjectExpiredTime, DefaultAutoClearInterval);
         }
 
         public PoolBase CreateMultiReferencePool(Type objectType, float objectExpiredTime, float autoClearInterval)
         {
-            return CreatePoolInternal(objectType, true, MaxCapacity, objectExpiredTime, autoClearInterval);
+            return CreatePoolInternal(objectType, true, DefaultCapacity, objectExpiredTime, autoClearInterval);
         }
 
         public PoolBase CreateMultiReferencePool(Type objectType, int capacity, float objectExpiredTime, float autoClearInterval)

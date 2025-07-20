@@ -14,12 +14,16 @@ public sealed class ProcedurePreload : ProcedureBase
 
     private async UniTask Preload()
     {
+        await Global.UIManager.LoadPanelAsync(100001);
+        await Global.UIManager.LoadPanelAsync(100002);
+        await Global.UIManager.LoadPanelAsync(100003);
+
         await Global.AssetManager.LoadSceneAsync("Game01", LoadSceneMode.Single);
-        await Global.UIManager.OpenPanelAsync(100001);
+        Global.UIManager.OpenPanel(100001);
         await UniTask.Delay(2000);
-        await Global.UIManager.OpenPanelAsync(100002);
+        Global.UIManager.OpenPanel(100002);
         await UniTask.Delay(3000);
-        await Global.UIManager.OpenPanelAsync(100003);
+        Global.UIManager.OpenPanel(100003);
         await UniTask.Delay(5000);
         Global.UIManager.ClosePanel(100003);
     }
