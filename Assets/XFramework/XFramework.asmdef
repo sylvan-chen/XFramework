@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "YooAsset",
-        "UniTask"
+        "UniTask",
+        "MagicaClothV2"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -10,6 +10,12 @@ MobileDependencyResolver/
 MobileDependencyResolver.meta
 TextMesh Pro/
 TextMesh Pro.meta
+Example/
+Examples/
+Examples & Extras/
+MagicDressup/
+MagicaDressup/
+
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
