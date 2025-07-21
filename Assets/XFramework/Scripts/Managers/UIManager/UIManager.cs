@@ -12,7 +12,7 @@ namespace XFramework
     {
         private Camera _uiCamera;
         private Transform _uiRoot;
-        private Transform _loadedPanelRoot;
+        private Transform _closedPanelRoot;
         private readonly Dictionary<int, UILayer> _layers = new();
         private readonly Dictionary<int, UIPanelBase> _loadedPanels = new();
         private readonly Dictionary<int, UIPanelBase> _openedPanels = new();
@@ -30,11 +30,11 @@ namespace XFramework
                 _uiRoot.SetParent(null);
                 _uiRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
                 Object.DontDestroyOnLoad(_uiRoot.gameObject);
-                _loadedPanelRoot = new GameObject("[LoadedPanels]").transform;
-                _loadedPanelRoot.SetParent(_uiRoot, false);
+                _closedPanelRoot = new GameObject("[ClosedPanels]").transform;
+                _closedPanelRoot.SetParent(_uiRoot, false);
             }
-            InitUICamera();
-            InitUILayers();
+            CreateUICamera();
+            CreateUILayers();
         }
 
         internal override void Shutdown()
@@ -63,7 +63,7 @@ namespace XFramework
             base.Update(deltaTime, unscaledDeltaTime);
         }
 
-        private void InitUICamera()
+        private void CreateUICamera()
         {
             // 创建专用的UI摄像机
             var cameraObj = new GameObject("[UICamera]");
@@ -79,7 +79,7 @@ namespace XFramework
             _uiCamera.useOcclusionCulling = false;                     // 不需要遮挡剔除，节约性能
         }
 
-        private void InitUILayers()
+        private void CreateUILayers()
         {
             var configTable = ConfigTableHelper.GetTable<UILayerConfigTable>();
             foreach (var config in configTable.Configs)
@@ -141,7 +141,7 @@ namespace XFramework
                 return null;
             }
             panel.Init(config);
-            panel.transform.SetParent(_loadedPanelRoot, false);
+            panel.transform.SetParent(_closedPanelRoot, false);
             _loadedPanels[config.Id] = panel;
             return panel;
         }
@@ -154,10 +154,10 @@ namespace XFramework
             }
             else if (_loadedPanels.TryGetValue(id, out var loadedPanel))   // 已经加载但未打开
             {
-                var layer = GetUILayer(loadedPanel.ParentLayerId);
+                var layer = GetUILayer(loadedPanel.Config.ParentLayer);
                 if (layer == null)
                 {
-                    Log.Error($"[XFramework] [UIManager] UILayer({loadedPanel.ParentLayerId}) for panel({id}) not found.");
+                    Log.Error($"[XFramework] [UIManager] UILayer({loadedPanel.Config.ParentLayer}) for panel({id}) not found.");
                     return null;
                 }
                 layer.OpenPanel(loadedPanel);
@@ -175,10 +175,16 @@ namespace XFramework
         {
             if (_openedPanels.TryGetValue(id, out var openedPanel))
             {
-                var layer = GetUILayer(openedPanel.ParentLayerId);
+                var layer = GetUILayer(openedPanel.Config.ParentLayer);
                 layer?.ClosePanel(openedPanel);
                 _openedPanels.Remove(id);
+                openedPanel.transform.SetParent(_closedPanelRoot, false);
             }
+        }
+
+        public void ClosePanel(UIPanelBase panel)
+        {
+            ClosePanel(panel.Config.Id);
         }
 
         public void UnloadPanel(int id)
@@ -187,8 +193,14 @@ namespace XFramework
             {
                 ClosePanel(id);
                 _loadedPanels.Remove(id);
+                loadedPanel.Clear();
                 Object.Destroy(loadedPanel.gameObject);
             }
+        }
+
+        public void UnloadPanel(UIPanelBase panel)
+        {
+            UnloadPanel(panel.Config.Id);
         }
     }
 }

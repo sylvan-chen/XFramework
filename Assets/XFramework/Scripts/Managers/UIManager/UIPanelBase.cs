@@ -8,59 +8,63 @@ namespace XFramework
     /// </summary>
     public abstract class UIPanelBase : MonoBehaviour
     {
-        private int _id;
-        private string _name;
-        private string _address;
-        private int _parentLayerId;
+        private UIPanelConfig _config;
+        private bool _isInitialized;
         private bool _isVisible;
         private bool _isPaused;
 
-        public int Id => _id;
-        public string Name => _name;
-        public string Address => _address;
-        public int ParentLayerId => _parentLayerId;
+        public UIPanelConfig Config => _config;
+        public bool IsInitialized => _isInitialized;
         public bool IsVisible => _isVisible;
         public bool IsPaused => _isPaused;
 
         public void Init(UIPanelConfig config)
         {
-            gameObject.name = config.Name;
-            _id = config.Id;
-            _name = config.Name;
-            _address = config.Address;
-            _parentLayerId = config.ParentLayer;
-
-            gameObject.SetActive(false); // 初始状态为隐藏
-            _isVisible = false;
+            _config = config;
+            SetVisibilityInternal(false); // 初始状态为隐藏
             _isPaused = false;
 
             OnInit();
+
+            _isInitialized = true;
+        }
+
+        public void Clear()
+        {
+            OnClear();
+
+            _config = null;
+            _isInitialized = false;
         }
 
         public void Show()
         {
-            _isVisible = true;
             SetVisibilityInternal(true);
             OnShow();
+
+            _isVisible = true;
         }
 
         public void Hide()
         {
-            _isVisible = false;
             SetVisibilityInternal(false);
             OnHide();
+
+            _isVisible = false;
         }
 
         public void Pause()
         {
-            _isPaused = true;
             OnPause();
+
+            _isPaused = true;
         }
 
         public void Resume()
         {
-            _isPaused = false;
             OnResume();
+
+            _isPaused = false;
         }
 
         protected virtual void OnInit()
@@ -83,9 +87,15 @@ namespace XFramework
         {
         }
 
+        protected virtual void OnClear()
+        {
+        }
+
         private void SetVisibilityInternal(bool isVisible)
         {
             gameObject.SetActive(isVisible);
+
+            _isVisible = isVisible;
         }
     }
 }
