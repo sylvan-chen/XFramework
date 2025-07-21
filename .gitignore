@@ -12,9 +12,12 @@ TextMesh Pro/
 TextMesh Pro.meta
 Example/
 Examples/
+Example[s].meta
 Examples & Extras/
 MagicDressup/
+MagicDressup.meta
 MagicaDressup/
+MagicaDressup.meta
 
 
 # This .gitignore file should be placed at the root of your Unity project directory
