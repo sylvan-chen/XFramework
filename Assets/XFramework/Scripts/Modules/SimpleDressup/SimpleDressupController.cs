@@ -66,7 +66,6 @@ namespace SimpleDressup
         /// </summary>
         private void Init()
         {
-
             _atlasGenerator = new AtlasGenerator(_atlasSize);
             _meshCombiner = new MeshCombiner();
 
@@ -79,7 +78,7 @@ namespace SimpleDressup
         }
 
         /// <summary>
-        /// 设置换装部件
+        /// 设置换装部件槽
         /// </summary>
         public void SetDressupSlot(DressupSlot slot)
         {
@@ -101,7 +100,7 @@ namespace SimpleDressup
 
 
         /// <summary>
-        /// 从 GameObject 创建并设置换装部件
+        /// 从 GameObject 创建并设置换装部件槽
         /// </summary>
         public void SetDressupSlotFromGameObject(GameObject dressupObject, DressupSlotType slotType)
         {
@@ -124,8 +123,7 @@ namespace SimpleDressup
         {
             if (!_isInitialized) return;
 
-            var slot = _slotMap.GetValueOrDefault(slotType);
-            if (slot != null)
+            if (_slotMap.TryGetValue(slotType, out var slot))
             {
                 _currentSlots.Remove(slot);
                 _slotMap.Remove(slotType);
@@ -269,7 +267,6 @@ namespace SimpleDressup
                 return false;
             }
 
-            // 更新换装部件的UV映射
             UpdateSlotUVMappings();
 
             Log.Debug($"[SimpleDressupController] Atlas generated successfully - Size: {_atlasSize}x{_atlasSize}");
@@ -278,7 +275,7 @@ namespace SimpleDressup
         }
 
         /// <summary>
-        /// 更新换装部件的UV映射
+        /// 更新换装部件的 UV 映射
         /// </summary>
         private void UpdateSlotUVMappings()
         {
