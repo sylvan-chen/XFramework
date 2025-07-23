@@ -339,9 +339,17 @@ namespace SimpleDressup
                 if (slot.Mesh == null || !slot.Mesh.IsValid()) continue;
 
                 // 创建使用图集的材质
-                var atlasMaterials = CreateAtlasMaterials(slot);
+                // var atlasMaterials = CreateAtlasMaterials(slot);
 
-                var instance = new MeshCombiner.CombineInstance(slot.Mesh, atlasMaterials);
+                // 暂时屏蔽合并图集功能，先跑通网格合并和材质映射
+                // 收集全部材质实例
+                var slotMaterials = new Material[slot.Materials.Length];
+                for (int i = 0; i < slot.Materials.Length; i++)
+                {
+                    slotMaterials[i] = slot.Materials[i].SourceMaterial;
+                }
+
+                var instance = new MeshCombiner.CombineInstance(slot.Mesh, slotMaterials);
 
                 // 配置子网格映射
                 ConfigureSubmeshMapping(instance, slot);
