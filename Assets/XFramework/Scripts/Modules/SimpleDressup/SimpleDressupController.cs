@@ -21,8 +21,10 @@ namespace SimpleDressup
         [SerializeField] private SkinnedMeshRenderer _targetRenderer;
         [SerializeField] private Transform _dressupParent;
 
-        // [Header("原始角色部件")]
-        // [SerializeField] private SkinnedMeshRenderer[] _originalBodyParts; // 原始角色的多个部件
+        [Header("原始角色部件")]
+        [SerializeField] private SkinnedMeshRenderer[] _bodyRenderers;
+
+        private List<SkinnedMeshRenderer> _equipmentRenderers = new();
 
         // 核心组件
         private AtlasGenerator _atlasGenerator;
@@ -113,6 +115,12 @@ namespace SimpleDressup
             var slot = ScriptableObject.CreateInstance<DressupSlot>();
             slot.SlotType = slotType;
             slot.InitializeFromGameObject(dressupObject);
+
+            if (dressupObject.TryGetComponent<SkinnedMeshRenderer>(out var renderer))
+            {
+                _equipmentRenderers.Add(renderer);
+            }
+
             SetDressupSlot(slot);
         }
 
@@ -294,36 +302,36 @@ namespace SimpleDressup
         }
 
         /// <summary>
-        /// 合并网格（支持原始多部件角色）
+        /// 合并网格
         /// </summary>
         private async UniTask<bool> CombineMeshesAsync()
         {
-            // 准备合并实例
+            // 准备合并实例（原始角色部件 + 换装槽位部件 合并）
             var combineInstances = new List<MeshCombiner.CombineInstance>();
 
-            // // 1. 首先添加原始角色部件
-            // if (_originalBodyParts != null)
-            // {
-            //     foreach (var bodyPart in _originalBodyParts)
-            //     {
-            //         if (bodyPart != null && bodyPart.sharedMesh != null)
-            //         {
-            //             // 从原始角色部件创建 DressupMesh
-            //             var bodyMesh = ScriptableObject.CreateInstance<DressupMesh>();
-            //             bodyMesh.ExtractFromRenderer(bodyPart);
+            // 1. 首先添加原始角色部件
+            if (_bodyRenderers != null)
+            {
+                foreach (var bodyPart in _bodyRenderers)
+                {
+                    if (bodyPart != null && bodyPart.sharedMesh != null)
+                    {
+                        // 从原始角色部件创建 DressupMesh
+                        var bodyMesh = ScriptableObject.CreateInstance<DressupMesh>();
+                        bodyMesh.ExtractFromRenderer(bodyPart);
 
-            //             // 使用原始材质（不使用图集，保持原样）
-            //             var originalMaterials = bodyPart.sharedMaterials;
+                        // 使用原始材质（不使用图集，保持原样）
+                        var originalMaterials = bodyPart.sharedMaterials;
 
-            //             var instance = new MeshCombiner.CombineInstance(bodyMesh, originalMaterials);
-            //             ConfigureSubmeshMapping(instance, null); // 传 null 是因为这不是装备槽位
+                        var instance = new MeshCombiner.CombineInstance(bodyMesh, originalMaterials);
+                        ConfigureSubmeshMapping(instance, null); // 传 null 是因为这不是装备槽位
 
-            //             combineInstances.Add(instance);
+                        combineInstances.Add(instance);
 
-            //             Log.Debug($"[SimpleDressupController] Added original body part: {bodyPart.name}");
-            //         }
-            //     }
-            // }
+                        Log.Debug($"[SimpleDressupController] Added original body part: {bodyPart.name}");
+                    }
+                }
+            }
 
             // 2. 然后添加装备部件
             foreach (var slot in _currentSlots)
@@ -358,8 +366,7 @@ namespace SimpleDressup
                 return false;
             }
 
-            Log.Debug($"[SimpleDressupController] Meshes combined successfully - {combineInstances.Count} instances.");
-            // Log.Debug($"[SimpleDressupController] Meshes combined successfully - {combineInstances.Count} instances (including {_originalBodyParts?.Length ?? 0} original body parts).");
+            Log.Debug($"[SimpleDressupController] Meshes combined successfully - {combineInstances.Count} instances (including {_bodyRenderers?.Length ?? 0} original body parts).");
 
             return true;
         }
@@ -404,36 +411,6 @@ namespace SimpleDressup
         }
 
         /// <summary>
-        /// 自动检测并收集原始角色部件
-        /// </summary>
-        // public void AutoDetectOriginalBodyParts()
-        // {
-        //     if (_dressupParent == null) return;
-
-        //     var allRenderers = _dressupParent.GetComponentsInChildren<SkinnedMeshRenderer>();
-        //     var bodyParts = new List<SkinnedMeshRenderer>();
-
-        //     foreach (var renderer in allRenderers)
-        //     {
-        //         // 跳过目标渲染器
-        //         if (renderer == _targetRenderer) continue;
-
-        //         // 通过名称判断是否为原始身体部件
-        //         string lowerName = renderer.name.ToLower();
-        //         if (lowerName.Contains("body") || lowerName.Contains("head") ||
-        //             lowerName.Contains("torso") || lowerName.Contains("limb") ||
-        //             lowerName.Contains("原始") || lowerName.Contains("base"))
-        //         {
-        //             bodyParts.Add(renderer);
-        //             Log.Debug($"[SimpleDressupController] Detected original body part: {renderer.name}");
-        //         }
-        //     }
-
-        //     _originalBodyParts = bodyParts.ToArray();
-        //     Log.Debug($"[SimpleDressupController] Auto-detected {_originalBodyParts.Length} original body parts.");
-        // }
-
-        /// <summary>
         /// 应用到目标渲染器
         /// </summary>
         private bool ApplyToTargetRenderer()
@@ -475,6 +452,21 @@ namespace SimpleDressup
 
                 Log.Debug("[SimpleDressupController] Successfully applied to target renderer.");
 
+                foreach (var renderer in _equipmentRenderers)
+                {
+                    if (renderer != null)
+                    {
+                        renderer.enabled = false; // 禁用原始装备渲染器
+                    }
+                }
+                foreach (var renderer in _bodyRenderers)
+                {
+                    if (renderer != null)
+                    {
+                        renderer.enabled = false; // 禁用原始角色部件渲染器
+                    }
+                }
+
                 return true;
             }
             catch (System.Exception e)
@@ -502,6 +494,7 @@ namespace SimpleDressup
             foreach (var renderer in renderers)
             {
                 if (renderer.gameObject == _targetRenderer?.gameObject) continue;
+                if (_bodyRenderers != null && _bodyRenderers.Contains(renderer)) continue;
 
                 // 尝试从名称推断槽位类型
                 var slotType = InferSlotTypeFromName(renderer.name);
