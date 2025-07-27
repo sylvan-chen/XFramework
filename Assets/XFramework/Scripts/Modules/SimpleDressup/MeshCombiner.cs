@@ -26,6 +26,7 @@ namespace XFramework.SimpleDressup
             private readonly Material _material;
             private readonly List<Vector3> _vertices = new();
             private readonly List<Vector3> _normals = new();
+            private readonly List<Vector4> _tangents = new();
             private readonly List<Vector2> _uvs = new();
             private readonly List<BoneWeight> _boneWeights = new();
             private readonly List<int> _triangles = new();
@@ -33,6 +34,7 @@ namespace XFramework.SimpleDressup
             public Material Material => _material;
             public List<Vector3> Vertices => _vertices;
             public List<Vector3> Normals => _normals;
+            public List<Vector4> Tangents => _tangents;
             public List<Vector2> Uvs => _uvs;
             public List<BoneWeight> BoneWeights => _boneWeights;
             public List<int> Triangles => _triangles;
@@ -52,6 +54,22 @@ namespace XFramework.SimpleDressup
             {
                 if (_sourceMesh == null) throw new ArgumentNullException(nameof(_sourceMesh));
 
+                // 检查源网格数据完整性
+                bool hasNormals = _sourceMesh.normals != null && _sourceMesh.normals.Length == _sourceMesh.vertices.Length;
+                bool hasTangents = _sourceMesh.tangents != null && _sourceMesh.tangents.Length == _sourceMesh.vertices.Length;
+                bool hasUV = _sourceMesh.uv != null && _sourceMesh.uv.Length == _sourceMesh.vertices.Length;
+                bool hasBoneWeights = _sourceMesh.boneWeights != null && _sourceMesh.boneWeights.Length == _sourceMesh.vertices.Length;
+
+                // 对源网格不完整的情况打印日志提醒
+                if (!hasNormals)
+                    Log.Debug($"[MeshCombiner] Mesh '{_sourceMesh.name}' missing normals, will recalculate.");
+                if (!hasTangents)
+                    Log.Debug($"[MeshCombiner] Mesh '{_sourceMesh.name}' missing tangents, will recalculate.");
+                if (!hasUV)
+                    Log.Warning($"[MeshCombiner] Mesh '{_sourceMesh.name}' missing UV coordinates, using default values. This may affect texture rendering.");
+                if (!hasBoneWeights)
+                    Log.Warning($"[MeshCombiner] Mesh '{_sourceMesh.name}' missing bone weights, using default weights. This may affect skinning.");
+
                 // 提取子网格数据
                 var submesh = _sourceMesh.GetSubMesh(_submeshIndex);
                 var triangles = _sourceMesh.GetTriangles(_submeshIndex);
@@ -70,10 +88,29 @@ namespace XFramework.SimpleDressup
                 foreach (var oldIndex in sortedVertices)
                 {
                     vertexRemapping[oldIndex] = newIndex++;
+
+                    // 顶点位置（必须存在）
                     _vertices.Add(_sourceMesh.vertices[oldIndex]);
-                    _normals.Add(_sourceMesh.normals[oldIndex]);
-                    _uvs.Add(_sourceMesh.uv[oldIndex]);
-                    _boneWeights.Add(_sourceMesh.boneWeights[oldIndex]);
+
+                    // 法线数据（如果不存在或损坏，会在后续重新计算）
+                    if (hasNormals)
+                        _normals.Add(_sourceMesh.normals[oldIndex]);
+
+                    // 切线数据（如果不存在或损坏，会在后续重新计算）
+                    if (hasTangents)
+                        _tangents.Add(_sourceMesh.tangents[oldIndex]);
+
+                    // UV坐标（无法自动计算，使用默认值，可能影响材质渲染效果）
+                    if (hasUV)
+                        _uvs.Add(_sourceMesh.uv[oldIndex]);
+                    else
+                        _uvs.Add(Vector2.zero);
+
+                    // 骨骼权重（无法自动计算，使用默认值，可能影响蒙皮效果）
+                    if (hasBoneWeights)
+                        _boneWeights.Add(_sourceMesh.boneWeights[oldIndex]);
+                    else
+                        _boneWeights.Add(new BoneWeight { weight0 = 1.0f, boneIndex0 = 0 });
                 }
                 // 三角形索引重映射
                 foreach (var triangle in triangles)
@@ -103,12 +140,14 @@ namespace XFramework.SimpleDressup
 
         private List<Transform> _combinedBones;
         private List<Matrix4x4> _combinedBindPoses;
-        private Dictionary<Transform, int> _boneIndexMap;
 
         #endregion
 
         #region 公共接口
 
+        /// <summary>
+        /// 合并所有换装部件为一个大网格（仅支持同骨骼）
+        /// </summary>
         public CombineResult Combine(List<DressupItem> items)
         {
             if (items == null || items.Count == 0)
@@ -120,7 +159,6 @@ namespace XFramework.SimpleDressup
             // 初始化骨骼数据
             _combinedBones = new List<Transform>();
             _combinedBindPoses = new List<Matrix4x4>();
-            _boneIndexMap = new Dictionary<Transform, int>();
 
             var submeshUnits = ExtractSubmeshUnits(items);
             var mergedSubmeshUnits = MergeSubmeshUnitsByMaterial(submeshUnits);
@@ -168,7 +206,6 @@ namespace XFramework.SimpleDressup
             return submeshUnits;
         }
 
-
         private void RegisterBones(Transform[] bones, Matrix4x4[] bindPoses)
         {
             if (bones == null || bindPoses == null || bones.Length != bindPoses.Length)
@@ -190,14 +227,6 @@ namespace XFramework.SimpleDressup
                 Log.Error("[MeshCombiner] Attempted to register a null bone.");
                 return;
             }
-            if (_boneIndexMap.ContainsKey(bone))
-            {
-                Log.Warning($"[MeshCombiner] Bone '{bone.name}' is already registered.");
-                return;
-            }
-
-            int boneIndex = _combinedBones.Count;
-            _boneIndexMap[bone] = boneIndex;
             _combinedBones.Add(bone);
             _combinedBindPoses.Add(bindPose);
         }
@@ -262,6 +291,7 @@ namespace XFramework.SimpleDressup
 
             var allVertices = new List<Vector3>();
             var allNormals = new List<Vector3>();
+            var allTangents = new List<Vector4>();
             var allUVs = new List<Vector2>();
             var allBoneWeights = new List<BoneWeight>();
             var allTriangles = new List<int>();
@@ -273,6 +303,7 @@ namespace XFramework.SimpleDressup
             {
                 allVertices.AddRange(unit.Vertices);
                 allNormals.AddRange(unit.Normals);
+                allTangents.AddRange(unit.Tangents);
                 allUVs.AddRange(unit.Uvs);
                 allBoneWeights.AddRange(unit.BoneWeights);
 
@@ -287,10 +318,18 @@ namespace XFramework.SimpleDressup
             // 设置合并后的网格数据
             mergedMesh.SetVertices(allVertices);
             mergedMesh.SetNormals(allNormals);
+            mergedMesh.SetTangents(allTangents);
             mergedMesh.SetUVs(0, allUVs);
             mergedMesh.boneWeights = allBoneWeights.ToArray();
             mergedMesh.SetTriangles(allTriangles, 0);
-            mergedMesh.RecalculateBounds();
+
+            // 如果原始法线数据不完整，重新计算法线
+            if (allNormals.Count == 0 || allNormals.Count != allVertices.Count)
+                mergedMesh.RecalculateNormals();
+
+            // 如果原始切线数据不完整，重新计算切线
+            if (allTangents.Count == 0 || allTangents.Count != allVertices.Count)
+                mergedMesh.RecalculateTangents();
 
             Log.Debug($"[XFramework] [MeshCombiner] Merged {unitsToMerge.Count} units for material {material.name}: " +
                      $"{allVertices.Count} vertices, {allTriangles.Count} triangles");
@@ -316,6 +355,7 @@ namespace XFramework.SimpleDressup
             // 合并所有SubmeshUnit的数据
             var finalVertices = new List<Vector3>();
             var finalNormals = new List<Vector3>();
+            var finalTangents = new List<Vector4>();
             var finalUVs = new List<Vector2>();
             var finalBoneWeights = new List<BoneWeight>();
             var finalTriangles = new List<int>[submeshUnits.Count];
@@ -334,6 +374,7 @@ namespace XFramework.SimpleDressup
                 // 添加顶点数据
                 finalVertices.AddRange(unit.Vertices);
                 finalNormals.AddRange(unit.Normals);
+                finalTangents.AddRange(unit.Tangents);
                 finalUVs.AddRange(unit.Uvs);
                 finalBoneWeights.AddRange(unit.BoneWeights);
 
@@ -347,7 +388,7 @@ namespace XFramework.SimpleDressup
             }
 
             // 创建最终网格
-            var mesh = CreateFinalCombinedMesh(finalVertices, finalNormals, finalUVs, finalBoneWeights, finalTriangles);
+            var mesh = CreateFinalCombinedMesh(finalVertices, finalNormals, finalTangents, finalUVs, finalBoneWeights, finalTriangles);
 
             if (mesh != null)
             {
@@ -369,7 +410,7 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 创建最终的合并网格
         /// </summary>
-        private Mesh CreateFinalCombinedMesh(List<Vector3> vertices, List<Vector3> normals, List<Vector2> uvs,
+        private Mesh CreateFinalCombinedMesh(List<Vector3> vertices, List<Vector3> normals, List<Vector4> tangents, List<Vector2> uvs,
             List<BoneWeight> boneWeights, List<int>[] triangles)
         {
             try
@@ -381,10 +422,9 @@ namespace XFramework.SimpleDressup
 
                 // 设置顶点数据 
                 mesh.SetVertices(vertices);
-                if (normals.Count > 0)
-                    mesh.SetNormals(normals);
-                if (uvs.Count > 0)
-                    mesh.SetUVs(0, uvs);
+                mesh.SetNormals(normals);
+                mesh.SetTangents(tangents);
+                mesh.SetUVs(0, uvs);
 
                 // 设置子网格
                 mesh.subMeshCount = triangles.Length;
@@ -403,8 +443,6 @@ namespace XFramework.SimpleDressup
                 // 设置绑定姿势
                 if (_combinedBindPoses.Count > 0)
                     mesh.bindposes = _combinedBindPoses.ToArray();
-
-                mesh.RecalculateBounds();
 
                 return mesh;
             }

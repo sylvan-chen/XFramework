@@ -253,6 +253,9 @@ namespace XFramework.SimpleDressup
             // 设置根骨骼
             _targetRenderer.rootBone = _meshCombineResult.RootBone;
 
+            // 计算合适的本地边界
+            CalculateAndSetLocalBounds(_targetRenderer);
+
             Log.Debug("[SimpleDressupController] Successfully applied to target renderer.");
 
             foreach (var item in _dressupItems)
@@ -264,6 +267,53 @@ namespace XFramework.SimpleDressup
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 计算并设置合适的本地边界
+        /// 基于所有原始部件的localBounds计算合并后的边界
+        /// </summary>
+        private void CalculateAndSetLocalBounds(SkinnedMeshRenderer targetRenderer)
+        {
+            if (_dressupItems.Count == 0)
+            {
+                Log.Warning("[SimpleDressupController] No dressup items to calculate bounds from.");
+                return;
+            }
+
+            // 计算所有部件的联合边界
+            Bounds combinedBounds = new();
+            bool firstBounds = true;
+
+            foreach (var item in _dressupItems)
+            {
+                if (item?.Renderer != null)
+                {
+                    var itemBounds = item.Renderer.localBounds;
+
+                    if (firstBounds)
+                    {
+                        combinedBounds = itemBounds;
+                        firstBounds = false;
+                    }
+                    else
+                    {
+                        combinedBounds.Encapsulate(itemBounds);
+                    }
+                }
+            }
+
+            if (!firstBounds)
+            {
+                // 设置计算出的边界
+                targetRenderer.localBounds = combinedBounds;
+
+                Log.Debug($"[SimpleDressupController] Set localBounds: center={combinedBounds.center}, size={combinedBounds.size}");
+            }
+            else
+            {
+                Log.Warning("[SimpleDressupController] No valid bounds found from dressup items.");
+            }
         }
     }
 }

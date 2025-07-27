@@ -26,7 +26,7 @@ namespace XFramework.SimpleDressup
     }
 
     /// <summary>
-    /// 服装部件
+    /// 换装部件
     /// 包含合并需要的三个重要信息：网格、材质和骨骼
     /// </summary>
     [Serializable]
