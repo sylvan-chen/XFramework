@@ -33,15 +33,16 @@ namespace XFramework.SimpleDressup
     public class DressupItem
     {
         [SerializeField] private DressupType _dressupType = DressupType.None;
-        [SerializeField] private SkinnedMeshRenderer _renderer;
+        [SerializeField] private Renderer _renderer;
 
         // 基础信息
         public DressupType DressupType => _dressupType;
-        public SkinnedMeshRenderer Renderer => _renderer;
-        //  渲染数据
+        public Renderer Renderer => _renderer;
+        public bool IsSkinnedMesh => _renderer is SkinnedMeshRenderer;
+        // 渲染信息
         public Mesh Mesh { get; private set; }
         public Material[] Materials { get; private set; }
-        // 骨骼数据
+        // 骨骼信息
         public Transform[] Bones { get; private set; }
         public Transform RootBone { get; private set; }
 
@@ -50,22 +51,54 @@ namespace XFramework.SimpleDressup
 
         public void Init()
         {
-            if (_renderer == null || _renderer.sharedMesh == null)
+            if (_renderer == null)
             {
-                Log.Error("[DressupItem] SkinnedMeshRenderer or its mesh is null.");
+                Log.Error("[DressupItem] Renderer is null.");
                 return;
             }
 
-            Mesh = _renderer.sharedMesh;
-            Materials = _renderer.sharedMaterials;
-            Bones = _renderer.bones;
-            RootBone = _renderer.rootBone;
+            // 获取网格和材质
+            if (_renderer is SkinnedMeshRenderer skinnedRenderer)
+            {
+                // SkinnedMeshRenderer处理
+                if (skinnedRenderer.sharedMesh == null)
+                {
+                    Log.Error("[DressupItem] SkinnedMeshRenderer's sharedMesh is null.");
+                    return;
+                }
+
+                Mesh = skinnedRenderer.sharedMesh;
+                Materials = skinnedRenderer.sharedMaterials;
+                Bones = skinnedRenderer.bones;
+                RootBone = skinnedRenderer.rootBone;
+            }
+            else if (_renderer is MeshRenderer meshRenderer)
+            {
+                // MeshRenderer处理
+                var meshFilter = meshRenderer.GetComponent<MeshFilter>();
+                if (meshFilter == null || meshFilter.sharedMesh == null)
+                {
+                    Log.Error("[DressupItem] MeshRenderer's MeshFilter or sharedMesh is null.");
+                    return;
+                }
+
+                Mesh = meshFilter.sharedMesh;
+                Materials = meshRenderer.sharedMaterials;
+                // 静态网格没有骨骼信息
+                Bones = null;
+                RootBone = null;
+            }
+            else
+            {
+                Log.Error($"[DressupItem] Unsupported renderer type: {_renderer.GetType().Name}");
+            }
         }
     }
 
 #if UNITY_EDITOR
     /// <summary>
     /// 让_dressupType和_renderer两个字段并排显示
+    /// 支持SkinnedMeshRenderer和MeshRenderer的选择
     /// </summary>
     [CustomPropertyDrawer(typeof(DressupItem))]
     public class DressupItemDrawer : PropertyDrawer
@@ -88,6 +121,7 @@ namespace XFramework.SimpleDressup
             var dressupTypeProperty = property.FindPropertyRelative("_dressupType");
             var rendererProperty = property.FindPropertyRelative("_renderer");
 
+            // 绘制字段
             EditorGUI.PropertyField(typeRect, dressupTypeProperty, GUIContent.none);
             EditorGUI.PropertyField(rendererRect, rendererProperty, GUIContent.none);
 
