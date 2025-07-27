@@ -1,36 +1,84 @@
-using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using XFramework.Utils;
 
-namespace SimpleDressup
+namespace XFramework.SimpleDressup
 {
     /// <summary>
-    /// 网格合并器 - 负责将多个 SkinnedMeshRenderer 合并成单一网格
-    /// 处理顶点数据、骨骼权重、UV重映射等
+    /// 网格合并器 - 基于材质的分组策略
+    /// 1. 拆分所有实例的子网格（以材质-子网格为单位）
+    /// 2. 合并相同材质的子网格
+    /// 3. 按最终的子网格数量重建新的包含多个子网格的大网格
     /// </summary>
     public class MeshCombiner
     {
-        /// <summary>
-        /// 合并实例 - 代表一个待合并的网格
-        /// </summary>
-        public struct CombineInstance
-        {
-            public DressupMesh MeshData;          // 网格数据
-            public Material[] Materials;          // 材质数组
-            public int[] TargetSubmeshIndices;    // 目标子网格索引映射
+        #region 数据结构
 
-            public CombineInstance(DressupMesh meshData, Material[] materials)
+        /// <summary>
+        /// 子网格单元 - 单个材质的网格数据
+        /// </summary>
+        private class SubmeshUnit
+        {
+            private readonly Mesh _sourceMesh;
+            private readonly int _submeshIndex;
+            private readonly Material _material;
+            private readonly List<Vector3> _vertices = new();
+            private readonly List<Vector3> _normals = new();
+            private readonly List<Vector2> _uvs = new();
+            private readonly List<BoneWeight> _boneWeights = new();
+            private readonly List<int> _triangles = new();
+
+            public Material Material => _material;
+            public List<Vector3> Vertices => _vertices;
+            public List<Vector3> Normals => _normals;
+            public List<Vector2> Uvs => _uvs;
+            public List<BoneWeight> BoneWeights => _boneWeights;
+            public List<int> Triangles => _triangles;
+
+            public bool IsValid => _vertices.Count > 0 && _triangles.Count > 0;
+            public int VertexCount => _vertices.Count;
+
+            public SubmeshUnit(Mesh sourceMesh, int submeshIndex, Material material)
             {
-                MeshData = meshData;
-                Materials = materials;
-                if (meshData != null)
+                _sourceMesh = sourceMesh;
+                _submeshIndex = submeshIndex;
+                _material = material;
+                InitData();
+            }
+
+            private void InitData()
+            {
+                if (_sourceMesh == null) throw new ArgumentNullException(nameof(_sourceMesh));
+
+                // 提取子网格数据
+                var submesh = _sourceMesh.GetSubMesh(_submeshIndex);
+                var triangles = _sourceMesh.GetTriangles(_submeshIndex);
+
+                var usedVertices = new HashSet<int>();
+                foreach (var triangle in triangles)
                 {
-                    TargetSubmeshIndices = new int[meshData.SubMeshes?.Length ?? 0];
+                    usedVertices.Add(triangle);
                 }
-                else
+
+                // 顶点重映射，缩短数组需要的长度以节约内存
+                var vertexRemapping = new Dictionary<int, int>();
+                int newIndex = 0;
+
+                var sortedVertices = usedVertices.OrderBy(x => x);
+                foreach (var oldIndex in sortedVertices)
                 {
-                    TargetSubmeshIndices = new int[0];
+                    vertexRemapping[oldIndex] = newIndex++;
+                    _vertices.Add(_sourceMesh.vertices[oldIndex]);
+                    _normals.Add(_sourceMesh.normals[oldIndex]);
+                    _uvs.Add(_sourceMesh.uv[oldIndex]);
+                    _boneWeights.Add(_sourceMesh.boneWeights[oldIndex]);
+                }
+                // 三角形索引重映射
+                foreach (var triangle in triangles)
+                {
+                    _triangles.Add(vertexRemapping[triangle]);
                 }
             }
         }
@@ -43,388 +91,330 @@ namespace SimpleDressup
             public bool Success;
             public Mesh CombinedMesh;
             public Material[] CombinedMaterials;
+            public Dictionary<Material, int> SubmeshMap;
             public Transform[] Bones;
             public Matrix4x4[] BindPoses;
             public Transform RootBone;
         }
 
-        private List<Vector3> _combinedVertices;
-        private List<Vector3> _combinedNormals;
-        private List<Vector2> _combinedUVs;
-        private List<BoneWeight> _combinedBoneWeights;
-        private List<int>[] _combinedTriangles;  // 每个子网格的三角形
+        #endregion
+
+        #region 私有字段
 
         private List<Transform> _combinedBones;
         private List<Matrix4x4> _combinedBindPoses;
         private Dictionary<Transform, int> _boneIndexMap;
 
+        #endregion
+
+        #region 公共接口
+
+        public CombineResult Combine(List<DressupItem> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                Log.Warning("[MeshCombiner] No items to combine");
+                return new CombineResult { Success = false };
+            }
+
+            // 初始化骨骼数据
+            _combinedBones = new List<Transform>();
+            _combinedBindPoses = new List<Matrix4x4>();
+            _boneIndexMap = new Dictionary<Transform, int>();
+
+            var submeshUnits = ExtractSubmeshUnits(items);
+            var mergedSubmeshUnits = MergeSubmeshUnitsByMaterial(submeshUnits);
+            var finalMesh = BuildFinalMesh(mergedSubmeshUnits, items[0].RootBone);
+
+            return finalMesh;
+        }
+
+        #endregion
+
+        #region 核心实现
+
         /// <summary>
-        /// 合并多个网格实例
+        /// 步骤1: 拆分所有实例的子网格
         /// </summary>
-        public CombineResult CombineMeshes(List<CombineInstance> instances, Transform rootBone = null)
+        private List<SubmeshUnit> ExtractSubmeshUnits(List<DressupItem> items)
+        {
+            var submeshUnits = new List<SubmeshUnit>();
+
+            foreach (var item in items)
+            {
+                if (!item.IsValid) continue;
+
+                var mesh = item.Mesh;
+                var materials = item.Materials;
+
+                RegisterBones(item.Bones, mesh.bindposes);
+
+                // 为每个子网格创建一个子网格单元
+                for (int submeshIndex = 0; submeshIndex < mesh.subMeshCount; submeshIndex++)
+                {
+                    // 多余的材质直接忽略
+                    if (submeshIndex >= materials.Length) break;
+
+                    var material = materials[submeshIndex];
+                    var unit = new SubmeshUnit(mesh, submeshIndex, material);
+
+                    if (unit.IsValid)
+                    {
+                        submeshUnits.Add(unit);
+                    }
+                }
+            }
+
+            return submeshUnits;
+        }
+
+
+        private void RegisterBones(Transform[] bones, Matrix4x4[] bindPoses)
+        {
+            if (bones == null || bindPoses == null || bones.Length != bindPoses.Length)
+            {
+                Log.Error("[MeshCombiner] Bones and bind poses must be non-null and of the same length.");
+                return;
+            }
+
+            for (int i = 0; i < bones.Length; i++)
+            {
+                RegisterBone(bones[i], bindPoses[i]);
+            }
+        }
+
+        private void RegisterBone(Transform bone, Matrix4x4 bindPose)
+        {
+            if (bone == null)
+            {
+                Log.Error("[MeshCombiner] Attempted to register a null bone.");
+                return;
+            }
+            if (_boneIndexMap.ContainsKey(bone))
+            {
+                Log.Warning($"[MeshCombiner] Bone '{bone.name}' is already registered.");
+                return;
+            }
+
+            int boneIndex = _combinedBones.Count;
+            _boneIndexMap[bone] = boneIndex;
+            _combinedBones.Add(bone);
+            _combinedBindPoses.Add(bindPose);
+        }
+
+        /// <summary>
+        /// 步骤2: 按材质分组并合并子网格
+        /// 将所有相同材质的SubmeshUnit合并成一个SubmeshUnit
+        /// </summary>
+        private List<SubmeshUnit> MergeSubmeshUnitsByMaterial(List<SubmeshUnit> submeshUnits)
+        {
+            var materialGroupMap = new Dictionary<Material, List<SubmeshUnit>>();
+
+            // 按材质分组
+            foreach (var unit in submeshUnits)
+            {
+                if (!materialGroupMap.TryGetValue(unit.Material, out var group))
+                {
+                    group = new List<SubmeshUnit>();
+                    materialGroupMap[unit.Material] = group;
+                }
+                group.Add(unit);
+            }
+
+            var mergedUnits = new List<SubmeshUnit>();
+
+            // 合并每个材质分组中的所有SubmeshUnit
+            foreach (var kvp in materialGroupMap)
+            {
+                var material = kvp.Key;
+                var unitsToMerge = kvp.Value;
+
+                if (unitsToMerge.Count == 1)
+                {
+                    // 只有一个单元，直接添加
+                    mergedUnits.Add(unitsToMerge[0]);
+                }
+                else
+                {
+                    // 多个单元需要合并
+                    var mergedUnit = MergeSubmeshUnits(unitsToMerge, material);
+                    if (!mergedUnit.IsValid)
+                    {
+                        Log.Error($"[MeshCombiner] Merged unit for material {material.name} is invalid. " +
+                                  $"Vertices: {mergedUnit.Vertices.Count}, Triangles: {mergedUnit.Triangles.Count}");
+                        continue;
+                    }
+                    mergedUnits.Add(mergedUnit);
+                }
+            }
+
+            return mergedUnits;
+        }
+
+        /// <summary>
+        /// 合并多个相同材质的SubmeshUnit
+        /// </summary>
+        private SubmeshUnit MergeSubmeshUnits(List<SubmeshUnit> unitsToMerge, Material material)
+        {
+            // 创建一个虚拟网格来容纳合并后的数据
+            var mergedMesh = new Mesh();
+            mergedMesh.name = $"MergedMesh_{material.name}";
+
+            var allVertices = new List<Vector3>();
+            var allNormals = new List<Vector3>();
+            var allUVs = new List<Vector2>();
+            var allBoneWeights = new List<BoneWeight>();
+            var allTriangles = new List<int>();
+
+            int vertexOffset = 0;
+
+            // 合并所有单元的数据
+            foreach (var unit in unitsToMerge)
+            {
+                allVertices.AddRange(unit.Vertices);
+                allNormals.AddRange(unit.Normals);
+                allUVs.AddRange(unit.Uvs);
+                allBoneWeights.AddRange(unit.BoneWeights);
+
+                // 重映射三角形索引
+                foreach (var triangle in unit.Triangles)
+                {
+                    allTriangles.Add(triangle + vertexOffset);
+                }
+                vertexOffset += unit.VertexCount;
+            }
+
+            // 设置合并后的网格数据
+            mergedMesh.SetVertices(allVertices);
+            mergedMesh.SetNormals(allNormals);
+            mergedMesh.SetUVs(0, allUVs);
+            mergedMesh.boneWeights = allBoneWeights.ToArray();
+            mergedMesh.SetTriangles(allTriangles, 0);
+            mergedMesh.RecalculateBounds();
+
+            Log.Debug($"[XFramework] [MeshCombiner] Merged {unitsToMerge.Count} units for material {material.name}: " +
+                     $"{allVertices.Count} vertices, {allTriangles.Count} triangles");
+
+            // 创建新的SubmeshUnit表示合并结果
+            return new SubmeshUnit(mergedMesh, 0, material);
+        }
+
+        /// <summary>
+        /// 步骤3: 按最终的子网格数量重建新的包含多个子网格的大网格
+        /// </summary>
+        private CombineResult BuildFinalMesh(List<SubmeshUnit> submeshUnits, Transform rootBone)
         {
             var result = new CombineResult { Success = false };
 
-            if (instances == null || instances.Count == 0)
+
+            if (submeshUnits.Count == 0)
             {
-                Log.Warning("[MeshCombiner] Combine instances list is empty.");
+                Log.Warning("[MeshCombiner] No submesh units to build final mesh.");
                 return result;
             }
 
-            Log.Debug($"[MeshCombiner] Start combining {instances.Count} meshes.");
+            // 合并所有SubmeshUnit的数据
+            var finalVertices = new List<Vector3>();
+            var finalNormals = new List<Vector3>();
+            var finalUVs = new List<Vector2>();
+            var finalBoneWeights = new List<BoneWeight>();
+            var finalTriangles = new List<int>[submeshUnits.Count];
+            var finalMaterials = new Material[submeshUnits.Count];
+            var submeshMap = new Dictionary<Material, int>();
 
-            try
+            int vertexOffset = 0;
+
+            for (int i = 0; i < submeshUnits.Count; i++)
             {
-                // 1. 初始化数据结构
-                InitializeCombineData(instances);
+                var unit = submeshUnits[i];
+                finalTriangles[i] = new List<int>();
+                finalMaterials[i] = unit.Material;
+                submeshMap[unit.Material] = i;
 
-                // 2. 构建骨骼映射
-                BuildBoneMapping(instances, rootBone);
+                // 添加顶点数据
+                finalVertices.AddRange(unit.Vertices);
+                finalNormals.AddRange(unit.Normals);
+                finalUVs.AddRange(unit.Uvs);
+                finalBoneWeights.AddRange(unit.BoneWeights);
 
-                // 3. 合并网格数据
-                CombineMeshData(instances);
-
-                // 4. 创建最终网格
-                var mesh = CreateCombinedMesh();
-                if (mesh != null)
+                // 重映射三角形索引
+                foreach (int triangleIndex in unit.Triangles)
                 {
-                    result.Success = true;
-                    result.CombinedMesh = mesh;
-                    result.CombinedMaterials = CollectCombinedMaterials(instances);
-                    result.Bones = _combinedBones.ToArray();
-                    result.BindPoses = _combinedBindPoses.ToArray();
-                    result.RootBone = rootBone ?? (_combinedBones.Count > 0 ? _combinedBones[0] : null);
-
-                    Log.Debug($"[MeshCombiner] Combine success - Vertices: {_combinedVertices.Count}, SubMeshes: {_combinedTriangles.Length}.");
+                    finalTriangles[i].Add(triangleIndex + vertexOffset);
                 }
+
+                vertexOffset += unit.VertexCount;
             }
-            catch (System.Exception e)
+
+            // 创建最终网格
+            var mesh = CreateFinalCombinedMesh(finalVertices, finalNormals, finalUVs, finalBoneWeights, finalTriangles);
+
+            if (mesh != null)
             {
-                Log.Error($"[MeshCombiner] Combine process error - {e.Message}");
+                result.Success = true;
+                result.CombinedMesh = mesh;
+                result.CombinedMaterials = finalMaterials;
+                result.Bones = _combinedBones.ToArray();
+                result.BindPoses = _combinedBindPoses.ToArray();
+                result.RootBone = rootBone != null ? rootBone : (_combinedBones.Count > 0 ? _combinedBones[0] : null);
+                result.SubmeshMap = submeshMap;
+
+                Log.Info($"[XFramework] [MeshCombiner] Successfully built final mesh with {submeshUnits.Count} submeshes, " +
+                         $"{finalVertices.Count} vertices, {finalTriangles.Sum(t => t.Count)} triangles");
             }
 
             return result;
         }
 
         /// <summary>
-        /// 初始化合并数据结构
+        /// 创建最终的合并网格
         /// </summary>
-        private void InitializeCombineData(List<CombineInstance> instances)
+        private Mesh CreateFinalCombinedMesh(List<Vector3> vertices, List<Vector3> normals, List<Vector2> uvs,
+            List<BoneWeight> boneWeights, List<int>[] triangles)
         {
-            // 计算总顶点数和子网格数
-            int totalVertices = instances.Sum(inst => inst.MeshData?.VertexCount ?? 0);
-            int maxSubmeshes = instances.Max(inst => inst.Materials?.Length ?? 0);
-
-            // 初始化顶点数据列表
-            _combinedVertices = new List<Vector3>(totalVertices);
-            _combinedNormals = new List<Vector3>(totalVertices);
-            _combinedUVs = new List<Vector2>(totalVertices);
-            _combinedBoneWeights = new List<BoneWeight>(totalVertices);
-
-            // 初始化三角形数据
-            _combinedTriangles = new List<int>[maxSubmeshes];
-            for (int i = 0; i < maxSubmeshes; i++)
-            {
-                _combinedTriangles[i] = new List<int>();
-            }
-
-            // 初始化骨骼相关数据
-            _combinedBones = new List<Transform>();
-            _combinedBindPoses = new List<Matrix4x4>();
-            _boneIndexMap = new Dictionary<Transform, int>();
-        }
-
-        /// <summary>
-        /// 构建骨骼映射表
-        /// </summary>
-        private void BuildBoneMapping(List<CombineInstance> instances, Transform rootBone)
-        {
-            // 收集所有唯一的骨骼
-            var allBones = new HashSet<Transform>();
-
-            foreach (var instance in instances)
-            {
-                if (instance.MeshData?.Bones != null)
-                {
-                    foreach (var bone in instance.MeshData.Bones)
-                    {
-                        if (bone != null)
-                        {
-                            allBones.Add(bone);
-                        }
-                    }
-                }
-            }
-
-            // 确保根骨骼在第一位
-            if (rootBone != null && !allBones.Contains(rootBone))
-            {
-                allBones.Add(rootBone);
-            }
-
-            // 构建骨骼列表和映射表
-            var sortedBones = allBones.OrderBy(bone => bone.name).ToList();
-            if (rootBone != null && sortedBones.Contains(rootBone))
-            {
-                sortedBones.Remove(rootBone);
-                sortedBones.Insert(0, rootBone);
-            }
-
-            for (int i = 0; i < sortedBones.Count; i++)
-            {
-                var bone = sortedBones[i];
-                _combinedBones.Add(bone);
-                _boneIndexMap[bone] = i;
-
-                // 添加对应的绑定姿态
-                AddBindPoseForBone(bone, instances);
-            }
-
-            Log.Debug($"[MeshCombiner] Built mapping for {_combinedBones.Count} bones.");
-        }
-
-        /// <summary>
-        /// 为骨骼添加绑定姿态
-        /// </summary>
-        private void AddBindPoseForBone(Transform bone, List<CombineInstance> instances)
-        {
-            // 尝试从实例中找到该骨骼的绑定姿态
-            foreach (var instance in instances)
-            {
-                if (instance.MeshData?.Bones != null && instance.MeshData.BindPoses != null)
-                {
-                    for (int i = 0; i < instance.MeshData.Bones.Length; i++)
-                    {
-                        if (instance.MeshData.Bones[i] == bone)
-                        {
-                            _combinedBindPoses.Add(instance.MeshData.BindPoses[i]);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            // 如果没找到，使用单位矩阵
-            _combinedBindPoses.Add(Matrix4x4.identity);
-        }
-
-        /// <summary>
-        /// 合并网格数据
-        /// </summary>
-        private void CombineMeshData(List<CombineInstance> instances)
-        {
-            int vertexOffset = 0;
-
-            foreach (var instance in instances)
-            {
-                if (instance.MeshData == null || !instance.MeshData.IsValid())
-                    continue;
-
-                var meshData = instance.MeshData;
-                int instanceVertexCount = meshData.VertexCount;
-
-                // 合并顶点数据
-                CombineVertexData(meshData, vertexOffset);
-
-                // 合并骨骼权重
-                CombineBoneWeights(meshData, vertexOffset);
-
-                // 合并三角形索引
-                CombineTriangles(meshData, instance.TargetSubmeshIndices, vertexOffset);
-
-                vertexOffset += instanceVertexCount;
-            }
-        }
-
-        /// <summary>
-        /// 合并顶点数据
-        /// </summary>
-        private void CombineVertexData(DressupMesh meshData, int vertexOffset)
-        {
-            // 合并顶点
-            if (meshData.Vertices != null)
-                _combinedVertices.AddRange(meshData.Vertices);
-
-            // 合并法线
-            if (meshData.Normals != null && meshData.Normals.Length > 0)
-                _combinedNormals.AddRange(meshData.Normals);
-            else
-                _combinedNormals.AddRange(new Vector3[meshData.VertexCount]); // 填充默认法线
-
-            // 合并UV
-            if (meshData.UV != null && meshData.UV.Length > 0)
-                _combinedUVs.AddRange(meshData.UV);
-            else
-                _combinedUVs.AddRange(new Vector2[meshData.VertexCount]); // 填充默认UV
-        }
-
-        /// <summary>
-        /// 合并骨骼权重
-        /// </summary>
-        private void CombineBoneWeights(DressupMesh meshData, int vertexOffset)
-        {
-            if (meshData.BoneWeights == null || meshData.Bones == null)
-            {
-                // 如果没有骨骼权重，添加默认权重
-                _combinedBoneWeights.AddRange(new BoneWeight[meshData.VertexCount]);
-                return;
-            }
-
-            // 重映射骨骼权重
-            for (int i = 0; i < meshData.BoneWeights.Length; i++)
-            {
-                var originalWeight = meshData.BoneWeights[i];
-                var newWeight = new BoneWeight();
-
-                // 重映射骨骼索引
-                newWeight.boneIndex0 = RemapBoneIndex(originalWeight.boneIndex0, meshData.Bones);
-                newWeight.boneIndex1 = RemapBoneIndex(originalWeight.boneIndex1, meshData.Bones);
-                newWeight.boneIndex2 = RemapBoneIndex(originalWeight.boneIndex2, meshData.Bones);
-                newWeight.boneIndex3 = RemapBoneIndex(originalWeight.boneIndex3, meshData.Bones);
-
-                // 复制权重值
-                newWeight.weight0 = originalWeight.weight0;
-                newWeight.weight1 = originalWeight.weight1;
-                newWeight.weight2 = originalWeight.weight2;
-                newWeight.weight3 = originalWeight.weight3;
-
-                _combinedBoneWeights.Add(newWeight);
-            }
-        }
-
-        /// <summary>
-        /// 重映射骨骼索引
-        /// </summary>
-        private int RemapBoneIndex(int originalIndex, Transform[] originalBones)
-        {
-            if (originalIndex < 0 || originalIndex >= originalBones.Length)
-                return 0;
-
-            var bone = originalBones[originalIndex];
-            return _boneIndexMap.ContainsKey(bone) ? _boneIndexMap[bone] : 0;
-        }
-
-        /// <summary>
-        /// 合并三角形索引
-        /// </summary>
-        private void CombineTriangles(DressupMesh meshData, int[] targetSubmeshIndices, int vertexOffset)
-        {
-            if (meshData.SubMeshes == null) return;
-
-            for (int submeshIndex = 0; submeshIndex < meshData.SubMeshes.Length; submeshIndex++)
-            {
-                var submesh = meshData.SubMeshes[submeshIndex];
-                int targetIndex = targetSubmeshIndices[submeshIndex];
-
-                if (targetIndex >= _combinedTriangles.Length) continue;
-
-                // 提取该子网格的三角形
-                var triangles = ExtractSubmeshTriangles(meshData.Triangles, submesh);
-
-                // 重映射顶点索引并添加到目标子网格
-                foreach (int triangle in triangles)
-                {
-                    _combinedTriangles[targetIndex].Add(triangle + vertexOffset);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 提取子网格的三角形
-        /// </summary>
-        private int[] ExtractSubmeshTriangles(int[] allTriangles, DressupMesh.SubMeshInfo submesh)
-        {
-            var triangles = new int[submesh.IndexCount];
-            System.Array.Copy(allTriangles, submesh.IndexStart, triangles, 0, submesh.IndexCount);
-            return triangles;
-        }
-
-        /// <summary>
-        /// 创建最终合并的网格
-        /// </summary>
-        private Mesh CreateCombinedMesh()
-        {
-            var mesh = new Mesh();
-            mesh.name = "CombinedDressupMesh";
-
             try
             {
-                // 设置顶点数据
-                mesh.SetVertices(_combinedVertices);
-                if (_combinedNormals.Count > 0)
-                    mesh.SetNormals(_combinedNormals);
-                if (_combinedUVs.Count > 0)
-                    mesh.SetUVs(0, _combinedUVs);
-
-                // 设置子网格和三角形
-                mesh.subMeshCount = _combinedTriangles.Length;
-                for (int i = 0; i < _combinedTriangles.Length; i++)
+                var mesh = new Mesh
                 {
-                    if (_combinedTriangles[i].Count > 0)
-                        mesh.SetTriangles(_combinedTriangles[i], i);
+                    name = "CombinedMesh"
+                };
+
+                // 设置顶点数据 
+                mesh.SetVertices(vertices);
+                if (normals.Count > 0)
+                    mesh.SetNormals(normals);
+                if (uvs.Count > 0)
+                    mesh.SetUVs(0, uvs);
+
+                // 设置子网格
+                mesh.subMeshCount = triangles.Length;
+                for (int i = 0; i < triangles.Length; i++)
+                {
+                    if (triangles[i].Count > 0)
+                    {
+                        mesh.SetTriangles(triangles[i], i);
+                    }
                 }
 
                 // 设置骨骼权重
-                if (_combinedBoneWeights.Count > 0)
-                    mesh.boneWeights = _combinedBoneWeights.ToArray();
+                if (boneWeights.Count > 0)
+                    mesh.boneWeights = boneWeights.ToArray();
 
-                // 设置绑定姿态
+                // 设置绑定姿势
                 if (_combinedBindPoses.Count > 0)
                     mesh.bindposes = _combinedBindPoses.ToArray();
 
-                // 重新计算边界和法线
                 mesh.RecalculateBounds();
-                if (_combinedNormals.Count == 0)
-                    mesh.RecalculateNormals();
 
                 return mesh;
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
-                Log.Error($"[MeshCombiner] Failed to create mesh - {e.Message}.");
-                if (mesh != null)
-                    Object.DestroyImmediate(mesh);
+                Log.Error($"[MeshCombiner] CreateFinalCombinedMesh error - {e.Message}");
                 return null;
             }
         }
 
-        /// <summary>
-        /// 收集合并后的材质
-        /// </summary>
-        private Material[] CollectCombinedMaterials(List<CombineInstance> instances)
-        {
-            var materialList = new List<Material>();
-
-            // 按子网格索引收集材质
-            for (int submeshIndex = 0; submeshIndex < _combinedTriangles.Length; submeshIndex++)
-            {
-                Material selectedMaterial = null;
-
-                // 找到第一个使用该子网格的材质
-                foreach (var instance in instances)
-                {
-                    if (instance.Materials != null)
-                    {
-                        for (int i = 0; i < instance.TargetSubmeshIndices.Length; i++)
-                        {
-                            if (instance.TargetSubmeshIndices[i] == submeshIndex)
-                            {
-                                if (i < instance.Materials.Length && instance.Materials[i] != null)
-                                {
-                                    selectedMaterial = instance.Materials[i];
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (selectedMaterial != null) break;
-                }
-
-                materialList.Add(selectedMaterial);
-            }
-
-            return materialList.ToArray();
-        }
+        #endregion
     }
 }
