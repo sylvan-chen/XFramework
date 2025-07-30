@@ -11,6 +11,7 @@ namespace XFramework.SimpleDressup
     /// <summary>
     /// 简单换装系统主控制器
     /// 负责协调整个换装流程：数据收集→图集生成→网格合并→结果应用
+    /// 合并所有身体部件和外观部件的网格到同一个SkinnedMeshRenderer
     /// </summary>
     public class SimpleDressupController : MonoBehaviour
     {
@@ -22,14 +23,20 @@ namespace XFramework.SimpleDressup
         [Header("目标对象")]
         [SerializeField] private SkinnedMeshRenderer _targetRenderer;
 
-        [Header("换装部件")]
+        [Header("骨骼数据")]
+        [SerializeField] private Transform _rootBone;
+
+        [Header("外观部件")]
         [SerializeField] private List<DressupItem> _dressupItems;
 
         // 核心组件
-        private MeshCombiner _meshCombiner;      // 网格合并器
+        private MeshCombiner _meshCombiner;                     // 网格合并器
+        private MeshCombiner.CombineResult _meshCombineResult;  // 网格合并结果
 
-        // 运行时数据
-        private MeshCombiner.CombineResult _meshCombineResult;
+        // 骨骼数据
+        private Transform[] _mainBones = new Transform[0];                // 主骨骼数组
+        private Matrix4x4[] _bindPoses = new Matrix4x4[0];                // 绑定姿势矩阵
+        private readonly Dictionary<string, Transform> _boneMap = new();  // 骨骼映射字典
 
         // 状态管理
         public bool IsInitialized { get; private set; } = false;
@@ -49,7 +56,7 @@ namespace XFramework.SimpleDressup
         {
             if (_autoApplyOnStart)
             {
-                ApplyCurrentDressupAsync().Forget();
+                ApplyDressupAsync().Forget();
             }
         }
 
@@ -104,33 +111,33 @@ namespace XFramework.SimpleDressup
 
         private void Init()
         {
+            // 创建和初始化核心组件
             _meshCombiner = new MeshCombiner();
 
-            IsInitialized = true;
+            // 骨骼数据初始化
+            _boneMap.Clear();
+            _mainBones = _rootBone.GetComponentsInChildren<Transform>();
+            _bindPoses = new Matrix4x4[_mainBones.Length];
 
-            // 初始化换装部件
-            var invalidItems = new List<DressupItem>();
-            for (int i = 0; i < _dressupItems.Count; i++)
+            for (int i = 0; i < _mainBones.Length; i++)
             {
-                var item = _dressupItems[i];
-                item.Init();
-                if (!item.IsValid)
-                {
-                    Log.Error($"[SimpleDressupController] Dressup item '{item.Renderer.name}' is invalid.");
-                    invalidItems.Add(_dressupItems[i]);
-                }
+                var bone = _mainBones[i];
+                if (bone == null) throw new System.ArgumentNullException($"Bone at index {i} is null in the hierarchy under {_rootBone.name}");
+
+                // 骨骼绑定姿势
+                _bindPoses[i] = _mainBones[i].worldToLocalMatrix * _rootBone.localToWorldMatrix;
+
+                // 骨骼映射字典
+                _boneMap[bone.name] = bone;
             }
-            // 移除无效的部件
-            foreach (var invalidItem in invalidItems)
-            {
-                _dressupItems.Remove(invalidItem);
-            }
+
+            IsInitialized = true;
         }
 
         /// <summary>
-        /// 应用当前的换装配置
+        /// 应用当前的外观配置
         /// </summary>
-        public async UniTask<bool> ApplyCurrentDressupAsync()
+        public async UniTask<bool> ApplyDressupAsync()
         {
             if (!IsInitialized)
             {
@@ -152,48 +159,78 @@ namespace XFramework.SimpleDressup
 
             IsDressing = true;
 
-            try
+            Log.Debug($"[SimpleDressupController] Start dressing process - {_dressupItems.Count} items.");
+
+            // 1. 初始化所有部件
+            InitDressupItems();
+
+            // 2. 生成纹理图集
+            bool atlasSuccess = await GenerateTextureAtlasAsync();
+            if (!atlasSuccess)
             {
-                Log.Debug($"[SimpleDressupController] Start dressing process - {_dressupItems.Count} items.");
-
-                // 1. 生成纹理图集
-                bool atlasSuccess = await GenerateTextureAtlasAsync();
-                if (!atlasSuccess)
-                {
-                    Log.Error("[SimpleDressupController] Failed to generate texture atlas.");
-                    return false;
-                }
-
-                // 2. 合并网格
-                bool meshSuccess = await CombineMeshesAsync();
-                if (!meshSuccess)
-                {
-                    Log.Error("[SimpleDressupController] Failed to combine meshes.");
-                    return false;
-                }
-
-                // 3. 应用到目标渲染器
-                bool applySuccess = ApplyToTargetRenderer();
-                if (!applySuccess)
-                {
-                    Log.Error("[SimpleDressupController] Failed to apply to target renderer.");
-                    return false;
-                }
-
-                Log.Debug("[SimpleDressupController] Dressup process completed.");
-
-                OnDressupComplete?.Invoke(true);
-                return true;
-            }
-            catch (System.Exception e)
-            {
-                Log.Error($"[SimpleDressupController] Dressup process error - {e.Message}");
-                OnDressupComplete?.Invoke(false);
+                Log.Error("[SimpleDressupController] Failed to generate texture atlas.");
+                IsDressing = false;
                 return false;
             }
-            finally
+
+            // 3. 合并网格
+            bool meshSuccess = await CombineMeshesAsync();
+            if (!meshSuccess)
             {
+                Log.Error("[SimpleDressupController] Failed to combine meshes.");
                 IsDressing = false;
+                return false;
+            }
+
+            // 4. 应用到目标渲染器
+            bool applySuccess = ApplyToTargetRenderer();
+            if (!applySuccess)
+            {
+                Log.Error("[SimpleDressupController] Failed to apply to target renderer.");
+                IsDressing = false;
+                return false;
+            }
+
+            Log.Debug("[SimpleDressupController] Dressup process completed.");
+
+            OnDressupComplete?.Invoke(true);
+            IsDressing = false;
+            return true;
+
+        }
+
+        /// <summary>
+        /// 初始化当前所有外观部件
+        /// </summary>
+        private void InitDressupItems()
+        {
+            var invalidItems = new List<DressupItem>();
+
+            foreach (var item in _dressupItems)
+            {
+                // 初始化
+                item.Init();
+                if (!item.IsValid)
+                {
+                    Log.Error($"[SimpleDressupController] Clothing item '{item.Renderer.name}' is invalid.");
+                    invalidItems.Add(item);
+                    continue;
+                }
+                // 骨骼重映射
+                // TODO: 不合并的部件需要将骨骼重映射到主骨骼，目前全都要合并，一律不进行
+                // var success = item.RemapBones(_boneMap);
+                // if (!success)
+                // {
+                //     Log.Error($"[SimpleDressupController] Clothing item '{item.Renderer.name}' failed to remap bones.");
+                //     invalidItems.Add(item);
+                //     continue;
+                // }
+            }
+
+            // 移除无效的部件
+            foreach (var invalidItem in invalidItems)
+            {
+                _dressupItems.Remove(invalidItem);
             }
         }
 
@@ -202,8 +239,7 @@ namespace XFramework.SimpleDressup
         /// </summary>
         private async UniTask<bool> GenerateTextureAtlasAsync()
         {
-            // TODO: 如果需要纹理合并，这里需要从DressupItem的Materials中提取纹理
-            // 当前简化处理，直接返回成功
+            // TODO: 当前未实现，直接返回成功
             await UniTask.NextFrame();
             return true;
         }
@@ -221,7 +257,7 @@ namespace XFramework.SimpleDressup
 
             await UniTask.NextFrame();
 
-            _meshCombineResult = _meshCombiner.Combine(_dressupItems);
+            _meshCombineResult = _meshCombiner.Combine(_dressupItems, _bindPoses);
             if (!_meshCombineResult.Success)
             {
                 Log.Error("[SimpleDressupController] Failed to combine items.");
@@ -249,9 +285,9 @@ namespace XFramework.SimpleDressup
             // 应用材质
             _targetRenderer.sharedMaterials = _meshCombineResult.CombinedMaterials;
             // 应用骨骼
-            _targetRenderer.bones = _meshCombineResult.Bones;
+            _targetRenderer.bones = _mainBones;
             // 设置根骨骼
-            _targetRenderer.rootBone = _meshCombineResult.RootBone;
+            _targetRenderer.rootBone = _rootBone;
 
             // 计算合适的本地边界
             CalculateAndSetLocalBounds(_targetRenderer);

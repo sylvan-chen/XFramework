@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using XFramework.Utils;
+using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -10,7 +11,7 @@ namespace XFramework.SimpleDressup
     /// <summary>
     /// 服装类型 - 定义角色可以装备的部位
     /// </summary>
-    [Flags]
+    [Serializable]
     public enum DressupType
     {
         None = 0,
@@ -26,25 +27,22 @@ namespace XFramework.SimpleDressup
     }
 
     /// <summary>
-    /// 换装部件
-    /// 包含合并需要的三个重要信息：网格、材质和骨骼
+    /// 外观部件
+    /// 包含模型的三个重要信息：网格、材质和骨骼
     /// </summary>
     [Serializable]
     public class DressupItem
     {
         [SerializeField] private DressupType _dressupType = DressupType.None;
-        [SerializeField] private Renderer _renderer;
+        [SerializeField] private SkinnedMeshRenderer _renderer;
 
-        // 基础信息
         public DressupType DressupType => _dressupType;
-        public Renderer Renderer => _renderer;
-        public bool IsSkinnedMesh => _renderer is SkinnedMeshRenderer;
-        // 渲染信息
-        public Mesh Mesh { get; private set; }
-        public Material[] Materials { get; private set; }
-        // 骨骼信息
-        public Transform[] Bones { get; private set; }
-        public Transform RootBone { get; private set; }
+        public SkinnedMeshRenderer Renderer => _renderer;
+
+        public Mesh Mesh { get; private set; }             // 网格
+        public Material[] Materials { get; private set; }  // 材质
+        public Transform[] Bones { get; private set; }     // 骨骼
+        public Transform RootBone { get; private set; }    // 根骨骼
 
         public bool IsValid => Mesh != null && Materials != null && Materials.Length > 0;
         public int SubmeshCount => Mesh != null ? Mesh.subMeshCount : 0;
@@ -53,52 +51,68 @@ namespace XFramework.SimpleDressup
         {
             if (_renderer == null)
             {
-                Log.Error("[DressupItem] Renderer is null.");
+                Log.Warning("[DressupItem] SkinnedMeshRenderer is null.");
                 return;
             }
 
-            // 获取网格和材质
-            if (_renderer is SkinnedMeshRenderer skinnedRenderer)
-            {
-                // SkinnedMeshRenderer处理
-                if (skinnedRenderer.sharedMesh == null)
-                {
-                    Log.Error("[DressupItem] SkinnedMeshRenderer's sharedMesh is null.");
-                    return;
-                }
+            Mesh = _renderer.sharedMesh;
+            Materials = _renderer.sharedMaterials;
+            Bones = _renderer.bones;
+            RootBone = _renderer.rootBone;
+        }
 
-                Mesh = skinnedRenderer.sharedMesh;
-                Materials = skinnedRenderer.sharedMaterials;
-                Bones = skinnedRenderer.bones;
-                RootBone = skinnedRenderer.rootBone;
+        /// <summary>
+        /// 按骨骼名字重映射到新的骨骼
+        /// </summary>
+        /// <param name="boneMap">骨骼映射字典</param>
+        /// <returns>重映射是否成功</returns>
+        public bool RemapBones(Dictionary<string, Transform> boneMap)
+        {
+            if (Bones == null || Bones.Length == 0 || RootBone == null)
+            {
+                Log.Warning("[DressupItem] Bones or RootBone is null or empty.");
+                return false;
             }
-            else if (_renderer is MeshRenderer meshRenderer)
-            {
-                // MeshRenderer处理
-                var meshFilter = meshRenderer.GetComponent<MeshFilter>();
-                if (meshFilter == null || meshFilter.sharedMesh == null)
-                {
-                    Log.Error("[DressupItem] MeshRenderer's MeshFilter or sharedMesh is null.");
-                    return;
-                }
 
-                Mesh = meshFilter.sharedMesh;
-                Materials = meshRenderer.sharedMaterials;
-                // 静态网格没有骨骼信息
-                Bones = null;
-                RootBone = null;
+            if (boneMap == null || boneMap.Count == 0)
+            {
+                Log.Warning("[DressupItem] Bone map is null or empty.");
+                return false;
+            }
+
+            for (int i = 0; i < Bones.Length; i++)
+            {
+                if (boneMap.TryGetValue(Bones[i].name, out var targetBone))
+                {
+                    Bones[i] = targetBone;
+                }
+                else
+                {
+                    Log.Warning($"[DressupItem] Bone '{Bones[i].name}' not found in boneMap.");
+                    return false;
+                }
+            }
+
+            if (boneMap.TryGetValue(RootBone.name, out var targetRootBone))
+            {
+                RootBone = targetRootBone;
             }
             else
             {
-                Log.Error($"[DressupItem] Unsupported renderer type: {_renderer.GetType().Name}");
+                Log.Warning($"[DressupItem] Root bone '{RootBone.name}' not found in boneMap.");
+                return false;
             }
+
+            _renderer.bones = Bones;
+            _renderer.rootBone = RootBone;
+
+            return true;
         }
     }
 
 #if UNITY_EDITOR
     /// <summary>
     /// 让_dressupType和_renderer两个字段并排显示
-    /// 支持SkinnedMeshRenderer和MeshRenderer的选择
     /// </summary>
     [CustomPropertyDrawer(typeof(DressupItem))]
     public class DressupItemDrawer : PropertyDrawer
@@ -121,7 +135,6 @@ namespace XFramework.SimpleDressup
             var dressupTypeProperty = property.FindPropertyRelative("_dressupType");
             var rendererProperty = property.FindPropertyRelative("_renderer");
 
-            // 绘制字段
             EditorGUI.PropertyField(typeRect, dressupTypeProperty, GUIContent.none);
             EditorGUI.PropertyField(rendererRect, rendererProperty, GUIContent.none);
 
