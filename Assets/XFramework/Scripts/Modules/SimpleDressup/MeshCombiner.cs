@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Rendering;
 using XFramework.Utils;
 
 namespace XFramework.SimpleDressup
@@ -22,110 +22,90 @@ namespace XFramework.SimpleDressup
         /// </summary>
         private class SubmeshUnit
         {
-            private readonly Mesh _sourceMesh;
-            private readonly int _submeshIndex;
-            private readonly Material _material;
-            private readonly List<int> _triangles = new();
-            private readonly List<Vector3> _vertices = new();
-            private readonly List<Vector3> _normals = new();
-            private readonly List<Vector4> _tangents = new();
-            private readonly List<Vector2> _uvs = new();
-            private readonly List<BoneWeight> _boneWeights = new();
+            public Material Material { get; private set; }
+            public List<int> Triangles { get; private set; } = new();
+            public List<Vector3> Vertices { get; private set; } = new();
+            public List<Vector3> Normals { get; private set; } = new();
+            public List<Vector4> Tangents { get; private set; } = new();
+            public List<Vector2> Uvs { get; private set; } = new();
+            public List<BoneWeight> BoneWeights { get; private set; } = new();
 
-            public Material Material => _material;
-            public List<int> Triangles => _triangles;
-            public List<Vector3> Vertices => _vertices;
-            public List<Vector3> Normals => _normals;
-            public List<Vector4> Tangents => _tangents;
-            public List<Vector2> Uvs => _uvs;
-            public List<BoneWeight> BoneWeights => _boneWeights;
+            public bool IsValid => Vertices.Count > 0 && Triangles.Count > 0;
+            public int VertexCount => Vertices.Count;
 
-            public bool IsValid => _vertices.Count > 0 && _triangles.Count > 0;
-            public int VertexCount => _vertices.Count;
-
-            public SubmeshUnit(Mesh sourceMesh, int submeshIndex, Material material)
+            public static SubmeshUnit Create(Mesh sourceMesh, int submeshIndex, Material material)
             {
-                _sourceMesh = sourceMesh;
-                _submeshIndex = submeshIndex;
-                _material = material;
-                InitData();
-            }
+                if (sourceMesh == null) throw new ArgumentNullException(nameof(sourceMesh));
 
-            private void InitData()
-            {
-                if (_sourceMesh == null) throw new ArgumentNullException(nameof(_sourceMesh));
+                var unit = new SubmeshUnit
+                {
+                    Material = material
+                };
 
                 // 检查源网格数据完整性
-                bool hasNormals = _sourceMesh.normals != null && _sourceMesh.normals.Length == _sourceMesh.vertices.Length;
-                bool hasTangents = _sourceMesh.tangents != null && _sourceMesh.tangents.Length == _sourceMesh.vertices.Length;
-                bool hasUV = _sourceMesh.uv != null && _sourceMesh.uv.Length == _sourceMesh.vertices.Length;
-                bool hasBoneWeights = _sourceMesh.boneWeights != null && _sourceMesh.boneWeights.Length == _sourceMesh.vertices.Length;
+                bool hasNormals = sourceMesh.normals != null && sourceMesh.normals.Length == sourceMesh.vertexCount;
+                bool hasTangents = sourceMesh.tangents != null && sourceMesh.tangents.Length == sourceMesh.vertexCount;
+                bool hasUV = sourceMesh.uv != null && sourceMesh.uv.Length == sourceMesh.vertexCount;
+                bool hasBoneWeights = sourceMesh.boneWeights != null && sourceMesh.boneWeights.Length == sourceMesh.vertexCount;
 
-                // 对源网格不完整的情况打印日志提醒
                 if (!hasNormals)
-                    Log.Debug($"[MeshCombiner] Mesh '{_sourceMesh.name}' missing normals, will recalculate.");
+                    Log.Debug($"[MeshCombiner] Mesh '{sourceMesh.name}' missing normals, will recalculate.");
                 if (!hasTangents)
-                    Log.Debug($"[MeshCombiner] Mesh '{_sourceMesh.name}' missing tangents, will recalculate.");
+                    Log.Debug($"[MeshCombiner] Mesh '{sourceMesh.name}' missing tangents, will recalculate.");
                 if (!hasUV)
-                    Log.Warning($"[MeshCombiner] Mesh '{_sourceMesh.name}' missing UV coordinates, using default values. This may affect texture rendering.");
+                    Log.Warning($"[MeshCombiner] Mesh '{sourceMesh.name}' missing UV coordinates, using default values. This may affect texture rendering.");
                 if (!hasBoneWeights)
-                    Log.Warning($"[MeshCombiner] Mesh '{_sourceMesh.name}' missing bone weights, using default weights. This may affect skinning.");
+                    Log.Warning($"[MeshCombiner] Mesh '{sourceMesh.name}' missing bone weights, using default weights. This may affect skinning.");
 
-                // 提取子网格数据
-                var submesh = _sourceMesh.GetSubMesh(_submeshIndex);
-                var triangles = _sourceMesh.GetTriangles(_submeshIndex);
+                // 提取使用的顶点
+                var subTriangles = sourceMesh.GetTriangles(submeshIndex);
+                var usedVertexIndices = new HashSet<int>(subTriangles);
 
-                var usedVertices = new HashSet<int>();
-                foreach (var triangle in triangles)
-                {
-                    usedVertices.Add(triangle);
-                }
-
-                // 顶点重映射，缩短数组需要的长度以节约内存
+                // 顶点重映射，原索引 -> 0, 1, 2, ...
                 var vertexRemapping = new Dictionary<int, int>();
                 int newIndex = 0;
-
-                var sortedVertices = usedVertices.OrderBy(x => x);
-                foreach (var oldIndex in sortedVertices)
+                foreach (var oldIndex in usedVertexIndices)
                 {
                     vertexRemapping[oldIndex] = newIndex++;
 
                     // 顶点位置
-                    _vertices.Add(_sourceMesh.vertices[oldIndex]);
+                    unit.Vertices.Add(sourceMesh.vertices[oldIndex]);
 
                     // 法线数据（如果不存在或损坏，会在后续重新计算）
                     if (hasNormals)
-                        _normals.Add(_sourceMesh.normals[oldIndex]);
+                        unit.Normals.Add(sourceMesh.normals[oldIndex]);
 
                     // 切线数据（如果不存在或损坏，会在后续重新计算）
                     if (hasTangents)
-                        _tangents.Add(_sourceMesh.tangents[oldIndex]);
+                        unit.Tangents.Add(sourceMesh.tangents[oldIndex]);
 
                     // UV坐标（无法自动计算，使用默认值，可能影响材质渲染效果）
                     if (hasUV)
-                        _uvs.Add(_sourceMesh.uv[oldIndex]);
+                        unit.Uvs.Add(sourceMesh.uv[oldIndex]);
                     else
-                        _uvs.Add(Vector2.zero);
+                        unit.Uvs.Add(Vector2.zero);
 
                     // 骨骼权重（无法自动计算，使用默认值，可能影响蒙皮效果）
                     if (hasBoneWeights)
-                        _boneWeights.Add(_sourceMesh.boneWeights[oldIndex]);
+                        unit.BoneWeights.Add(sourceMesh.boneWeights[oldIndex]);
                     else
-                        _boneWeights.Add(new BoneWeight { weight0 = 1.0f, boneIndex0 = 0 });
+                        unit.BoneWeights.Add(new BoneWeight { weight0 = 1.0f, boneIndex0 = 0 });
                 }
 
                 // 三角形索引重映射
-                foreach (var oldIndex in triangles)
+                foreach (var oldIndex in subTriangles)
                 {
-                    _triangles.Add(vertexRemapping[oldIndex]);
+                    unit.Triangles.Add(vertexRemapping[oldIndex]);
                 }
+
+                return unit;
             }
         }
 
         /// <summary>
         /// 合并结果
         /// </summary>
-        public struct CombineResult
+        public struct MeshCombineResult
         {
             public bool Success;
             public Mesh CombinedMesh;
@@ -141,16 +121,16 @@ namespace XFramework.SimpleDressup
         /// </summary>
         /// <param name="items">换装部件列表</param>
         /// <param name="bindPoses">绑定姿势矩阵数组</param>
-        public CombineResult Combine(List<DressupItem> items, IReadOnlyList<Matrix4x4> bindPoses)
+        public async UniTask<MeshCombineResult> CombineMeshesAsync(List<DressupItem> items, IReadOnlyList<Matrix4x4> bindPoses)
         {
             if (items == null || items.Count == 0)
             {
                 Log.Error("[MeshCombiner] No items to combine");
-                return new CombineResult { Success = false };
+                return new MeshCombineResult { Success = false };
             }
 
             var submeshUnits = ExtractSubmeshUnits(items);
-            var mergedSubmeshUnits = MergeSubmeshUnitsByMaterial(submeshUnits);
+            var mergedSubmeshUnits = await MergeSubmeshUnitsByMaterialAsync(submeshUnits);
             var result = BuildFinalMesh(mergedSubmeshUnits, bindPoses);
 
             return result;
@@ -161,14 +141,16 @@ namespace XFramework.SimpleDressup
         #region 核心实现
 
         /// <summary>
-        /// 步骤1: 提取拆分所有实例的子网格
+        /// 提取拆分所有实例的子网格
         /// </summary>
         private List<SubmeshUnit> ExtractSubmeshUnits(List<DressupItem> items)
         {
             var submeshUnits = new List<SubmeshUnit>();
 
-            foreach (var item in items)
+            for (int i = 0; i < items.Count; i++)
             {
+                var item = items[i];
+
                 if (!item.IsValid) continue;
 
                 var mesh = item.Mesh;
@@ -181,8 +163,8 @@ namespace XFramework.SimpleDressup
                     if (submeshIndex >= materials.Length) break;
 
                     var material = materials[submeshIndex];
-                    var unit = new SubmeshUnit(mesh, submeshIndex, material);
 
+                    var unit = SubmeshUnit.Create(mesh, submeshIndex, material);
                     if (unit.IsValid)
                     {
                         submeshUnits.Add(unit);
@@ -194,10 +176,10 @@ namespace XFramework.SimpleDressup
         }
 
         /// <summary>
-        /// 步骤2: 按材质分组并合并子网格
+        /// 策略1：按材质分组合并子网格
         /// 将所有相同材质的SubmeshUnit合并成一个SubmeshUnit
         /// </summary>
-        private List<SubmeshUnit> MergeSubmeshUnitsByMaterial(List<SubmeshUnit> submeshUnits)
+        private async UniTask<List<SubmeshUnit>> MergeSubmeshUnitsByMaterialAsync(List<SubmeshUnit> submeshUnits)
         {
             var materialGroupMap = new Dictionary<Material, List<SubmeshUnit>>();
 
@@ -228,7 +210,7 @@ namespace XFramework.SimpleDressup
                 else
                 {
                     // 多个单元需要合并
-                    var mergedUnit = MergeSubmeshUnits(unitsToMerge, material);
+                    var mergedUnit = await MergeSubmeshUnitsAsync(unitsToMerge, material);
                     if (!mergedUnit.IsValid)
                     {
                         Log.Error($"[MeshCombiner] Merged unit for material {material.name} is invalid. " +
@@ -243,9 +225,9 @@ namespace XFramework.SimpleDressup
         }
 
         /// <summary>
-        /// 合并多个相同材质的SubmeshUnit
+        /// 合并多个SubmeshUnit
         /// </summary>
-        private SubmeshUnit MergeSubmeshUnits(List<SubmeshUnit> unitsToMerge, Material material)
+        private async UniTask<SubmeshUnit> MergeSubmeshUnitsAsync(List<SubmeshUnit> unitsToMerge, Material material)
         {
             // 创建一个虚拟网格来容纳合并后的数据
             var mergedMesh = new Mesh();
@@ -261,6 +243,7 @@ namespace XFramework.SimpleDressup
             int vertexOffset = 0;
 
             // 合并所有单元的数据
+            int processedCount = 0;
             foreach (var unit in unitsToMerge)
             {
                 allVertices.AddRange(unit.Vertices);
@@ -273,6 +256,12 @@ namespace XFramework.SimpleDressup
                 foreach (var triangle in unit.Triangles)
                 {
                     allTriangles.Add(triangle + vertexOffset);
+                    processedCount++;
+                    if (processedCount % 5000 == 0)
+                    {
+                        processedCount = 0;
+                        await UniTask.NextFrame(); // 避免长时间阻塞主线程
+                    }
                 }
                 vertexOffset += unit.VertexCount;
             }
@@ -297,15 +286,17 @@ namespace XFramework.SimpleDressup
                      $"{allVertices.Count} vertices, {allTriangles.Count} triangles");
 
             // 创建新的SubmeshUnit表示合并结果
-            return new SubmeshUnit(mergedMesh, 0, material);
+            return SubmeshUnit.Create(mergedMesh, 0, material);
         }
 
         /// <summary>
-        /// 步骤3: 按最终的子网格数量重建新的包含多个子网格的大网格
+        /// 按给定的子网格单元建立一个新的包含多个子网格的大网格
         /// </summary>
-        private CombineResult BuildFinalMesh(IReadOnlyList<SubmeshUnit> submeshUnits, IReadOnlyList<Matrix4x4> bindPoses)
+        /// <param name="submeshUnits">子网格单元列表</param>
+        /// <param name="bindPoses">绑定姿势矩阵数组</param>
+        private MeshCombineResult BuildFinalMesh(IReadOnlyList<SubmeshUnit> submeshUnits, IReadOnlyList<Matrix4x4> bindPoses)
         {
-            var result = new CombineResult { Success = false };
+            var result = new MeshCombineResult { Success = false };
 
             if (submeshUnits.Count == 0)
             {
@@ -372,7 +363,8 @@ namespace XFramework.SimpleDressup
             {
                 var mesh = new Mesh
                 {
-                    name = "CombinedMesh"
+                    name = "CombinedMesh",
+                    hideFlags = HideFlags.HideAndDontSave
                 };
 
                 // 设置顶点数据 
@@ -398,6 +390,11 @@ namespace XFramework.SimpleDressup
                 return null;
             }
         }
+
+        #endregion
+
+        #region 性能优化
+
 
         #endregion
     }

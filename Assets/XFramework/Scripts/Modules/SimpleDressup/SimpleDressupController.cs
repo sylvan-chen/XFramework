@@ -30,8 +30,11 @@ namespace XFramework.SimpleDressup
         [SerializeField] private List<DressupItem> _dressupItems;
 
         // 核心组件
-        private MeshCombiner _meshCombiner;                     // 网格合并器
-        private MeshCombiner.CombineResult _meshCombineResult;  // 网格合并结果
+        private MeshCombiner _meshCombiner;                         // 网格合并器
+        private MeshCombiner.MeshCombineResult _meshCombineResult;  // 网格合并结果
+
+        private MaterialCombiner _materialCombiner;                             // 材质合并器
+        private MaterialCombiner.MaterialCombineResult _materialCombineResult;  // 材质合并结果
 
         // 骨骼数据
         private Transform[] _mainBones = new Transform[0];                // 主骨骼数组
@@ -113,6 +116,7 @@ namespace XFramework.SimpleDressup
         {
             // 创建和初始化核心组件
             _meshCombiner = new MeshCombiner();
+            _materialCombiner = new MaterialCombiner();
 
             // 骨骼数据初始化
             _boneMap.Clear();
@@ -196,7 +200,6 @@ namespace XFramework.SimpleDressup
             OnDressupComplete?.Invoke(true);
             IsDressing = false;
             return true;
-
         }
 
         /// <summary>
@@ -257,7 +260,7 @@ namespace XFramework.SimpleDressup
 
             await UniTask.NextFrame();
 
-            _meshCombineResult = _meshCombiner.Combine(_dressupItems, _bindPoses);
+            _meshCombineResult = await _meshCombiner.CombineMeshesAsync(_dressupItems, _bindPoses);
             if (!_meshCombineResult.Success)
             {
                 Log.Error("[SimpleDressupController] Failed to combine items.");
