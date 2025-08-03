@@ -245,9 +245,6 @@ namespace XFramework.SimpleDressup
             return result;
         }
 
-        /// <summary>
-        /// 构建合并网格
-        /// </summary>
         private Mesh BuildMeshInternal(int[][] submeshToTriangles, Vector3[] vertices, Vector3[] normals, Vector4[] tangents,
             Vector2[] uvs, BoneWeight[] boneWeights, Matrix4x4[] bindPoses)
         {
