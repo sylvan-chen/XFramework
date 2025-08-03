@@ -10,9 +10,8 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 子网格单元
         /// </summary>
-        private struct SubmeshUnit
+        public struct SubmeshUnit
         {
-            private Material _material;
             private int[] _triangles;
             private Vector3[] _vertices;
             private Vector3[] _normals;
@@ -20,7 +19,6 @@ namespace XFramework.SimpleDressup
             private Vector2[] _uvs;
             private BoneWeight[] _boneWeights;
 
-            public readonly Material Material => _material;
             public readonly int[] Triangles => _triangles;
             public readonly Vector3[] Vertices => _vertices;
             public readonly Vector3[] Normals => _normals;
@@ -30,58 +28,62 @@ namespace XFramework.SimpleDressup
 
             public readonly bool IsValid => _vertices?.Length > 0 && _triangles?.Length > 0;
             public readonly int VertexCount => _vertices?.Length ?? 0;
+            public readonly int TriangleIndexCount => _triangles?.Length ?? 0;
 
-            public static SubmeshUnit Create(Mesh sourceMesh, int submeshIndex, Material material)
+            public static SubmeshUnit Create(Mesh sourceMesh, int submeshIndex)
             {
                 if (sourceMesh == null) throw new ArgumentNullException(nameof(sourceMesh));
-
-                var unit = new SubmeshUnit
-                {
-                    _material = material
-                };
 
                 var sourceVertices = sourceMesh.vertices;
                 var sourceNormals = sourceMesh.normals;
                 var sourceTangents = sourceMesh.tangents;
                 var sourceUVs = sourceMesh.uv;
                 var sourceBoneWeights = sourceMesh.boneWeights;
-                var sourceVertexCount = sourceMesh.vertexCount;
+                var sourceSubtriangles = sourceMesh.GetTriangles(submeshIndex);
 
-                // 检查源网格数据完整性
+                return Create(sourceVertices, sourceNormals, sourceTangents, sourceUVs, sourceBoneWeights, sourceSubtriangles);
+            }
+
+            public static SubmeshUnit Create(Vector3[] sourceVertices, Vector3[] sourceNormals, Vector4[] sourceTangents,
+                Vector2[] sourceUVs, BoneWeight[] sourceBoneWeights, int[] sourceSubtriangles)
+            {
+                var unit = new SubmeshUnit();
+
+                int sourceVertexCount = sourceVertices?.Length ?? 0;
+
                 bool hasNormals = sourceNormals != null && sourceNormals.Length == sourceVertexCount;
                 bool hasTangents = sourceTangents != null && sourceTangents.Length == sourceVertexCount;
                 bool hasUV = sourceUVs != null && sourceUVs.Length == sourceVertexCount;
                 bool hasBoneWeights = sourceBoneWeights != null && sourceBoneWeights.Length == sourceVertexCount;
 
                 if (!hasNormals)
-                    Log.Debug($"[MeshCombiner] Mesh '{sourceMesh.name}' missing normals, will recalculate.");
+                    Log.Debug($"[MeshCombiner] Source mesh missing normals, will recalculate.");
                 if (!hasTangents)
-                    Log.Debug($"[MeshCombiner] Mesh '{sourceMesh.name}' missing tangents, will recalculate.");
+                    Log.Debug($"[MeshCombiner] Source mesh missing tangents, will recalculate.");
                 if (!hasUV)
-                    Log.Warning($"[MeshCombiner] Mesh '{sourceMesh.name}' missing UV coordinates, using default values. This may affect texture rendering.");
+                    Log.Warning($"[MeshCombiner] Source mesh missing UV coordinates, using default values. This may affect texture rendering.");
                 if (!hasBoneWeights)
-                    Log.Warning($"[MeshCombiner] Mesh '{sourceMesh.name}' missing bone weights, using default weights. This may affect skinning.");
+                    Log.Warning($"[MeshCombiner] Source mesh missing bone weights, using default weights. This may affect skinning.");
 
-                // 提取使用的顶点索引和新旧顶点索引映射 (原索引 -> 0, 1, 2, ...)
-                var subTriangles = sourceMesh.GetTriangles(submeshIndex);
+                // 提取新旧顶点索引映射 (原索引 -> 0, 1, 2, ...)
                 int usedVertexCount = 0;
-                int[] usedVertexIndices;
-                Dictionary<int, int> vertexIndexMap;
+                int[] newIndexToOld;
+                Dictionary<int, int> oldIndexToNew;
                 // 获取索引范围
                 int maxVertexIndex = 0;
-                for (int i = 0; i < subTriangles.Length; i++)
+                for (int i = 0; i < sourceSubtriangles.Length; i++)
                 {
-                    if (subTriangles[i] > maxVertexIndex)
-                        maxVertexIndex = subTriangles[i];
+                    if (sourceSubtriangles[i] > maxVertexIndex)
+                        maxVertexIndex = sourceSubtriangles[i];
                 }
                 // 根据索引范围使用不同提取算法
                 if (maxVertexIndex < 10000)  // 小范围使用bool数组标记
                 {
                     var vertexUseFlags = new bool[maxVertexIndex + 1];
 
-                    for (int i = 0; i < subTriangles.Length; i++)
+                    for (int i = 0; i < sourceSubtriangles.Length; i++)
                     {
-                        int vertexIndex = subTriangles[i];
+                        int vertexIndex = sourceSubtriangles[i];
                         if (!vertexUseFlags[vertexIndex])
                         {
                             vertexUseFlags[vertexIndex] = true;
@@ -89,50 +91,49 @@ namespace XFramework.SimpleDressup
                         }
                     }
 
-                    usedVertexIndices = new int[usedVertexCount];
-                    vertexIndexMap = new Dictionary<int, int>(usedVertexCount);
+                    newIndexToOld = new int[usedVertexCount];
+                    oldIndexToNew = new Dictionary<int, int>(usedVertexCount);
                     int newIndex = 0;
                     for (int i = 0; i < vertexUseFlags.Length; i++)
                     {
                         if (vertexUseFlags[i])
                         {
-                            usedVertexIndices[newIndex] = i;
-                            vertexIndexMap[i] = newIndex;
+                            newIndexToOld[newIndex] = i;
+                            oldIndexToNew[i] = newIndex;
                             newIndex++;
                         }
                     }
                 }
                 else  // 大范围使用排序去重
                 {
-                    Array.Sort(subTriangles);
+                    Array.Sort(sourceSubtriangles);
 
                     usedVertexCount = 1; // 包含第一个顶点
-                    for (int i = 1; i < subTriangles.Length; i++)
+                    for (int i = 1; i < sourceSubtriangles.Length; i++)
                     {
-                        if (subTriangles[i] != subTriangles[i - 1])
+                        if (sourceSubtriangles[i] != sourceSubtriangles[i - 1])
                             usedVertexCount++;
                     }
 
-                    usedVertexIndices = new int[usedVertexCount];
-                    vertexIndexMap = new Dictionary<int, int>(usedVertexCount);
+                    newIndexToOld = new int[usedVertexCount];
+                    oldIndexToNew = new Dictionary<int, int>(usedVertexCount);
 
-                    usedVertexIndices[0] = subTriangles[0];
-                    vertexIndexMap[subTriangles[0]] = 0;
+                    newIndexToOld[0] = sourceSubtriangles[0];
+                    oldIndexToNew[sourceSubtriangles[0]] = 0;
 
                     int newIndex = 1;
-                    for (int i = 1; i < subTriangles.Length; i++)
+                    for (int i = 1; i < sourceSubtriangles.Length; i++)
                     {
-                        if (subTriangles[i] != subTriangles[i - 1])
+                        if (sourceSubtriangles[i] != sourceSubtriangles[i - 1])
                         {
-                            // 新顶点索引
-                            usedVertexIndices[newIndex] = subTriangles[i];
-                            vertexIndexMap[subTriangles[i]] = newIndex;
+                            newIndexToOld[newIndex] = sourceSubtriangles[i];
+                            oldIndexToNew[sourceSubtriangles[i]] = newIndex;
                             newIndex++;
                         }
                     }
                 }
 
-                unit._triangles = new int[subTriangles.Length];
+                unit._triangles = new int[sourceSubtriangles.Length];
                 unit._vertices = new Vector3[usedVertexCount];
                 unit._normals = new Vector3[usedVertexCount];
                 unit._tangents = new Vector4[usedVertexCount];
@@ -140,38 +141,38 @@ namespace XFramework.SimpleDressup
                 unit._boneWeights = new BoneWeight[usedVertexCount];
 
                 // 复制顶点数据
-                for (int i = 0; i < usedVertexIndices.Length; i++)
+                for (int newIndex = 0; newIndex < newIndexToOld.Length; newIndex++)
                 {
-                    int oldIndex = usedVertexIndices[i];
+                    int oldIndex = newIndexToOld[newIndex];
 
                     // 顶点位置
-                    unit._vertices[i] = sourceVertices[oldIndex];
+                    unit._vertices[newIndex] = sourceVertices[oldIndex];
 
                     // 法线数据（如果不存在或损坏，会在后续重新计算）
                     if (hasNormals)
-                        unit._normals[i] = sourceNormals[oldIndex];
+                        unit._normals[newIndex] = sourceNormals[oldIndex];
 
                     // 切线数据（如果不存在或损坏，会在后续重新计算）
                     if (hasTangents)
-                        unit._tangents[i] = sourceTangents[oldIndex];
+                        unit._tangents[newIndex] = sourceTangents[oldIndex];
 
                     // UV坐标（无法自动计算，使用默认值，可能影响材质渲染效果）
                     if (hasUV)
-                        unit._uvs[i] = sourceUVs[oldIndex];
+                        unit._uvs[newIndex] = sourceUVs[oldIndex];
                     else
-                        unit._uvs[i] = Vector2.zero;
+                        unit._uvs[newIndex] = Vector2.zero;
 
                     // 骨骼权重（无法自动计算，使用默认值，可能影响蒙皮效果）
                     if (hasBoneWeights)
-                        unit._boneWeights[i] = sourceBoneWeights[oldIndex];
+                        unit._boneWeights[newIndex] = sourceBoneWeights[oldIndex];
                     else
-                        unit._boneWeights[i] = new BoneWeight { weight0 = 1.0f, boneIndex0 = 0 };
+                        unit._boneWeights[newIndex] = new BoneWeight { weight0 = 1.0f, boneIndex0 = 0 };
                 }
 
                 // 三角形索引重映射
-                for (int i = 0; i < subTriangles.Length; i++)
+                for (int i = 0; i < sourceSubtriangles.Length; i++)
                 {
-                    unit._triangles[i] = vertexIndexMap[subTriangles[i]];
+                    unit._triangles[i] = oldIndexToNew[sourceSubtriangles[i]];
                 }
 
                 return unit;

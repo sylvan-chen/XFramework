@@ -31,7 +31,7 @@ namespace XFramework.SimpleDressup
 
         // 核心组件
         private MeshCombiner _meshCombiner;                         // 网格合并器
-        private MeshCombiner.MeshCombineResult _meshCombineResult;  // 网格合并结果
+        private Mesh _combinedMesh;                                 // 合并后的网格
 
         private MaterialCombiner _materialCombiner;                             // 材质合并器
         private MaterialCombiner.MaterialCombineResult _materialCombineResult;  // 材质合并结果
@@ -65,22 +65,10 @@ namespace XFramework.SimpleDressup
 
         private void OnDestroy()
         {
-            // 清理临时创建的材质 - 只清理运行时创建的材质，跳过资源文件材质
-            if (_meshCombineResult.CombinedMaterials != null)
-            {
-                foreach (var mat in _meshCombineResult.CombinedMaterials)
-                {
-                    // 只销毁运行时创建的材质实例，不销毁资源文件中的材质
-                    if (mat != null && ShouldDestroyMaterial(mat))
-                    {
-                        DestroyImmediate(mat);
-                    }
-                }
-            }
             // 清理临时创建的网格
-            if (_meshCombineResult.CombinedMesh != null && ShouldDestroyMesh(_meshCombineResult.CombinedMesh))
+            if (_combinedMesh != null && ShouldDestroyMesh(_combinedMesh))
             {
-                DestroyImmediate(_meshCombineResult.CombinedMesh);
+                DestroyImmediate(_combinedMesh);
             }
         }
 
@@ -260,14 +248,17 @@ namespace XFramework.SimpleDressup
 
             await UniTask.NextFrame();
 
-            _meshCombineResult = await _meshCombiner.CombineMeshesAsync(_dressupItems, _bindPoses);
-            if (!_meshCombineResult.Success)
+            // 准备子网格单元列表
+            var submeshUnits = await _meshCombiner.ExtractSubmeshUnitsAsync(_dressupItems);
+            _combinedMesh = await _meshCombiner.BuildMeshAsync(submeshUnits, _bindPoses);
+
+            if (_combinedMesh == null)
             {
                 Log.Error("[SimpleDressupController] Failed to combine items.");
                 return false;
             }
 
-            Log.Debug($"[SimpleDressupController] Items combined successfully - {_dressupItems.Count} items → {_meshCombineResult.CombinedMaterials?.Length ?? 0} submeshes.");
+            Log.Debug($"[SimpleDressupController] Items combined successfully - {_dressupItems.Count} items → {_combinedMesh.subMeshCount} submeshes.");
 
             return true;
         }
@@ -284,9 +275,20 @@ namespace XFramework.SimpleDressup
             }
 
             // 应用合并的网格
-            _targetRenderer.sharedMesh = _meshCombineResult.CombinedMesh;
+            _targetRenderer.sharedMesh = _combinedMesh;
+
+            var combinedMaterials = new List<Material>();
+            foreach (var item in _dressupItems)
+            {
+                if (!item.IsValid) continue;
+
+                foreach (var mat in item.Materials)
+                {
+                    combinedMaterials.Add(mat);
+                }
+            }
             // 应用材质
-            _targetRenderer.sharedMaterials = _meshCombineResult.CombinedMaterials;
+            _targetRenderer.sharedMaterials = combinedMaterials.ToArray();
             // 应用骨骼
             _targetRenderer.bones = _mainBones;
             // 设置根骨骼
@@ -344,10 +346,7 @@ namespace XFramework.SimpleDressup
 
             if (!firstBounds)
             {
-                // 设置计算出的边界
                 targetRenderer.localBounds = combinedBounds;
-
-                Log.Debug($"[SimpleDressupController] Set localBounds: center={combinedBounds.center}, size={combinedBounds.size}");
             }
             else
             {
