@@ -27,9 +27,9 @@ namespace XFramework.SimpleDressup
         #region 数据结构
 
         /// <summary>
-        /// 合并子网格单元信息
+        /// 合并网格信息
         /// </summary>
-        private struct CombinedSubmeshUnitInfo
+        private struct CombinedMeshInfo
         {
             public bool Success;
             public Vector3[] Vertices;
@@ -38,6 +38,7 @@ namespace XFramework.SimpleDressup
             public Vector2[] UVs;
             public BoneWeight[] BoneWeights;
             public int[] Triangles;
+            public int[][] SubmeshToTriangles;
         }
 
         #endregion
@@ -92,10 +93,10 @@ namespace XFramework.SimpleDressup
         /// <returns>合并后的子网格单元</returns>
         public async UniTask<SubmeshUnit> CombineSubmeshUnitsAsync(IReadOnlyList<SubmeshUnit> submeshUnits)
         {
-            var combinedInfo = await GenerateCombinedSubmeshUnitInfoAsync(submeshUnits);
+            var combinedInfo = await GenerateCombinedMeshInfoAsync(submeshUnits);
             if (!combinedInfo.Success)
             {
-                Log.Error("[MeshCombiner] Failed to generate combined submesh unit info.");
+                Log.Error("[MeshCombiner] Failed to generate combined mesh info.");
                 return default;
             }
 
@@ -111,34 +112,17 @@ namespace XFramework.SimpleDressup
         /// <returns>合并后的网格</returns>
         public async UniTask<Mesh> BuildMeshAsync(IReadOnlyList<SubmeshUnit> submeshUnits, Matrix4x4[] bindPoses)
         {
-            var combinedInfo = await GenerateCombinedSubmeshUnitInfoAsync(submeshUnits);
+            var combinedInfo = await GenerateCombinedMeshInfoAsync(submeshUnits);
             if (!combinedInfo.Success)
             {
-                Log.Error("[MeshCombiner] Failed to generate combined submesh unit info.");
+                Log.Error("[MeshCombiner] Failed to generate combined mesh info.");
                 return null;
             }
 
-            var submeshToTriangles = new int[submeshUnits.Count][];
-            int triangleOffset = 0;
-
-            for (int unitIndex = 0; unitIndex < submeshUnits.Count; unitIndex++)
-            {
-                var unit = submeshUnits[unitIndex];
-                if (!unit.IsValid) continue;
-
-                int triangleIndexCount = unit.TriangleIndexCount;
-
-                submeshToTriangles[unitIndex] = new int[triangleIndexCount];
-
-                Array.Copy(combinedInfo.Triangles, triangleOffset, submeshToTriangles[unitIndex], 0, triangleIndexCount);
-
-                triangleOffset += triangleIndexCount;
-            }
-
             Log.Info($"[XFramework] [MeshCombiner] Successfully built mesh with {submeshUnits.Count} submeshes, " +
-                     $"{combinedInfo.Vertices.Length} vertices, {submeshToTriangles.Sum(t => t.Length)} triangles");
+                     $"{combinedInfo.Vertices.Length} vertices, {combinedInfo.SubmeshToTriangles.Sum(t => t.Length)} triangles");
 
-            return BuildMeshInternal(submeshToTriangles, combinedInfo.Vertices, combinedInfo.Normals,
+            return BuildMeshInternal(combinedInfo.SubmeshToTriangles, combinedInfo.Vertices, combinedInfo.Normals,
                 combinedInfo.Tangents, combinedInfo.UVs, combinedInfo.BoneWeights, bindPoses);
         }
 
@@ -175,9 +159,9 @@ namespace XFramework.SimpleDressup
             return submeshUnits;
         }
 
-        private async UniTask<CombinedSubmeshUnitInfo> GenerateCombinedSubmeshUnitInfoAsync(IReadOnlyList<SubmeshUnit> submeshUnits)
+        private async UniTask<CombinedMeshInfo> GenerateCombinedMeshInfoAsync(IReadOnlyList<SubmeshUnit> submeshUnits)
         {
-            var result = new CombinedSubmeshUnitInfo { Success = false };
+            var result = new CombinedMeshInfo { Success = false };
 
             if (submeshUnits == null || submeshUnits.Count == 0)
             {
@@ -204,6 +188,7 @@ namespace XFramework.SimpleDressup
             result.UVs = new Vector2[totalVertexCount];
             result.BoneWeights = new BoneWeight[totalVertexCount];
             result.Triangles = new int[totalTriangleCount];
+            result.SubmeshToTriangles = new int[submeshUnits.Count][];
 
             int vertexOffset = 0;
             int triangleOffset = 0;
@@ -225,9 +210,11 @@ namespace XFramework.SimpleDressup
 
                 // 三角形索引重映射到新的顶点索引
                 var unitTriangles = unit.Triangles;
+                result.SubmeshToTriangles[unitIndex] = new int[triangleIndexCount];
                 for (int i = 0; i < triangleIndexCount; i++)
                 {
                     result.Triangles[triangleOffset + i] = unitTriangles[i] + vertexOffset;
+                    result.SubmeshToTriangles[unitIndex][i] = unitTriangles[i] + vertexOffset;
 
                     processedCount++;
                     if (processedCount >= TRIANGLE_PROCESS_COUNT_PER_FRAME)
