@@ -20,7 +20,10 @@ namespace XFramework.SimpleDressup
     {
         #region 常量配置
 
-        private const int TRIANGLE_PROCESS_COUNT_PER_FRAME = 1000; // 三角形每帧处理数量
+        /// <summary>
+        /// 每帧处理的三角形数量
+        /// </summary>
+        private const int TRIANGLE_PROCESS_COUNT_PER_FRAME = 1000;
 
         #endregion
 
