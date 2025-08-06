@@ -385,6 +385,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _defaultShader
+      value: 
+      objectReference: {fileID: 4800000, guid: d5836e97a42cb634b8ae093190c1d298, type: 3}
     - target: {fileID: 4629843598363556833, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

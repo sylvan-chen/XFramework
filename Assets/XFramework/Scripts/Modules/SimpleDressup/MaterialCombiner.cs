@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
 using XFramework.Utils;
 
 namespace XFramework.SimpleDressup
@@ -37,10 +36,9 @@ namespace XFramework.SimpleDressup
             public Texture2D MetallicAtlas;
             public Texture2D OcclusionAtlas;
             public Texture2D EmissionAtlas;
-            public Dictionary<string, Rect> UvRectMap;
         }
 
-        public class TextureUnit
+        public struct TextureUnit
         {
             public Texture2D BaseMap;
             public Texture2D NormalMap;
@@ -48,33 +46,24 @@ namespace XFramework.SimpleDressup
             public Texture2D OcclusionMap;
             public Texture2D EmissionMap;
             public Rect UvRect;
+
+            public readonly Texture2D GetTexture(TextureType type)
+            {
+                return type switch
+                {
+                    TextureType.Base => BaseMap,
+                    TextureType.Normal => NormalMap,
+                    TextureType.Metallic => MetallicMap,
+                    TextureType.Occlusion => OcclusionMap,
+                    TextureType.Emission => EmissionMap,
+                    _ => null
+                };
+            }
         }
 
         #endregion
 
         #region 公共接口
-
-        private int _atlasSize;
-        private Shader _shader;
-
-        public async UniTask<MaterialCombineResult> CombineMaterialsAsync(List<DressupItem> dressupItems, int atlasSize, Shader shader)
-        {
-            _atlasSize = atlasSize;
-            _shader = shader;
-
-            var result = new MaterialCombineResult { Success = false };
-
-            if (dressupItems == null || dressupItems.Count == 0)
-            {
-                Log.Warning("[MaterialCombiner] No items to combine.");
-                return result;
-            }
-
-            // TODO: 进行材质合并操作
-            // ...
-
-            return result;
-        }
 
         /// <summary>
         /// 批量从外观物品中提取纹理单元
@@ -106,9 +95,6 @@ namespace XFramework.SimpleDressup
                         EmissionMap = ExtractTexture(material, TextureType.Emission)
                     };
 
-                    // 计算UV矩形
-                    // unit.UvRect = CalculateUvRect(unit);
-
                     textureUnits.Add(unit);
                 }
             }
@@ -119,7 +105,7 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 根据纹理单元构建合并材质
         /// </summary>
-        public async UniTask<MaterialCombineResult> BuildMaterial(TextureUnit[] textureUnits, int atlasSize, Shader shader)
+        public async UniTask<MaterialCombineResult> BuildCombinedMaterialAsync(TextureUnit[] textureUnits, int atlasSize, Shader shader)
         {
             var result = new MaterialCombineResult() { Success = false };
 
@@ -129,28 +115,59 @@ namespace XFramework.SimpleDressup
                 return result;
             }
 
-            // 合并纹理为图集
-            var combinedAtlas = new Texture2D(atlasSize, atlasSize);
-
+            // 先打包所有BaseMap用于确定统一的UV布局
             var baseTextures = new List<Texture2D>();
-            var normalTextures = new List<Texture2D>();
-            var metallicTextures = new List<Texture2D>();
-            var occlusionTextures = new List<Texture2D>();
-            var emissionTextures = new List<Texture2D>();
-
-
             foreach (var unit in textureUnits)
             {
-                if (unit.BaseMap != null) baseTextures.Add(unit.BaseMap);
-                if (unit.NormalMap != null) normalTextures.Add(unit.NormalMap);
-                if (unit.MetallicMap != null) metallicTextures.Add(unit.MetallicMap);
-                if (unit.OcclusionMap != null) occlusionTextures.Add(unit.OcclusionMap);
-                if (unit.EmissionMap != null) emissionTextures.Add(unit.EmissionMap);
+                if (unit.BaseMap != null)
+                    baseTextures.Add(unit.BaseMap);
+                else
+                    baseTextures.Add(Texture2D.whiteTexture); // 使用白色纹理填充空位，确保布局正确
             }
 
-            var (baseAtlas, uvRects) = await PackBaseTexturesAsync(baseTextures, atlasSize);
+            try
+            {
+                var (baseAtlas, uvRects) = await PackBaseTexturesAsync(baseTextures, atlasSize);
+                result.BaseAtlas = baseAtlas;
 
-            // TODO: 处理其他纹理图集
+                for (int i = 0; i < textureUnits.Length; i++)
+                {
+                    textureUnits[i].UvRect = uvRects[i];
+                }
+
+                // 并行打包其他纹理
+                var normalPackTask = PackOtherTexturesAsync(textureUnits, atlasSize, TextureType.Normal);
+                var metallicPackTask = PackOtherTexturesAsync(textureUnits, atlasSize, TextureType.Metallic);
+                var occlusionPackTask = PackOtherTexturesAsync(textureUnits, atlasSize, TextureType.Occlusion);
+                var emissionPackTask = PackOtherTexturesAsync(textureUnits, atlasSize, TextureType.Emission);
+
+
+                var (normalTexture, metallicTexture, occlusionTexture, emissionTexture) =
+                    await UniTask.WhenAll(normalPackTask, metallicPackTask, occlusionPackTask, emissionPackTask);
+
+                result.NormalAtlas = normalTexture;
+                result.MetallicAtlas = metallicTexture;
+                result.OcclusionAtlas = occlusionTexture;
+                result.EmissionAtlas = emissionTexture;
+
+                // 创建合并材质
+                result.CombinedMaterial = CreateMaterial(
+                    baseAtlas,
+                    normalTexture,
+                    metallicTexture,
+                    occlusionTexture,
+                    emissionTexture,
+                    shader
+                );
+                result.Success = true;
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"[MaterialCombiner] Failed to pack textures: {ex.Message}");
+                result.Success = false;
+                ClearResult(result);
+                return result;
+            }
 
             return result;
         }
@@ -161,48 +178,109 @@ namespace XFramework.SimpleDressup
 
         private Texture2D ExtractTexture(Material material, TextureType type)
         {
-            Texture2D map;
+            Texture2D map = null;
 
             switch (type)
             {
                 case TextureType.Base:
-                    map = material.GetTexture("_MainTex") as Texture2D;
-                    if (map == null)
+                    if (material.HasTexture("_BaseMap"))
+                    {
                         map = material.GetTexture("_BaseMap") as Texture2D;
-                    if (map == null)
+                        break;
+                    }
+                    else if (material.HasTexture("_MainTex"))
+                    {
+                        map = material.GetTexture("_MainTex") as Texture2D;
+                        break;
+                    }
+                    else if (material.HasTexture("_BaseColorMap"))
+                    {
                         map = material.GetTexture("_BaseColorMap") as Texture2D;
-                    if (map == null)
+                        break;
+                    }
+                    else if (material.HasTexture("_Albedo"))
+                    {
                         map = material.GetTexture("_Albedo") as Texture2D;
-                    if (map == null)
+                        break;
+                    }
+                    else if (material.HasTexture("_Diffuse"))
+                    {
                         map = material.GetTexture("_Diffuse") as Texture2D;
+                        break;
+                    }
                     break;
                 case TextureType.Normal:
-                    map = material.GetTexture("_BumpMap") as Texture2D;
-                    if (map == null)
+                    if (material.HasTexture("_BumpMap"))
+                    {
+                        map = material.GetTexture("_BumpMap") as Texture2D;
+                        break;
+                    }
+                    else if (material.HasTexture("_NormalMap"))
+                    {
                         map = material.GetTexture("_NormalMap") as Texture2D;
-                    if (map == null)
+                        break;
+                    }
+                    else if (material.HasTexture("_DetailNormalMap"))
+                    {
                         map = material.GetTexture("_DetailNormalMap") as Texture2D;
+                        break;
+                    }
                     break;
                 case TextureType.Metallic:
-                    map = material.GetTexture("_MetallicGlossMap") as Texture2D;
-                    if (map == null)
+                    if (material.HasTexture("_MetallicGlossMap"))
+                    {
+                        map = material.GetTexture("_MetallicGlossMap") as Texture2D;
+                        break;
+                    }
+                    else if (material.HasTexture("_MetallicMap"))
+                    {
                         map = material.GetTexture("_MetallicMap") as Texture2D;
-                    if (map == null)
+                        break;
+                    }
+                    else if (material.HasTexture("_SpecGlossMap"))
+                    {
                         map = material.GetTexture("_SpecGlossMap") as Texture2D;
-                    if (map == null)
+                        break;
+                    }
+                    else if (material.HasTexture("_MaskMap"))
+                    {
                         map = material.GetTexture("_MaskMap") as Texture2D;
+                        break;
+                    }
                     break;
                 case TextureType.Occlusion:
-                    map = material.GetTexture("_OcclusionMap") as Texture2D;
-                    if (map == null)
+                    if (material.HasTexture("_OcclusionMap"))
+                    {
+                        map = material.GetTexture("_OcclusionMap") as Texture2D;
+                        break;
+                    }
+                    else if (material.HasTexture("_AOMap"))
+                    {
                         map = material.GetTexture("_AOMap") as Texture2D;
+                        break;
+                    }
+                    else if (material.HasTexture("_AmbientOcclusionMap"))
+                    {
+                        map = material.GetTexture("_AmbientOcclusionMap") as Texture2D;
+                        break;
+                    }
                     break;
                 case TextureType.Emission:
-                    map = material.GetTexture("_EmissionMap") as Texture2D;
-                    if (map == null)
+                    if (material.HasTexture("_EmissionMap"))
+                    {
+                        map = material.GetTexture("_EmissionMap") as Texture2D;
+                        break;
+                    }
+                    else if (material.HasTexture("_EmissiveMap"))
+                    {
                         map = material.GetTexture("_EmissiveMap") as Texture2D;
-                    if (map == null)
+                        break;
+                    }
+                    else if (material.HasTexture("_EmissionColorMap"))
+                    {
                         map = material.GetTexture("_EmissionColorMap") as Texture2D;
+                        break;
+                    }
                     break;
                 default:
                     map = null;
@@ -226,32 +304,139 @@ namespace XFramework.SimpleDressup
             return (atlas, uvRects);
         }
 
-        private async UniTask<Texture2D> PackTexturesWithLayoutAsync(List<Texture2D> textures, int atlasSize, Rect[] uvRects, TextureType textureType)
+        private async UniTask<Texture2D> PackOtherTexturesAsync(TextureUnit[] textureUnits, int atlasSize, TextureType textureType)
         {
             var atlas = new Texture2D(atlasSize, atlasSize, GetTextureDefaultFormat(textureType), false)
             {
                 name = $"CombinedAtlas_{atlasSize}_{textureType}"
             };
 
+            // 填充默认颜色
             var backgroundColor = GetTextureDefaultColor(textureType);
             var pixels = new Color32[atlasSize * atlasSize];
             for (int i = 0; i < pixels.Length; i++)
             {
                 pixels[i] = backgroundColor;
 
-                if (i % PIXEL_PROCESS_COUNT_PER_FRAME == 0) await UniTask.NextFrame();
+                if (i > 0 && i % PIXEL_PROCESS_COUNT_PER_FRAME == 0) await UniTask.NextFrame();
             }
 
             atlas.SetPixels32(pixels);
 
-            for (int i = 0; i < textures.Count && i < uvRects.Length; i++)
+            // 将存在的贴图绘制到图集的对应位置
+            for (int i = 0; i < textureUnits.Length; i++)
             {
-                // TODO
+                var unit = textureUnits[i];
+                var sourceTexture = unit.GetTexture(textureType);
+
+                if (sourceTexture == null) continue;
+
+                var uvRect = unit.UvRect;
+                await CopyTextureToAtlasAsync(sourceTexture, atlas, uvRect);
             }
 
-            atlas.Apply();
+            atlas.Apply(true, false);
 
             return atlas;
+        }
+
+        private async UniTask CopyTextureToAtlasAsync(Texture2D texture, Texture2D atlas, Rect uvRect)
+        {
+            if (!texture.isReadable)
+            {
+                Log.Error($"[MaterialCombiner] Pack textures failed. Source texture '{texture.name}' is not readable.");
+                return;
+            }
+
+            int targetX = Mathf.FloorToInt(uvRect.x * atlas.width);
+            int targetY = Mathf.FloorToInt(uvRect.y * atlas.height);
+            int targetWidth = Mathf.FloorToInt(uvRect.width * atlas.width);
+            int targetHeight = Mathf.FloorToInt(uvRect.height * atlas.height);
+
+            // 简单双线性插值缩放
+            for (int h = 0; h < targetHeight; h++)
+            {
+                for (int w = 0; w < targetWidth; w++)
+                {
+                    float u = (float)w / targetWidth;
+                    float v = (float)h / targetHeight;
+
+                    int sourceX = Mathf.FloorToInt(u * texture.width);
+                    int sourceY = Mathf.FloorToInt(v * texture.height);
+
+                    if (sourceX < 0 || sourceX >= texture.width || sourceY < 0 || sourceY >= texture.height)
+                        continue;
+
+                    Color pixelColor = texture.GetPixel(sourceX, sourceY);
+                    atlas.SetPixel(targetX + w, targetY + h, pixelColor);
+
+                    if (h > 0 && (h * targetWidth + w) % PIXEL_PROCESS_COUNT_PER_FRAME == 0) await UniTask.NextFrame();
+                }
+            }
+        }
+
+        private Material CreateMaterial(Texture2D baseAtlas, Texture2D normalAtlas, Texture2D metallicAtlas, Texture2D occlusionAtlas, Texture2D emissionAtlas, Shader shader)
+        {
+            var material = new Material(shader)
+            {
+                name = "CombinedMaterial"
+            };
+
+            if (baseAtlas != null)
+                material.SetTexture("_BaseMap", baseAtlas);
+
+            if (normalAtlas != null)
+                material.SetTexture("_BumpMap", normalAtlas);
+
+            if (metallicAtlas != null)
+                material.SetTexture("_MetallicGlossMap", metallicAtlas);
+
+            if (occlusionAtlas != null)
+                material.SetTexture("_OcclusionMap", occlusionAtlas);
+
+            if (emissionAtlas != null)
+                material.SetTexture("_EmissionMap", emissionAtlas);
+
+            return material;
+        }
+
+        private void ClearResult(MaterialCombineResult result)
+        {
+            if (result.BaseAtlas != null)
+            {
+                Object.Destroy(result.BaseAtlas);
+                result.BaseAtlas = null;
+            }
+
+            if (result.NormalAtlas != null)
+            {
+                Object.Destroy(result.NormalAtlas);
+                result.NormalAtlas = null;
+            }
+
+            if (result.MetallicAtlas != null)
+            {
+                Object.Destroy(result.MetallicAtlas);
+                result.MetallicAtlas = null;
+            }
+
+            if (result.OcclusionAtlas != null)
+            {
+                Object.Destroy(result.OcclusionAtlas);
+                result.OcclusionAtlas = null;
+            }
+
+            if (result.EmissionAtlas != null)
+            {
+                Object.Destroy(result.EmissionAtlas);
+                result.EmissionAtlas = null;
+            }
+
+            if (result.CombinedMaterial != null)
+            {
+                Object.Destroy(result.CombinedMaterial);
+                result.CombinedMaterial = null;
+            }
         }
 
         private Color GetTextureDefaultColor(TextureType type)

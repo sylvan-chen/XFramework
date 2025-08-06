@@ -19,6 +19,7 @@ namespace XFramework.SimpleDressup
         [IntDropdown(256, 512, 1024, 2048, 4096)]
         [SerializeField] private int _atlasSize = 1024;
         [SerializeField] private bool _autoApplyOnStart = false;
+        [SerializeField] private Shader _defaultShader;
 
         [Header("目标对象")]
         [SerializeField] private SkinnedMeshRenderer _targetRenderer;
@@ -49,6 +50,10 @@ namespace XFramework.SimpleDressup
         /// 换装结果事件
         /// </summary>
         public System.Action<bool> OnDressupComplete;
+
+#if UNITY_EDITOR
+        public Material CombinedMaterial => _materialCombineResult.CombinedMaterial;
+#endif
 
         private void Awake()
         {
@@ -129,7 +134,7 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 应用当前的外观配置
         /// </summary>
-        public async UniTask<bool> ApplyDressupAsync()
+        public async UniTask<bool> ApplyDressupAsync(Shader shader = null)
         {
             if (!IsInitialized)
             {
@@ -157,7 +162,7 @@ namespace XFramework.SimpleDressup
             InitDressupItems();
 
             // 2. 生成纹理图集
-            bool atlasSuccess = await GenerateTextureAtlasAsync();
+            bool atlasSuccess = await GenerateTextureAtlasAsync(shader != null ? shader : _defaultShader);
             if (!atlasSuccess)
             {
                 Log.Error("[SimpleDressupController] Failed to generate texture atlas.");
@@ -228,10 +233,17 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 生成纹理图集
         /// </summary>
-        private async UniTask<bool> GenerateTextureAtlasAsync()
+        private async UniTask<bool> GenerateTextureAtlasAsync(Shader shader)
         {
-            // TODO: 当前未实现，直接返回成功
-            await UniTask.NextFrame();
+            var textureUnits = _materialCombiner.ExtractTextureUnits(_dressupItems);
+            if (textureUnits == null || textureUnits.Length == 0)
+            {
+                Log.Warning("[SimpleDressupController] No valid texture units found.");
+                return false;
+            }
+
+            _materialCombineResult = await _materialCombiner.BuildCombinedMaterialAsync(textureUnits, _atlasSize, shader);
+
             return true;
         }
 
@@ -287,6 +299,7 @@ namespace XFramework.SimpleDressup
                     combinedMaterials.Add(mat);
                 }
             }
+
             // 应用材质
             _targetRenderer.sharedMaterials = combinedMaterials.ToArray();
             // 应用骨骼
