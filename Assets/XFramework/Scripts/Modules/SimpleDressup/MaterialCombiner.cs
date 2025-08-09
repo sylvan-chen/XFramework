@@ -12,7 +12,7 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 每帧处理的像素数量
         /// </summary>
-        public const int PIXEL_PROCESS_COUNT_PER_FRAME = 1000;
+        public const int PIXEL_PROCESS_COUNT_PER_FRAME = 15000;
 
         #endregion
 
@@ -457,10 +457,10 @@ namespace XFramework.SimpleDressup
             return type switch
             {
                 TextureType.Base => TextureFormat.RGBA32,
-                TextureType.Normal => TextureFormat.DXT5,
-                TextureType.Metallic => TextureFormat.DXT1,
-                TextureType.Occlusion => TextureFormat.DXT1,
-                TextureType.Emission => TextureFormat.DXT1,
+                TextureType.Normal => TextureFormat.RGBA32,
+                TextureType.Metallic => TextureFormat.RGBA32,
+                TextureType.Occlusion => TextureFormat.RGBA32,
+                TextureType.Emission => TextureFormat.RGBA32,
                 _ => TextureFormat.RGBA32
             };
         }

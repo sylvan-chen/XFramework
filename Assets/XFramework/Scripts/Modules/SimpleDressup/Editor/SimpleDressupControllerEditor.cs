@@ -13,18 +13,36 @@ namespace XFramework.SimpleDressup.Editor
             var controller = (SimpleDressupController)target;
 
             // 在 Inspector 中显示合并后的材质
-            if (Application.isPlaying && controller.CombinedMaterial != null)
+            if (Application.isPlaying && controller.MaterialCombineResult.CombinedMaterial != null)
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Combined Material Preview", EditorStyles.boldLabel);
 
-                // 创建一个临时的材质编辑器来显示材质球
-                var materialEditor = (MaterialEditor)CreateEditor(controller.CombinedMaterial);
-                if (materialEditor != null)
+                using (new EditorGUI.DisabledGroupScope(true))
                 {
-                    materialEditor.OnInspectorGUI();
-                    // 清理临时的编辑器实例
-                    DestroyImmediate(materialEditor);
+                    EditorGUILayout.ObjectField("Combined Material", controller.MaterialCombineResult.CombinedMaterial, typeof(Material), false);
+                }
+
+                DrawMaterialPreview(controller.MaterialCombineResult);
+            }
+        }
+
+        private void DrawMaterialPreview(MaterialCombiner.MaterialCombineResult combineResult)
+        {
+            if (combineResult.CombinedMaterial == null) return;
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("Shader", combineResult.CombinedMaterial.shader.name);
+
+                var mainTexture = combineResult.BaseAtlas;
+                if (mainTexture != null)
+                {
+                    EditorGUILayout.ObjectField("Main Texture", mainTexture, typeof(Texture), false);
+                }
+                else
+                {
+                    EditorGUILayout.LabelField("Main Texture", "None");
                 }
             }
         }

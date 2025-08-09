@@ -52,7 +52,7 @@ namespace XFramework.SimpleDressup
         public System.Action<bool> OnDressupComplete;
 
 #if UNITY_EDITOR
-        public Material CombinedMaterial => _materialCombineResult.CombinedMaterial;
+        public MaterialCombiner.MaterialCombineResult MaterialCombineResult => _materialCombineResult;
 #endif
 
         private void Awake()
