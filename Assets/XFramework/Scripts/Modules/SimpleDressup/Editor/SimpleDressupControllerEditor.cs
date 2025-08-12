@@ -13,29 +13,29 @@ namespace XFramework.SimpleDressup.Editor
             var controller = (SimpleDressupController)target;
 
             // 在 Inspector 中显示合并后的材质
-            if (Application.isPlaying && controller.MaterialCombineResult.CombinedMaterial != null)
+            if (Application.isPlaying && controller.AtlasMaterial != null)
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Combined Material Preview", EditorStyles.boldLabel);
 
                 using (new EditorGUI.DisabledGroupScope(true))
                 {
-                    EditorGUILayout.ObjectField("Combined Material", controller.MaterialCombineResult.CombinedMaterial, typeof(Material), false);
+                    EditorGUILayout.ObjectField("Combined Material", controller.AtlasMaterial, typeof(Material), false);
                 }
 
-                DrawMaterialPreview(controller.MaterialCombineResult);
+                DrawMaterialPreview(controller.AtlasMaterial);
             }
         }
 
-        private void DrawMaterialPreview(MaterialCombiner.MaterialCombineResult combineResult)
+        private void DrawMaterialPreview(Material material)
         {
-            if (combineResult.CombinedMaterial == null) return;
+            if (material == null) return;
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("Shader", combineResult.CombinedMaterial.shader.name);
+                EditorGUILayout.LabelField("Shader", material.shader.name);
 
-                var mainTexture = combineResult.BaseAtlas;
+                var mainTexture = material.mainTexture;
                 if (mainTexture != null)
                 {
                     EditorGUILayout.ObjectField("Main Texture", mainTexture, typeof(Texture), false);

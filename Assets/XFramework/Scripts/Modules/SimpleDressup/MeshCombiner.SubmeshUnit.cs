@@ -19,6 +19,8 @@ namespace XFramework.SimpleDressup
             private Vector2[] _uvs;
             private BoneWeight[] _boneWeights;
 
+            public Material SubmeshMaterial { get; set; }
+
             public readonly int[] Triangles => _triangles;
             public readonly Vector3[] Vertices => _vertices;
             public readonly Vector3[] Normals => _normals;

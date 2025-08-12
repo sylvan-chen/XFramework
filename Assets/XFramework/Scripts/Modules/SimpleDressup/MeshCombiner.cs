@@ -48,12 +48,51 @@ namespace XFramework.SimpleDressup
 
         #region 公共接口
 
+        public async UniTask<Mesh> CombineMeshesAsync(IReadOnlyList<DressupItem> dressupItems, Matrix4x4[] bindPoses)
+        {
+            var submeshUnits = await ExtractSubmeshUnitsAsync(dressupItems);
+
+            // 按材质分组
+            var materialToSubmeshUnits = new Dictionary<Material, List<SubmeshUnit>>();
+            for (int i = 0; i < submeshUnits.Length; i++)
+            {
+                var unit = submeshUnits[i];
+                if (!unit.IsValid) continue;
+
+                if (!materialToSubmeshUnits.TryGetValue(unit.SubmeshMaterial, out var submeshList))
+                {
+                    submeshList = new List<SubmeshUnit>();
+                    materialToSubmeshUnits[unit.SubmeshMaterial] = submeshList;
+                }
+                submeshList.Add(unit);
+            }
+
+            // 合并相同材质的子网格单元
+            var groupedSubmeshUnits = new List<SubmeshUnit>();
+            foreach (var kvp in materialToSubmeshUnits)
+            {
+                var units = kvp.Value;
+
+                var combinedUnit = await CombineSubmeshUnitsAsync(units);
+                if (combinedUnit.IsValid)
+                {
+                    groupedSubmeshUnits.Add(combinedUnit);
+                }
+            }
+
+            return await BuildMeshAsync(groupedSubmeshUnits, bindPoses);
+        }
+
+        #endregion
+
+        #region 私有方法
+
         /// <summary>
         /// 提取外观部件的子网格单元
         /// </summary>
         /// <param name="dressupItem">外观部件</param>
         /// <returns>子网格单元列表</returns>
-        public async UniTask<SubmeshUnit[]> ExtractSubmeshUnitsAsync(DressupItem dressupItem)
+        private async UniTask<SubmeshUnit[]> ExtractSubmeshUnitsAsync(DressupItem dressupItem)
         {
             return await ExtractSubmeshUnitsInternal(dressupItem);
         }
@@ -63,7 +102,7 @@ namespace XFramework.SimpleDressup
         /// </summary>
         /// <param name="dressupItems">外观部件列表</param>
         /// <returns>子网格单元列表</returns>
-        public async UniTask<SubmeshUnit[]> ExtractSubmeshUnitsAsync(IReadOnlyList<DressupItem> dressupItems)
+        private async UniTask<SubmeshUnit[]> ExtractSubmeshUnitsAsync(IReadOnlyList<DressupItem> dressupItems)
         {
             int submeshCount = 0;
             for (int i = 0; i < dressupItems.Count; i++)
@@ -94,7 +133,7 @@ namespace XFramework.SimpleDressup
         /// </summary>
         /// <param name="submeshUnits">待合并的子网格单元列表</param>
         /// <returns>合并后的子网格单元</returns>
-        public async UniTask<SubmeshUnit> CombineSubmeshUnitsAsync(IReadOnlyList<SubmeshUnit> submeshUnits)
+        private async UniTask<SubmeshUnit> CombineSubmeshUnitsAsync(IReadOnlyList<SubmeshUnit> submeshUnits)
         {
             var combinedInfo = await GenerateCombinedMeshInfoAsync(submeshUnits);
             if (!combinedInfo.Success)
@@ -113,7 +152,7 @@ namespace XFramework.SimpleDressup
         /// <param name="submeshUnits">子网格单元列表</param>
         /// <param name="bindPoses">绑定姿势矩阵数组</param>
         /// <returns>合并后的网格</returns>
-        public async UniTask<Mesh> BuildMeshAsync(IReadOnlyList<SubmeshUnit> submeshUnits, Matrix4x4[] bindPoses)
+        private async UniTask<Mesh> BuildMeshAsync(IReadOnlyList<SubmeshUnit> submeshUnits, Matrix4x4[] bindPoses)
         {
             var combinedInfo = await GenerateCombinedMeshInfoAsync(submeshUnits);
             if (!combinedInfo.Success)
@@ -129,15 +168,11 @@ namespace XFramework.SimpleDressup
                 combinedInfo.Tangents, combinedInfo.UVs, combinedInfo.BoneWeights, bindPoses);
         }
 
-        #endregion
-
-        #region 核心实现
-
         private async UniTask<SubmeshUnit[]> ExtractSubmeshUnitsInternal(DressupItem dressupItem)
         {
             if (!dressupItem.IsValid) return Array.Empty<SubmeshUnit>();
 
-            var mesh = dressupItem.Mesh;
+            var mesh = dressupItem.Renderer.sharedMesh;
             int submeshCount = dressupItem.SubmeshCount;
 
             var submeshUnits = new SubmeshUnit[submeshCount];
@@ -149,6 +184,11 @@ namespace XFramework.SimpleDressup
                 var unit = SubmeshUnit.Create(mesh, submeshIndex);
                 if (unit.IsValid)
                 {
+                    if (submeshIndex < dressupItem.Renderer.sharedMaterials.Length)
+                        unit.SubmeshMaterial = dressupItem.Renderer.sharedMaterials[submeshIndex];
+                    else
+                        Debug.LogError($"[MeshCombiner] Missing material for submesh {submeshIndex}.");
+
                     submeshUnits[submeshIndex] = unit;
                 }
 

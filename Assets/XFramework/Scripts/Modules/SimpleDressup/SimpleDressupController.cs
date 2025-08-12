@@ -34,8 +34,8 @@ namespace XFramework.SimpleDressup
         private MeshCombiner _meshCombiner;                         // 网格合并器
         private Mesh _combinedMesh;                                 // 合并后的网格
 
-        private MaterialCombiner _materialCombiner;                             // 材质合并器
-        private MaterialCombiner.MaterialCombineResult _materialCombineResult;  // 材质合并结果
+        private AtlasGenerator _materialCombiner;                   // 材质合并器
+        private Material _atlasMaterial;                            // 使用图集的材质
 
         // 骨骼数据
         private Transform[] _mainBones = new Transform[0];                // 主骨骼数组
@@ -52,7 +52,7 @@ namespace XFramework.SimpleDressup
         public System.Action<bool> OnDressupComplete;
 
 #if UNITY_EDITOR
-        public MaterialCombiner.MaterialCombineResult MaterialCombineResult => _materialCombineResult;
+        public Material AtlasMaterial => _atlasMaterial;
 #endif
 
         private void Awake()
@@ -70,6 +70,12 @@ namespace XFramework.SimpleDressup
 
         private void OnDestroy()
         {
+            // 清理临时创建的材质
+            if (_atlasMaterial != null && ShouldDestroyMaterial(_atlasMaterial))
+            {
+                DestroyImmediate(_atlasMaterial);
+            }
+
             // 清理临时创建的网格
             if (_combinedMesh != null && ShouldDestroyMesh(_combinedMesh))
             {
@@ -109,7 +115,7 @@ namespace XFramework.SimpleDressup
         {
             // 创建和初始化核心组件
             _meshCombiner = new MeshCombiner();
-            _materialCombiner = new MaterialCombiner();
+            _materialCombiner = new AtlasGenerator();
 
             // 骨骼数据初始化
             _boneMap.Clear();
@@ -162,7 +168,7 @@ namespace XFramework.SimpleDressup
             InitDressupItems();
 
             // 2. 生成纹理图集
-            bool atlasSuccess = await GenerateTextureAtlasAsync(shader != null ? shader : _defaultShader);
+            bool atlasSuccess = await GenerateTextureAtlasAsync();
             if (!atlasSuccess)
             {
                 Log.Error("[SimpleDressupController] Failed to generate texture atlas.");
@@ -233,18 +239,11 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 生成纹理图集
         /// </summary>
-        private async UniTask<bool> GenerateTextureAtlasAsync(Shader shader)
+        private async UniTask<bool> GenerateTextureAtlasAsync()
         {
-            var textureUnits = _materialCombiner.ExtractTextureUnits(_dressupItems);
-            if (textureUnits == null || textureUnits.Length == 0)
-            {
-                Log.Warning("[SimpleDressupController] No valid texture units found.");
-                return false;
-            }
+            _atlasMaterial = await _materialCombiner.PackAtlasAndBuildMaterialAsync(_dressupItems, _atlasSize, _dressupItems[0].Renderer.sharedMaterial);
 
-            _materialCombineResult = await _materialCombiner.BuildCombinedMaterialAsync(textureUnits, _atlasSize, shader);
-
-            return true;
+            return _atlasMaterial != null;
         }
 
         /// <summary>
@@ -260,9 +259,10 @@ namespace XFramework.SimpleDressup
 
             await UniTask.NextFrame();
 
-            // 准备子网格单元列表
-            var submeshUnits = await _meshCombiner.ExtractSubmeshUnitsAsync(_dressupItems);
-            _combinedMesh = await _meshCombiner.BuildMeshAsync(submeshUnits, _bindPoses);
+            // var submeshUnits = await _meshCombiner.ExtractSubmeshUnitsAsync(_dressupItems);
+            // _combinedMesh = await _meshCombiner.BuildMeshAsync(submeshUnits, _bindPoses);
+
+            _combinedMesh = await _meshCombiner.CombineMeshesAsync(_dressupItems, _bindPoses);
 
             if (_combinedMesh == null)
             {
@@ -288,19 +288,18 @@ namespace XFramework.SimpleDressup
 
             // 应用合并的网格
             _targetRenderer.sharedMesh = _combinedMesh;
-
+            // 应用材质
             var combinedMaterials = new List<Material>();
             foreach (var item in _dressupItems)
             {
                 if (!item.IsValid) continue;
 
-                foreach (var mat in item.Materials)
+                var materials = item.Renderer.sharedMaterials;
+                foreach (var material in materials)
                 {
-                    combinedMaterials.Add(mat);
+                    combinedMaterials.Add(material);
                 }
             }
-
-            // 应用材质
             _targetRenderer.sharedMaterials = combinedMaterials.ToArray();
             // 应用骨骼
             _targetRenderer.bones = _mainBones;

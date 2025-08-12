@@ -39,13 +39,10 @@ namespace XFramework.SimpleDressup
         public DressupType DressupType => _dressupType;
         public SkinnedMeshRenderer Renderer => _renderer;
 
-        public Mesh Mesh { get; private set; }             // 网格
         public Material[] Materials { get; private set; }  // 材质
-        public Transform[] Bones { get; private set; }     // 骨骼
-        public Transform RootBone { get; private set; }    // 根骨骼
 
-        public bool IsValid => Mesh != null && Materials != null && Materials.Length > 0;
-        public int SubmeshCount => Mesh != null ? Mesh.subMeshCount : 0;
+        public bool IsValid => _renderer.sharedMesh != null && _renderer.sharedMaterials != null && _renderer.sharedMaterials.Length > 0;
+        public int SubmeshCount => _renderer.sharedMesh != null ? _renderer.sharedMesh.subMeshCount : 0;
 
         public void Init()
         {
@@ -55,10 +52,7 @@ namespace XFramework.SimpleDressup
                 return;
             }
 
-            Mesh = _renderer.sharedMesh;
             Materials = _renderer.sharedMaterials;
-            Bones = _renderer.bones;
-            RootBone = _renderer.rootBone;
         }
 
         /// <summary>
@@ -68,7 +62,10 @@ namespace XFramework.SimpleDressup
         /// <returns>重映射是否成功</returns>
         public bool RemapBones(Dictionary<string, Transform> boneMap)
         {
-            if (Bones == null || Bones.Length == 0 || RootBone == null)
+            var bones = _renderer.bones;
+            var rootBone = _renderer.rootBone;
+
+            if (bones == null || bones.Length == 0 || rootBone == null)
             {
                 Log.Warning("[DressupItem] Bones or RootBone is null or empty.");
                 return false;
@@ -80,33 +77,46 @@ namespace XFramework.SimpleDressup
                 return false;
             }
 
-            for (int i = 0; i < Bones.Length; i++)
+            for (int i = 0; i < bones.Length; i++)
             {
-                if (boneMap.TryGetValue(Bones[i].name, out var targetBone))
+                if (boneMap.TryGetValue(bones[i].name, out var targetBone))
                 {
-                    Bones[i] = targetBone;
+                    bones[i] = targetBone;
                 }
                 else
                 {
-                    Log.Warning($"[DressupItem] Bone '{Bones[i].name}' not found in boneMap.");
+                    Log.Warning($"[DressupItem] Bone '{bones[i].name}' not found in boneMap.");
                     return false;
                 }
             }
 
-            if (boneMap.TryGetValue(RootBone.name, out var targetRootBone))
+            if (boneMap.TryGetValue(rootBone.name, out var targetRootBone))
             {
-                RootBone = targetRootBone;
+                rootBone = targetRootBone;
             }
             else
             {
-                Log.Warning($"[DressupItem] Root bone '{RootBone.name}' not found in boneMap.");
+                Log.Warning($"[DressupItem] Root bone '{rootBone.name}' not found in boneMap.");
                 return false;
             }
 
-            _renderer.bones = Bones;
-            _renderer.rootBone = RootBone;
+            _renderer.bones = bones;
+            _renderer.rootBone = rootBone;
 
             return true;
+        }
+
+        /// <summary>
+        /// 更新材质
+        /// </summary>
+        /// <param name="newMaterials">新的材质数组</param>
+        public void UpdateMaterials(Material[] newMaterials)
+        {
+            Materials = newMaterials;
+            if (_renderer != null)
+            {
+                _renderer.sharedMaterials = newMaterials;
+            }
         }
     }
 
