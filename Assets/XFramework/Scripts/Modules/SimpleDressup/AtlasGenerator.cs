@@ -250,7 +250,7 @@ namespace XFramework.SimpleDressup
         }
 
         /// <summary>
-        /// 重映射网格的 UV 坐标以匹配图集
+        /// 重映射网格的UV坐标以匹配图集
         /// </summary>
         /// <param name="textureUnits">纹理单元数组</param>
         private void RemapMeshUVs(TextureUnit[] textureUnits)

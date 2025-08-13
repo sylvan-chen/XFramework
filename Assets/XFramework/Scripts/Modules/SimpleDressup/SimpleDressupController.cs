@@ -10,9 +10,11 @@ namespace XFramework.SimpleDressup
 {
     /// <summary>
     /// 简单换装系统主控制器
-    /// 负责协调整个换装流程：数据收集→图集生成→网格合并→结果应用
-    /// 合并所有身体部件和外观部件的网格到同一个SkinnedMeshRenderer
     /// </summary>
+    /// <remarks>
+    /// 负责协调整个换装流程：数据收集 → 图集生成 → 网格合并 → 结果应用
+    /// 合并所有身体部件和外观部件的网格到同一个SkinnedMeshRenderer
+    /// </remarks>
     public class SimpleDressupController : MonoBehaviour
     {
         [Header("基础配置")]
