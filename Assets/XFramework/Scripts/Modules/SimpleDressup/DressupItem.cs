@@ -9,7 +9,7 @@ using UnityEditor;
 namespace XFramework.SimpleDressup
 {
     /// <summary>
-    /// 服装类型 - 定义角色可以装备的部位
+    /// 外观类型
     /// </summary>
     [Serializable]
     public enum DressupType
@@ -28,8 +28,10 @@ namespace XFramework.SimpleDressup
 
     /// <summary>
     /// 外观部件
-    /// 包含模型的三个重要信息：网格、材质和骨骼
     /// </summary>
+    /// <remarks>
+    /// 本质是对SkinnedMeshRenderer的封装
+    /// </remarks>
     [Serializable]
     public class DressupItem
     {
@@ -48,7 +50,7 @@ namespace XFramework.SimpleDressup
         {
             if (_renderer == null)
             {
-                Log.Warning("[DressupItem] SkinnedMeshRenderer is null.");
+                Log.Error("[DressupItem] SkinnedMeshRenderer is null.");
                 return;
             }
 
@@ -104,19 +106,6 @@ namespace XFramework.SimpleDressup
             _renderer.rootBone = rootBone;
 
             return true;
-        }
-
-        /// <summary>
-        /// 更新材质
-        /// </summary>
-        /// <param name="newMaterials">新的材质数组</param>
-        public void UpdateMaterials(Material[] newMaterials)
-        {
-            Materials = newMaterials;
-            if (_renderer != null)
-            {
-                _renderer.sharedMaterials = newMaterials;
-            }
         }
     }
 

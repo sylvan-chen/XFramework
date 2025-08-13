@@ -34,7 +34,7 @@ namespace XFramework.SimpleDressup
         private MeshCombiner _meshCombiner;                         // 网格合并器
         private Mesh _combinedMesh;                                 // 合并后的网格
 
-        private AtlasGenerator _materialCombiner;                   // 材质合并器
+        private AtlasGenerator _atlasGenerator;                     // 图集生成器
         private Material _atlasMaterial;                            // 使用图集的材质
 
         // 骨骼数据
@@ -91,9 +91,7 @@ namespace XFramework.SimpleDressup
             // 在编辑器中，检查材质是否是资源文件
             return !AssetDatabase.Contains(material);
 #else
-            // 在运行时，检查材质名称是否包含 "Instance"
-            // 运行时创建的材质通常会有 "Instance" 后缀
-            return material.name.Contains("(Instance)");
+            return material.name.Contains("(Instance)") || material.name.Contains("(Clone)");
 #endif
         }
 
@@ -105,9 +103,7 @@ namespace XFramework.SimpleDressup
             // 在编辑器中，检查网格是否是资源文件
             return !AssetDatabase.Contains(mesh);
 #else
-            // 在运行时，检查网格名称是否包含 "Instance"
-            // 运行时创建的网格通常会有 "Instance" 后缀
-            return mesh.name.Contains("(Instance)");
+            return mesh.name.Contains("(Instance)") || mesh.name.Contains("(Clone)");
 #endif
         }
 
@@ -115,7 +111,7 @@ namespace XFramework.SimpleDressup
         {
             // 创建和初始化核心组件
             _meshCombiner = new MeshCombiner();
-            _materialCombiner = new AtlasGenerator();
+            _atlasGenerator = new AtlasGenerator();
 
             // 骨骼数据初始化
             _boneMap.Clear();
@@ -140,7 +136,7 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 应用当前的外观配置
         /// </summary>
-        public async UniTask<bool> ApplyDressupAsync(Shader shader = null)
+        public async UniTask<bool> ApplyDressupAsync()
         {
             if (!IsInitialized)
             {
@@ -168,7 +164,7 @@ namespace XFramework.SimpleDressup
             InitDressupItems();
 
             // 2. 生成纹理图集
-            bool atlasSuccess = await GenerateTextureAtlasAsync();
+            bool atlasSuccess = await GenerateAndApplyAtlasAsync();
             if (!atlasSuccess)
             {
                 Log.Error("[SimpleDressupController] Failed to generate texture atlas.");
@@ -218,15 +214,6 @@ namespace XFramework.SimpleDressup
                     invalidItems.Add(item);
                     continue;
                 }
-                // 骨骼重映射
-                // TODO: 不合并的部件需要将骨骼重映射到主骨骼，目前全都要合并，一律不进行
-                // var success = item.RemapBones(_boneMap);
-                // if (!success)
-                // {
-                //     Log.Error($"[SimpleDressupController] Clothing item '{item.Renderer.name}' failed to remap bones.");
-                //     invalidItems.Add(item);
-                //     continue;
-                // }
             }
 
             // 移除无效的部件
@@ -239,9 +226,9 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 生成纹理图集
         /// </summary>
-        private async UniTask<bool> GenerateTextureAtlasAsync()
+        private async UniTask<bool> GenerateAndApplyAtlasAsync()
         {
-            _atlasMaterial = await _materialCombiner.PackAtlasAndBuildMaterialAsync(_dressupItems, _atlasSize, _dressupItems[0].Renderer.sharedMaterial);
+            _atlasMaterial = await _atlasGenerator.BakeAtlasAndApplyAsync(_dressupItems, _atlasSize, _dressupItems[0].Renderer.sharedMaterial);
 
             return _atlasMaterial != null;
         }
@@ -258,9 +245,6 @@ namespace XFramework.SimpleDressup
             }
 
             await UniTask.NextFrame();
-
-            // var submeshUnits = await _meshCombiner.ExtractSubmeshUnitsAsync(_dressupItems);
-            // _combinedMesh = await _meshCombiner.BuildMeshAsync(submeshUnits, _bindPoses);
 
             _combinedMesh = await _meshCombiner.CombineMeshesAsync(_dressupItems, _bindPoses);
 
@@ -289,18 +273,12 @@ namespace XFramework.SimpleDressup
             // 应用合并的网格
             _targetRenderer.sharedMesh = _combinedMesh;
             // 应用材质
-            var combinedMaterials = new List<Material>();
-            foreach (var item in _dressupItems)
+            var atlasMaterials = new Material[_combinedMesh.subMeshCount];
+            for (int i = 0; i < atlasMaterials.Length; i++)
             {
-                if (!item.IsValid) continue;
-
-                var materials = item.Renderer.sharedMaterials;
-                foreach (var material in materials)
-                {
-                    combinedMaterials.Add(material);
-                }
+                atlasMaterials[i] = _atlasMaterial;
             }
-            _targetRenderer.sharedMaterials = combinedMaterials.ToArray();
+            _targetRenderer.sharedMaterials = atlasMaterials;
             // 应用骨骼
             _targetRenderer.bones = _mainBones;
             // 设置根骨骼

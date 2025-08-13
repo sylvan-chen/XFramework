@@ -78,11 +78,24 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 生成纹理图集并应用
         /// </summary>
-        /// <param name="dressupItems"></param>
-        /// <param name="atlasSize"></param>
+        /// <param name="dressupItem">目标外观部位</param>
+        /// <param name="atlasSize">图集尺寸</param>
         /// <param name="baseMaterial">基础材质</param>
         /// <returns>使用图集的材质</returns>
-        public async UniTask<Material> PackAtlasAndBuildMaterialAsync(IReadOnlyList<DressupItem> dressupItems, int atlasSize, Material baseMaterial)
+        public async UniTask<Material> BakeAtlasAndApplyAsync(DressupItem dressupItem, int atlasSize, Material baseMaterial)
+        {
+            DressupItem[] itemArray = new DressupItem[] { dressupItem };
+            return await BakeAtlasAndApplyAsync(itemArray, atlasSize, baseMaterial);
+        }
+
+        /// <summary>
+        /// 生成纹理图集并应用
+        /// </summary>
+        /// <param name="dressupItems">目标外观部位</param>
+        /// <param name="atlasSize">图集尺寸</param>
+        /// <param name="baseMaterial">基础材质</param>
+        /// <returns>使用图集的材质</returns>
+        public async UniTask<Material> BakeAtlasAndApplyAsync(IReadOnlyList<DressupItem> dressupItems, int atlasSize, Material baseMaterial)
         {
             if (dressupItems == null || dressupItems.Count == 0)
             {
@@ -109,17 +122,16 @@ namespace XFramework.SimpleDressup
             }
 
             // 创建使用图集的材质
-            var atlasMaterial = BuildMaterialWithAtlas(baseMaterial, atlasInfo);
+            var atlasMaterial = BuildMaterialWithAtlas(atlasInfo, baseMaterial);
 
             // 重映射每个DressupItem的网格UV坐标
-            RemapMeshUVsAsync(textureUnits);
+            RemapMeshUVs(textureUnits);
 
-            // 替换所有DressupItem的材质为使用图集的材质
+            // 应用材质到每个目标外观部位
             foreach (var item in dressupItems)
             {
                 if (!item.IsValid) continue;
 
-                // 创建新的材质数组，只包含合并后的材质
                 var newMaterials = new Material[item.Renderer.sharedMaterials.Length];
                 for (int i = 0; i < newMaterials.Length; i++)
                 {
@@ -241,7 +253,7 @@ namespace XFramework.SimpleDressup
         /// 重映射网格的 UV 坐标以匹配图集
         /// </summary>
         /// <param name="textureUnits">纹理单元数组</param>
-        private void RemapMeshUVsAsync(TextureUnit[] textureUnits)
+        private void RemapMeshUVs(TextureUnit[] textureUnits)
         {
             for (int itemIndex = 0; itemIndex < textureUnits.Length; itemIndex++)
             {
@@ -282,10 +294,10 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 使用图集构建材质
         /// </summary>
-        /// <param name="baseMaterial">基础材质</param>
         /// <param name="atlasInfo">图集信息</param>
+        /// <param name="baseMaterial">基础材质</param>
         /// <returns>构建的材质</returns>
-        private Material BuildMaterialWithAtlas(Material baseMaterial, AtlasInfo atlasInfo)
+        private Material BuildMaterialWithAtlas(AtlasInfo atlasInfo, Material baseMaterial)
         {
             var resultMaterial = Object.Instantiate(baseMaterial);
             resultMaterial.name = "AtlasMaterial";

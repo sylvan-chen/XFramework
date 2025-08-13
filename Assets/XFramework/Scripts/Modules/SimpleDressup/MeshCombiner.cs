@@ -27,7 +27,20 @@ namespace XFramework.SimpleDressup
 
         #endregion
 
-        #region 数据结构
+        #region 数据结构/枚举
+
+        public enum SubMeshStrategy
+        {
+            /// <summary>
+            /// 合并所有子网格
+            /// </summary>
+            MergeAll,
+
+            /// <summary>
+            /// 保持所有子网格独立
+            /// </summary>
+            Independent,
+        }
 
         /// <summary>
         /// 合并网格信息
@@ -41,46 +54,18 @@ namespace XFramework.SimpleDressup
             public Vector2[] UVs;
             public BoneWeight[] BoneWeights;
             public int[] Triangles;
-            public int[][] SubmeshToTriangles;
+            public List<int>[] SubmeshToTriangles;
         }
 
         #endregion
 
         #region 公共接口
 
-        public async UniTask<Mesh> CombineMeshesAsync(IReadOnlyList<DressupItem> dressupItems, Matrix4x4[] bindPoses)
+        public async UniTask<Mesh> CombineMeshesAsync(IReadOnlyList<DressupItem> dressupItems, Matrix4x4[] bindPoses, SubMeshStrategy strategy = SubMeshStrategy.MergeAll)
         {
             var submeshUnits = await ExtractSubmeshUnitsAsync(dressupItems);
 
-            // 按材质分组
-            var materialToSubmeshUnits = new Dictionary<Material, List<SubmeshUnit>>();
-            for (int i = 0; i < submeshUnits.Length; i++)
-            {
-                var unit = submeshUnits[i];
-                if (!unit.IsValid) continue;
-
-                if (!materialToSubmeshUnits.TryGetValue(unit.SubmeshMaterial, out var submeshList))
-                {
-                    submeshList = new List<SubmeshUnit>();
-                    materialToSubmeshUnits[unit.SubmeshMaterial] = submeshList;
-                }
-                submeshList.Add(unit);
-            }
-
-            // 合并相同材质的子网格单元
-            var groupedSubmeshUnits = new List<SubmeshUnit>();
-            foreach (var kvp in materialToSubmeshUnits)
-            {
-                var units = kvp.Value;
-
-                var combinedUnit = await CombineSubmeshUnitsAsync(units);
-                if (combinedUnit.IsValid)
-                {
-                    groupedSubmeshUnits.Add(combinedUnit);
-                }
-            }
-
-            return await BuildMeshAsync(groupedSubmeshUnits, bindPoses);
+            return await BuildCombinedMeshAsync(submeshUnits, bindPoses, strategy);
         }
 
         #endregion
@@ -94,7 +79,36 @@ namespace XFramework.SimpleDressup
         /// <returns>子网格单元列表</returns>
         private async UniTask<SubmeshUnit[]> ExtractSubmeshUnitsAsync(DressupItem dressupItem)
         {
-            return await ExtractSubmeshUnitsInternal(dressupItem);
+            if (!dressupItem.IsValid) return Array.Empty<SubmeshUnit>();
+
+            var mesh = dressupItem.Renderer.sharedMesh;
+            int submeshCount = dressupItem.SubmeshCount;
+
+            var resultUnits = new SubmeshUnit[submeshCount];
+            int processedCount = 0;
+
+            // 为每个子网格创建一个子网格单元
+            for (int submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
+            {
+                var unit = SubmeshUnit.Create(mesh, submeshIndex);
+                if (unit.IsValid)
+                {
+                    if (submeshIndex < dressupItem.Renderer.sharedMaterials.Length)
+                        unit.SubmeshMaterial = dressupItem.Renderer.sharedMaterials[submeshIndex];
+                    else
+                        Debug.LogError($"[MeshCombiner] Missing material for submesh {submeshIndex}.");
+
+                    resultUnits[submeshIndex] = unit;
+                }
+
+                processedCount++;
+                if (processedCount >= TRIANGLE_PROCESS_COUNT_PER_FRAME)
+                {
+                    processedCount = 0;
+                    await UniTask.NextFrame();
+                }
+            }
+            return resultUnits;
         }
 
         /// <summary>
@@ -118,7 +132,7 @@ namespace XFramework.SimpleDressup
             {
                 var item = dressupItems[i];
 
-                var submeshUnits = await ExtractSubmeshUnitsInternal(item);
+                var submeshUnits = await ExtractSubmeshUnitsAsync(item);
                 if (submeshUnits.Length == 0) continue;
 
                 Array.Copy(submeshUnits, 0, allSubmeshUnits, lastTargetIndex, submeshUnits.Length);
@@ -129,80 +143,66 @@ namespace XFramework.SimpleDressup
         }
 
         /// <summary>
-        /// 合并多个子网格单元
-        /// </summary>
-        /// <param name="submeshUnits">待合并的子网格单元列表</param>
-        /// <returns>合并后的子网格单元</returns>
-        private async UniTask<SubmeshUnit> CombineSubmeshUnitsAsync(IReadOnlyList<SubmeshUnit> submeshUnits)
-        {
-            var combinedInfo = await GenerateCombinedMeshInfoAsync(submeshUnits);
-            if (!combinedInfo.Success)
-            {
-                Log.Error("[MeshCombiner] Failed to generate combined mesh info.");
-                return default;
-            }
-
-            return SubmeshUnit.Create(combinedInfo.Vertices, combinedInfo.Normals, combinedInfo.Tangents, combinedInfo.UVs,
-                combinedInfo.BoneWeights, combinedInfo.Triangles);
-        }
-
-        /// <summary>
-        /// 将多个子网格单元建立成真正的网格
+        /// 根据子网格单元列表建立合并网格
         /// </summary>
         /// <param name="submeshUnits">子网格单元列表</param>
         /// <param name="bindPoses">绑定姿势矩阵数组</param>
-        /// <returns>合并后的网格</returns>
-        private async UniTask<Mesh> BuildMeshAsync(IReadOnlyList<SubmeshUnit> submeshUnits, Matrix4x4[] bindPoses)
+        /// <returns>合并网格</returns>
+        private async UniTask<Mesh> BuildCombinedMeshAsync(IReadOnlyList<SubmeshUnit> submeshUnits, Matrix4x4[] bindPoses, SubMeshStrategy strategy)
         {
-            var combinedInfo = await GenerateCombinedMeshInfoAsync(submeshUnits);
-            if (!combinedInfo.Success)
+            var combinedMeshInfo = await GenerateCombinedMeshInfoAsync(submeshUnits, strategy);
+            if (!combinedMeshInfo.Success)
             {
                 Log.Error("[MeshCombiner] Failed to generate combined mesh info.");
                 return null;
             }
 
             Log.Info($"[XFramework] [MeshCombiner] Successfully built mesh with {submeshUnits.Count} submeshes, " +
-                     $"{combinedInfo.Vertices.Length} vertices, {combinedInfo.SubmeshToTriangles.Sum(t => t.Length)} triangles");
+                     $"{combinedMeshInfo.Vertices.Length} vertices, {combinedMeshInfo.Triangles.Length} triangle indices.");
 
-            return BuildMeshInternal(combinedInfo.SubmeshToTriangles, combinedInfo.Vertices, combinedInfo.Normals,
-                combinedInfo.Tangents, combinedInfo.UVs, combinedInfo.BoneWeights, bindPoses);
-        }
-
-        private async UniTask<SubmeshUnit[]> ExtractSubmeshUnitsInternal(DressupItem dressupItem)
-        {
-            if (!dressupItem.IsValid) return Array.Empty<SubmeshUnit>();
-
-            var mesh = dressupItem.Renderer.sharedMesh;
-            int submeshCount = dressupItem.SubmeshCount;
-
-            var submeshUnits = new SubmeshUnit[submeshCount];
-            int processedCount = 0;
-
-            // 为每个子网格创建一个子网格单元
-            for (int submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
+            try
             {
-                var unit = SubmeshUnit.Create(mesh, submeshIndex);
-                if (unit.IsValid)
+                var mesh = new Mesh
                 {
-                    if (submeshIndex < dressupItem.Renderer.sharedMaterials.Length)
-                        unit.SubmeshMaterial = dressupItem.Renderer.sharedMaterials[submeshIndex];
-                    else
-                        Debug.LogError($"[MeshCombiner] Missing material for submesh {submeshIndex}.");
+                    name = "CombinedMesh",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
 
-                    submeshUnits[submeshIndex] = unit;
+                // 设置顶点数据 
+                mesh.SetVertices(combinedMeshInfo.Vertices);
+                mesh.SetNormals(combinedMeshInfo.Normals);
+                mesh.SetTangents(combinedMeshInfo.Tangents);
+                mesh.SetUVs(0, combinedMeshInfo.UVs);
+
+                var submeshToTriangles = combinedMeshInfo.SubmeshToTriangles;
+
+                mesh.subMeshCount = submeshToTriangles.Length;
+                for (int submeshIndex = 0; submeshIndex < submeshToTriangles.Length; submeshIndex++)
+                {
+                    mesh.SetTriangles(submeshToTriangles[submeshIndex], submeshIndex);
                 }
 
-                processedCount++;
-                if (processedCount >= TRIANGLE_PROCESS_COUNT_PER_FRAME)
-                {
-                    processedCount = 0;
-                    await UniTask.NextFrame();
-                }
+                mesh.boneWeights = combinedMeshInfo.BoneWeights;
+                mesh.bindposes = bindPoses;
+
+                if (mesh.normals == null || mesh.normals.Length == 0)
+                    mesh.RecalculateNormals();
+
+                if (mesh.tangents == null || mesh.tangents.Length == 0)
+                    mesh.RecalculateTangents();
+
+                mesh.RecalculateBounds();
+
+                return mesh;
             }
-            return submeshUnits;
+            catch (Exception e)
+            {
+                Log.Error($"[MeshCombiner] CreateFinalCombinedMesh error - {e.Message}");
+                return null;
+            }
         }
 
-        private async UniTask<CombinedMeshInfo> GenerateCombinedMeshInfoAsync(IReadOnlyList<SubmeshUnit> submeshUnits)
+        private async UniTask<CombinedMeshInfo> GenerateCombinedMeshInfoAsync(IReadOnlyList<SubmeshUnit> submeshUnits, SubMeshStrategy strategy)
         {
             var result = new CombinedMeshInfo { Success = false };
 
@@ -225,13 +225,25 @@ namespace XFramework.SimpleDressup
                 }
             }
 
+            int submeshCount = strategy switch
+            {
+                SubMeshStrategy.MergeAll => 1,
+                SubMeshStrategy.Independent => submeshUnits.Count,
+                _ => submeshUnits.Count
+            };
+
             result.Vertices = new Vector3[totalVertexCount];
             result.Normals = new Vector3[totalVertexCount];
             result.Tangents = new Vector4[totalVertexCount];
             result.UVs = new Vector2[totalVertexCount];
             result.BoneWeights = new BoneWeight[totalVertexCount];
             result.Triangles = new int[totalTriangleCount];
-            result.SubmeshToTriangles = new int[submeshUnits.Count][];
+            result.SubmeshToTriangles = new List<int>[submeshCount];
+
+            for (int i = 0; i < submeshCount; i++)
+            {
+                result.SubmeshToTriangles[i] = new List<int>();
+            }
 
             int vertexOffset = 0;
             int triangleOffset = 0;
@@ -251,13 +263,19 @@ namespace XFramework.SimpleDressup
                 Array.Copy(unit.Uvs, 0, result.UVs, vertexOffset, vertexCount);
                 Array.Copy(unit.BoneWeights, 0, result.BoneWeights, vertexOffset, vertexCount);
 
+                var targetSubmeshIndex = strategy switch
+                {
+                    SubMeshStrategy.MergeAll => 0,
+                    SubMeshStrategy.Independent => unitIndex,
+                    _ => unitIndex
+                };
+
                 // 三角形索引重映射到新的顶点索引
                 var unitTriangles = unit.Triangles;
-                result.SubmeshToTriangles[unitIndex] = new int[triangleIndexCount];
                 for (int i = 0; i < triangleIndexCount; i++)
                 {
                     result.Triangles[triangleOffset + i] = unitTriangles[i] + vertexOffset;
-                    result.SubmeshToTriangles[unitIndex][i] = unitTriangles[i] + vertexOffset;
+                    result.SubmeshToTriangles[targetSubmeshIndex].Add(unitTriangles[i] + vertexOffset);
 
                     processedCount++;
                     if (processedCount >= TRIANGLE_PROCESS_COUNT_PER_FRAME)
@@ -273,49 +291,6 @@ namespace XFramework.SimpleDressup
 
             result.Success = true;
             return result;
-        }
-
-        private Mesh BuildMeshInternal(int[][] submeshToTriangles, Vector3[] vertices, Vector3[] normals, Vector4[] tangents,
-            Vector2[] uvs, BoneWeight[] boneWeights, Matrix4x4[] bindPoses)
-        {
-            try
-            {
-                var mesh = new Mesh
-                {
-                    name = "CombinedMesh",
-                    hideFlags = HideFlags.HideAndDontSave
-                };
-
-                // 设置顶点数据 
-                mesh.SetVertices(vertices);
-                mesh.SetNormals(normals);
-                mesh.SetTangents(tangents);
-                mesh.SetUVs(0, uvs);
-
-                mesh.subMeshCount = submeshToTriangles.Length;
-                for (int submeshIndex = 0; submeshIndex < submeshToTriangles.Length; submeshIndex++)
-                {
-                    mesh.SetTriangles(submeshToTriangles[submeshIndex], submeshIndex);
-                }
-
-                mesh.boneWeights = boneWeights;
-                mesh.bindposes = bindPoses;
-
-                if (mesh.normals == null || mesh.normals.Length == 0)
-                    mesh.RecalculateNormals();
-
-                if (mesh.tangents == null || mesh.tangents.Length == 0)
-                    mesh.RecalculateTangents();
-
-                mesh.RecalculateBounds();
-
-                return mesh;
-            }
-            catch (Exception e)
-            {
-                Log.Error($"[MeshCombiner] CreateFinalCombinedMesh error - {e.Message}");
-                return null;
-            }
         }
 
         #endregion
