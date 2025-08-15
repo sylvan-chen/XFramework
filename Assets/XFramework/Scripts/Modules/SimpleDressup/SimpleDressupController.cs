@@ -13,7 +13,6 @@ namespace XFramework.SimpleDressup
     /// </summary>
     /// <remarks>
     /// 负责协调整个换装流程：数据收集 → 图集生成 → 网格合并 → 结果应用
-    /// 合并所有身体部件和外观部件的网格到同一个SkinnedMeshRenderer
     /// </remarks>
     public class SimpleDressupController : MonoBehaviour
     {
@@ -230,7 +229,21 @@ namespace XFramework.SimpleDressup
         /// </summary>
         private async UniTask<bool> GenerateAndApplyAtlasAsync()
         {
-            _atlasMaterial = await _atlasGenerator.BakeAtlasAndApplyAsync(_dressupItems, _atlasSize, _dressupItems[0].Renderer.sharedMaterial);
+            if (_dressupItems.Count == 0)
+            {
+                Log.Warning("[SimpleDressupController] No valid items to generate atlas.");
+                return false;
+            }
+
+            _atlasMaterial = await _atlasGenerator.GenerateAndApplyAtlasAsync(_dressupItems, _atlasSize, _dressupItems[0].Renderer.sharedMaterial);
+
+            if (_atlasMaterial == null)
+            {
+                Log.Error("[SimpleDressupController] Failed to generate atlas material.");
+                return false;
+            }
+
+            Log.Debug("[SimpleDressupController] Successfully generated atlas material.");
 
             return _atlasMaterial != null;
         }
@@ -245,8 +258,6 @@ namespace XFramework.SimpleDressup
                 Log.Warning("[SimpleDressupController] No valid items to combine.");
                 return false;
             }
-
-            await UniTask.NextFrame();
 
             _combinedMesh = await _meshCombiner.CombineMeshesAsync(_dressupItems, _bindPoses);
 
