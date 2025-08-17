@@ -69,7 +69,7 @@ namespace XFramework.SimpleDressup
         {
             if (_autoApplyOnStart)
             {
-                ApplyDressupAsync().Forget();
+                ApplyOutlookAsync().Forget();
             }
         }
 
@@ -141,7 +141,7 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 应用当前的外观配置
         /// </summary>
-        public async UniTask<bool> ApplyDressupAsync()
+        public async UniTask<bool> ApplyOutlookAsync()
         {
             if (!IsInitialized)
             {

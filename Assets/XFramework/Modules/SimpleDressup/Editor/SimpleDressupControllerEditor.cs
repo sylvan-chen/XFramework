@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using Cysharp.Threading.Tasks;
 
 namespace XFramework.SimpleDressup.Editor
 {
@@ -11,6 +12,11 @@ namespace XFramework.SimpleDressup.Editor
             base.OnInspectorGUI();
 
             var controller = (SimpleDressupController)target;
+
+            if (GUILayout.Button("Apply Outlook"))
+            {
+                controller.ApplyOutlookAsync().Forget();
+            }
 
             // 在 Inspector 中显示合并后的材质
             if (Application.isPlaying && controller.CombinedMaterial != null)
