@@ -111,7 +111,7 @@ namespace XFramework.SimpleDressup
                 return null;
             }
 
-            Log.Info($"[XFramework] [MeshCombiner] Successfully built mesh with {combineUnits.Length} submeshes, " +
+            Log.Info($"[MeshCombiner] Successfully built mesh with {combineUnits.Length} submeshes, " +
                      $"{combinedMeshInfo.Vertices.Length} vertices, {combinedMeshInfo.Triangles.Length} triangle indices.");
 
             try

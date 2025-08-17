@@ -186,7 +186,10 @@ namespace XFramework.SimpleDressup
                 return false;
             }
 
-            // 4. 合并网格
+            // 4. 重映射UV
+            ApplyAtlasRectRemapping(combineUnits);
+
+            // 5. 合并网格
             bool meshSuccess = await CombineMeshesAsync(combineUnits);
             if (!meshSuccess)
             {
@@ -195,7 +198,7 @@ namespace XFramework.SimpleDressup
                 return false;
             }
 
-            // 5. 应用合并结果
+            // 6. 应用合并结果
             bool applySuccess = ApplyCombineResult();
             if (!applySuccess)
             {
@@ -304,6 +307,41 @@ namespace XFramework.SimpleDressup
             Log.Debug($"[SimpleDressupController] Items combined successfully - {_outlookItems.Count} items → {_combinedMesh.subMeshCount} submeshes.");
 
             return true;
+        }
+
+        /// <summary>
+        /// 应用图集UV重映射
+        /// </summary>
+        /// <param name="combineUnits">合并单元列表</param>
+        public void ApplyAtlasRectRemapping(DressupCombineUnit[] combineUnits)
+        {
+            for (int i = 0; i < combineUnits.Length; i++)
+            {
+                var materialData = combineUnits[i].MaterialData;
+                var subMeshData = combineUnits[i].SubmeshData;
+
+                var originalUVs = subMeshData.UVs;
+                if (originalUVs == null || originalUVs.Length == 0)
+                {
+                    Log.Warning($"[MaterialCombiner] SubmeshData in CombineUnit {i} has NO uv to remap.");
+                    continue;
+                }
+
+                var targetRect = materialData.AtlasRect;
+                var targetUVs = new Vector2[originalUVs.Length];
+
+                for (int uvIndex = 0; uvIndex < originalUVs.Length; uvIndex++)
+                {
+                    var originalUV = originalUVs[uvIndex];
+                    // 将原始 UV 映射到图集中的对应区域
+                    targetUVs[uvIndex] = new Vector2(
+                        targetRect.x + originalUV.x * targetRect.width,
+                        targetRect.y + originalUV.y * targetRect.height
+                    );
+                }
+
+                combineUnits[i].SubmeshData.UVs = targetUVs;
+            }
         }
 
         /// <summary>

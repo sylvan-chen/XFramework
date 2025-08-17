@@ -146,7 +146,7 @@ Material:
     - _GlossyReflections: 1
     - _HueVariationKwToggle: 0
     - _LightingEnabled: 0
-    - _Metallic: 0.473
+    - _Metallic: 0
     - _Mode: 1
     - _NormalMapKwToggle: 1
     - _Occlusion: 0

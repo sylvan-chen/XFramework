@@ -113,9 +113,6 @@ namespace XFramework.SimpleDressup
                 var (normalAtlas, metallicAtlas, occlusionAtlas, emissionAtlas) =
                     await UniTask.WhenAll(normalPackTask, metallicPackTask, occlusionPackTask, emissionPackTask);
 
-                // 重映射 UV
-                ApplyAtlasRectRemapping(combineUnits);
-
                 // 构建图集材质
                 var atlasInfo = new AtlasInfo
                 {
@@ -136,41 +133,6 @@ namespace XFramework.SimpleDressup
             {
                 Log.Error($"[MaterialCombiner] Failed to combined material: {ex.Message}");
                 return null;
-            }
-        }
-
-        /// <summary>
-        /// 应用图集UV重映射
-        /// </summary>
-        /// <param name="combineUnits">合并单元列表</param>
-        public void ApplyAtlasRectRemapping(DressupCombineUnit[] combineUnits)
-        {
-            for (int i = 0; i < combineUnits.Length; i++)
-            {
-                var materialData = combineUnits[i].MaterialData;
-                var subMeshData = combineUnits[i].SubmeshData;
-
-                var originalUVs = subMeshData.UVs;
-                if (originalUVs == null || originalUVs.Length == 0)
-                {
-                    Log.Warning($"[MaterialCombiner] SubmeshData in CombineUnit {i} has NO uv to remap.");
-                    continue;
-                }
-
-                var targetRect = materialData.AtlasRect;
-                var targetUVs = new Vector2[originalUVs.Length];
-
-                for (int uvIndex = 0; uvIndex < originalUVs.Length; uvIndex++)
-                {
-                    var originalUV = originalUVs[uvIndex];
-                    // 将原始 UV 映射到图集中的对应区域
-                    targetUVs[uvIndex] = new Vector2(
-                        targetRect.x + originalUV.x * targetRect.width,
-                        targetRect.y + originalUV.y * targetRect.height
-                    );
-                }
-
-                combineUnits[i].SubmeshData.UVs = targetUVs;
             }
         }
 
