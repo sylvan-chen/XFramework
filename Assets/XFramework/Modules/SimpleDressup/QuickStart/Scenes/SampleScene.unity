@@ -511,8 +511,7 @@ PrefabInstance:
       value: npc_csl_00_character_01m_01
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 7373149903325067236, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}

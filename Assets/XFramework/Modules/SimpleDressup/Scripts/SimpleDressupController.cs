@@ -178,7 +178,7 @@ namespace XFramework.SimpleDressup
             }
 
             // 3. 合并材质
-            bool atlasSuccess = await CombineMaterialsAsync(combineUnits);
+            bool atlasSuccess = CombineMaterials(combineUnits);
             if (!atlasSuccess)
             {
                 Log.Error("[SimpleDressupController] Failed to generate texture atlas.");
@@ -276,9 +276,9 @@ namespace XFramework.SimpleDressup
         /// <summary>
         /// 合并材质
         /// </summary>
-        private async UniTask<bool> CombineMaterialsAsync(DressupCombineUnit[] combineUnits)
+        private bool CombineMaterials(DressupCombineUnit[] combineUnits)
         {
-            _combinedMaterial = await _materialCombiner.CombineMaterialsAsync(combineUnits, _atlasSize, _baseMaterial);
+            _combinedMaterial = _materialCombiner.CombineMaterials(combineUnits, _atlasSize, _baseMaterial);
 
             if (_combinedMaterial == null)
             {

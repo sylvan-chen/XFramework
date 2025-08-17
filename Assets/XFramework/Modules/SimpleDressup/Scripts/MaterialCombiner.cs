@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.UI;
 using XFramework.Utils;
 
 namespace XFramework.SimpleDressup
@@ -21,6 +23,15 @@ namespace XFramework.SimpleDressup
         /// 纹理图集的格式
         /// </summary>
         public const TextureFormat TEXTURE_FORMAT = TextureFormat.RGBA32;
+
+        #endregion
+
+        #region 字段/属性
+
+        /// <summary>
+        /// 缓存材质到材质数据的映射，避免重复提取
+        /// </summary>
+        private readonly Dictionary<Material, DressupMaterialData> _materialToData = new();
 
         #endregion
 
@@ -68,6 +79,14 @@ namespace XFramework.SimpleDressup
                     var material = materials[materialIndex];
                     if (material == null) continue;
 
+                    // 重复材质直接复用
+                    if (_materialToData.TryGetValue(material, out var existingData))
+                    {
+                        materialDatas.Add(existingData);
+                        Log.Debug($"[MaterialCombiner] Reusing existing material data for '{material.name}'");
+                        continue;
+                    }
+
                     var data = new DressupMaterialData
                     {
                         Name = material.name,
@@ -78,7 +97,9 @@ namespace XFramework.SimpleDressup
                         EmissionMap = ExtractTexture(material, TextureType.Emission)
                     };
 
+                    _materialToData[material] = data;
                     materialDatas.Add(data);
+                    Log.Debug($"[MaterialCombiner] Extracted new material data for '{material.name}'");
                 }
             }
 
@@ -92,26 +113,22 @@ namespace XFramework.SimpleDressup
         /// <param name="atlasSize">图集大小</param>
         /// <param name="baseMaterial">基础材质</param>
         /// <returns>纹理图集</returns>
-        public async UniTask<Material> CombineMaterialsAsync(DressupCombineUnit[] combineUnits, int atlasSize, Material baseMaterial)
+        public Material CombineMaterials(DressupCombineUnit[] combineUnits, int atlasSize, Material baseMaterial)
         {
             try
             {
                 // 打包基础纹理图集
-                var baseAtlas = GenerateBaseAtlas(combineUnits, atlasSize);
+                var baseAtlas = PackTextures(combineUnits, atlasSize, TextureType.Base);
                 if (baseAtlas == null)
                 {
-                    Log.Error("[MaterialCombiner] Failed to combine material.");
+                    Log.Error("[MaterialCombiner] Failed to create base atlas, no valid base textures found.");
                     return null;
                 }
-
-                // 并行打包其他纹理图集
-                var normalPackTask = GenerateOtherAtlasAsync(combineUnits, atlasSize, TextureType.Normal);
-                var metallicPackTask = GenerateOtherAtlasAsync(combineUnits, atlasSize, TextureType.Metallic);
-                var occlusionPackTask = GenerateOtherAtlasAsync(combineUnits, atlasSize, TextureType.Occlusion);
-                var emissionPackTask = GenerateOtherAtlasAsync(combineUnits, atlasSize, TextureType.Emission);
-
-                var (normalAtlas, metallicAtlas, occlusionAtlas, emissionAtlas) =
-                    await UniTask.WhenAll(normalPackTask, metallicPackTask, occlusionPackTask, emissionPackTask);
+                // 打包其他纹理图集
+                var normalAtlas = PackTextures(combineUnits, atlasSize, TextureType.Normal);
+                var metallicAtlas = PackTextures(combineUnits, atlasSize, TextureType.Metallic);
+                var occlusionAtlas = PackTextures(combineUnits, atlasSize, TextureType.Occlusion);
+                var emissionAtlas = PackTextures(combineUnits, atlasSize, TextureType.Emission);
 
                 // 构建图集材质
                 var atlasInfo = new AtlasInfo
@@ -249,131 +266,82 @@ namespace XFramework.SimpleDressup
             return map;
         }
 
-        private Texture2D GenerateBaseAtlas(DressupCombineUnit[] combineUnits, int atlasSize)
+        private Texture2D PackTextures(DressupCombineUnit[] combineUnits, int atlasSize, TextureType textureType)
         {
-            var baseTextures = new Texture2D[combineUnits.Length];
-            for (int i = 0; i < combineUnits.Length; i++)
-            {
-                var data = combineUnits[i].MaterialData;
+            var uniqueTextures = new List<Texture2D>();
+            var textureToRectIndex = new Dictionary<Texture2D, int>();  // 纹理到图集坐标的映射
+            var unitIndexToRectIndex = new int[combineUnits.Length];    // 单元索引到图集坐标的映射
 
-                if (data == null || data.BaseMap == null)
+            for (int unitIndex = 0; unitIndex < combineUnits.Length; unitIndex++)
+            {
+                var materialData = combineUnits[unitIndex].MaterialData;
+
+                var texture = materialData.GetTexture(textureType);
+
+                if (texture == null)
                 {
-                    Log.Error($"[MaterialCombiner] Material data [{i}] has no BaseMap.");
-                    return null;
+                    if (textureType == TextureType.Base)
+                    {
+                        Log.Error($"[MaterialCombiner] Material data '{materialData.Name}' has no base texture.");
+                        return null; // 基础纹理不能为空
+                    }
+
+                    // 标记为无纹理
+                    unitIndexToRectIndex[unitIndex] = -1;
+                    continue;
                 }
 
-                baseTextures[i] = data.BaseMap;
+                // 尝试复用现有的图集坐标
+                if (textureToRectIndex.TryGetValue(texture, out int existingRectIndex))
+                {
+                    unitIndexToRectIndex[unitIndex] = existingRectIndex;
+                }
+                else
+                {
+                    int newIndex = uniqueTextures.Count;
+                    textureToRectIndex[texture] = newIndex;
+                    unitIndexToRectIndex[unitIndex] = newIndex;
+                    uniqueTextures.Add(texture);
+                }
             }
 
-            var atlas = new Texture2D(atlasSize, atlasSize, TEXTURE_FORMAT, false)
+            if (uniqueTextures.Count == 0)
             {
-                name = $"CombinedAtlas_{atlasSize}"
-            };
-
-            var atlasRects = atlas.PackTextures(baseTextures, 2, atlasSize);
-
-            // 保存图集坐标
-            for (int i = 0; i < combineUnits.Length; i++)
-            {
-                combineUnits[i].MaterialData.AtlasRect = atlasRects[i];
+                return null;
             }
 
-            return atlas;
-        }
-
-        private async UniTask<Texture2D> GenerateOtherAtlasAsync(DressupCombineUnit[] combineUnits, int atlasSize, TextureType textureType)
-        {
             var atlas = new Texture2D(atlasSize, atlasSize, TEXTURE_FORMAT, false)
             {
                 name = $"CombinedAtlas_{atlasSize}_{textureType}"
             };
 
-            // 先填充默认颜色
-            var backgroundColor = GetTextureDefaultColor(textureType);
-            var pixels = new Color32[atlasSize * atlasSize];
-            int processCount = 0;
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                pixels[i] = backgroundColor;
+            var atlasRects = atlas.PackTextures(uniqueTextures.ToArray(), 2, atlasSize);
 
-                processCount++;
-                if (processCount >= PIXEL_PROCESS_COUNT_PER_FRAME)
+            for (int unitIndex = 0; unitIndex < combineUnits.Length; unitIndex++)
+            {
+                int rectIndex = unitIndexToRectIndex[unitIndex];
+                if (rectIndex < 0) continue; // 无纹理的材质跳过
+
+                var atlasRect = atlasRects[rectIndex];
+
+                if (textureType == TextureType.Base)
                 {
-                    processCount = 0;
-                    await UniTask.NextFrame();
+                    // 保存基础图集坐标
+                    combineUnits[unitIndex].MaterialData.AtlasRect = atlasRect;
                 }
-            }
 
-            atlas.SetPixels32(pixels);
-
-            // 将存在的贴图绘制到图集的对应位置
-            for (int i = 0; i < combineUnits.Length; i++)
-            {
-                var data = combineUnits[i].MaterialData;
-                var texture = data.GetTexture(textureType);
-
-                if (texture == null) continue;
-
-                await BlitTextureToAtlasAsync(texture, atlas, data.AtlasRect);
-            }
-
-            atlas.Apply(true, false);
-
-            return atlas;
-        }
-
-        private Color GetTextureDefaultColor(TextureType type)
-        {
-            return type switch
-            {
-                TextureType.Base => Color.white,
-                TextureType.Normal => new Color(0.5f, 0.5f, 1f),
-                TextureType.Metallic => Color.black,
-                TextureType.Occlusion => Color.white,
-                TextureType.Emission => Color.black,
-                _ => Color.white
-            };
-        }
-
-        private async UniTask BlitTextureToAtlasAsync(Texture2D texture, Texture2D atlas, Rect uvRect)
-        {
-            if (!texture.isReadable)
-            {
-                Log.Error($"[MaterialCombiner] Pack textures failed. Source texture '{texture.name}' is not readable.");
-                return;
-            }
-
-            int targetX = Mathf.FloorToInt(uvRect.x * atlas.width);
-            int targetY = Mathf.FloorToInt(uvRect.y * atlas.height);
-            int targetWidth = Mathf.FloorToInt(uvRect.width * atlas.width);
-            int targetHeight = Mathf.FloorToInt(uvRect.height * atlas.height);
-
-            // 简单双线性插值缩放
-            int processCount = 0;
-            for (int h = 0; h < targetHeight; h++)
-            {
-                for (int w = 0; w < targetWidth; w++)
+                else
                 {
-                    float u = (float)w / targetWidth;
-                    float v = (float)h / targetHeight;
-
-                    int sourceX = Mathf.FloorToInt(u * texture.width);
-                    int sourceY = Mathf.FloorToInt(v * texture.height);
-
-                    if (sourceX < 0 || sourceX >= texture.width || sourceY < 0 || sourceY >= texture.height)
-                        continue;
-
-                    Color pixelColor = texture.GetPixel(sourceX, sourceY);
-                    atlas.SetPixel(targetX + w, targetY + h, pixelColor);
-
-                    processCount++;
-                    if (processCount >= PIXEL_PROCESS_COUNT_PER_FRAME)
+                    // 其他图集验证与基础图集一致
+                    if (atlasRect != combineUnits[unitIndex].MaterialData.AtlasRect)
                     {
-                        processCount = 0;
-                        await UniTask.NextFrame();
+                        Log.Warning($"[MaterialCombiner] Atlas rect mismatch for {textureType} in '{combineUnits[unitIndex].MaterialData.Name}'. " +
+                               $"Expected: {combineUnits[unitIndex].MaterialData.AtlasRect}, Got: {atlasRect}");
                     }
                 }
             }
+
+            return atlas;
         }
 
         private Material BuildAtlasMaterialFromBaseMaterial(AtlasInfo atlasInfo, Material baseMaterial)
