@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.UI;
 using XFramework.Utils;
 
 namespace XFramework.SimpleDressup
