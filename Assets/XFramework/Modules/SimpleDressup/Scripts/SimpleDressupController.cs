@@ -12,7 +12,7 @@ namespace XFramework.SimpleDressup
     /// 简单换装系统主控制器
     /// </summary>
     /// <remarks>
-    /// 负责协调整个换装流程：数据收集 → 图集生成 → 网格合并 → 结果应用
+    /// 负责协调整个换装流程：数据提取 → 图集生成 → UV重映射 → 网格合并 → 结果应用
     /// </remarks>
     public class SimpleDressupController : MonoBehaviour
     {
