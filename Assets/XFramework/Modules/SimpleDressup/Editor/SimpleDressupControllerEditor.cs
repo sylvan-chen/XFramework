@@ -13,23 +13,29 @@ namespace XFramework.SimpleDressup.Editor
 
             var controller = (SimpleDressupController)target;
 
-            if (GUILayout.Button("Apply Outlook"))
-            {
-                controller.ApplyOutlookAsync().Forget();
-            }
-
             // 在 Inspector 中显示合并后的材质
-            if (Application.isPlaying && controller.CombinedMaterial != null)
+            if (Application.isPlaying)
             {
                 EditorGUILayout.Space();
-                EditorGUILayout.LabelField("Combined Material Preview", EditorStyles.boldLabel);
 
-                using (new EditorGUI.DisabledGroupScope(true))
+                if (GUILayout.Button("Apply Outlook"))
                 {
-                    EditorGUILayout.ObjectField("Combined Material", controller.CombinedMaterial, typeof(Material), false);
+                    controller.ApplyOutlookAsync().Forget();
                 }
 
-                DrawMaterialPreview(controller.CombinedMaterial);
+                if (controller.CombinedMaterial != null)
+                {
+
+                    EditorGUILayout.Space();
+                    EditorGUILayout.LabelField("Combined Material Preview", EditorStyles.boldLabel);
+
+                    using (new EditorGUI.DisabledGroupScope(true))
+                    {
+                        EditorGUILayout.ObjectField("Combined Material", controller.CombinedMaterial, typeof(Material), false);
+                    }
+
+                    DrawMaterialPreview(controller.CombinedMaterial);
+                }
             }
         }
 

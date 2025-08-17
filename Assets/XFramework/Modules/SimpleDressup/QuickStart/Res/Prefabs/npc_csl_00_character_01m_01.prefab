@@ -4728,7 +4728,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4629843598363556833}
   - component: {fileID: 6515157101139833453}
-  - component: {fileID: 1706903380326413239}
+  - component: {fileID: 1759395196383017927}
   m_Layer: 0
   m_Name: npc_csl_00_character_01m_01
   m_TagString: Untagged
@@ -4817,7 +4817,7 @@ LODGroup:
     - renderer: {fileID: 1904884683567570254}
     - renderer: {fileID: 8971513067102212382}
   m_Enabled: 1
---- !u!114 &1706903380326413239
+--- !u!114 &1759395196383017927
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4829,23 +4829,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb0681ac6b074a4ebce660fb4fa3a0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _atlasSize: 2048
+  _atlasSize: 1024
   _autoApplyOnStart: 1
   _baseMaterial: {fileID: 2100000, guid: 24b4c6d2135b2544fb55f131dfdaec16, type: 2}
   _meshCombineStrategy: 0
   _rootBone: {fileID: 2788222124886035163}
-  _dressupItems:
-  - _dressupType: 1
-    _renderer: {fileID: 1838230070984236068}
-  - _dressupType: 2
-    _renderer: {fileID: 4501398698128791857}
-  - _dressupType: 4
+  _outlookItems:
+  - _outlookType: 4
     _renderer: {fileID: 4862195587188272068}
-  - _dressupType: 8
+  - _outlookType: 2
+    _renderer: {fileID: 4501398698128791857}
+  - _outlookType: 1
+    _renderer: {fileID: 1838230070984236068}
+  - _outlookType: 8
     _renderer: {fileID: 3963029700833843683}
-  - _dressupType: 16
+  - _outlookType: 16
     _renderer: {fileID: 8060759725704495700}
-  - _dressupType: 32
+  - _outlookType: 32
     _renderer: {fileID: 8653145881049815275}
 --- !u!1 &5596683497459983706
 GameObject:
