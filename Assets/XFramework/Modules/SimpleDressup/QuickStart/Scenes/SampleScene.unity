@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!137 &164326628 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8653145881049815275, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+  m_PrefabInstance: {fileID: 1888361522}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &421823576
 GameObject:
   m_ObjectHideFlags: 0
@@ -377,6 +382,26 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!137 &707272632 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1838230070984236068, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+  m_PrefabInstance: {fileID: 1888361522}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &761800305 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4862195587188272068, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+  m_PrefabInstance: {fileID: 1888361522}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &814396141 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4501398698128791857, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+  m_PrefabInstance: {fileID: 1888361522}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &1343326968 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8060759725704495700, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+  m_PrefabInstance: {fileID: 1888361522}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1888361522
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -389,6 +414,58 @@ PrefabInstance:
       propertyPath: _defaultShader
       value: 
       objectReference: {fileID: 4800000, guid: d5836e97a42cb634b8ae093190c1d298, type: 3}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[0]._renderer
+      value: 
+      objectReference: {fileID: 761800305}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[1]._renderer
+      value: 
+      objectReference: {fileID: 814396141}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[2]._renderer
+      value: 
+      objectReference: {fileID: 707272632}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[3]._renderer
+      value: 
+      objectReference: {fileID: 2098345502}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[4]._renderer
+      value: 
+      objectReference: {fileID: 1343326968}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[5]._renderer
+      value: 
+      objectReference: {fileID: 164326628}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[0]._outlookType
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[1]._outlookType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[2]._outlookType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[3]._outlookType
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[4]._outlookType
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 1706903380326413239, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+      propertyPath: _outlookItems.Array.data[5]._outlookType
+      value: 32
+      objectReference: {fileID: 0}
     - target: {fileID: 4629843598363556833, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -434,10 +511,16 @@ PrefabInstance:
       value: npc_csl_00_character_01m_01
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 7373149903325067236, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+--- !u!137 &2098345502 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3963029700833843683, guid: 4247e1a57e693c04db8d4fc828d31ca7, type: 3}
+  m_PrefabInstance: {fileID: 1888361522}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

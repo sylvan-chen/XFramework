@@ -12,7 +12,7 @@ namespace XFramework.SimpleDressup
     /// 外观类型
     /// </summary>
     [Serializable]
-    public enum DressupType
+    public enum OutlookType
     {
         None = 0,
         Body = 1 << 0,      // 身体
@@ -33,29 +33,16 @@ namespace XFramework.SimpleDressup
     /// 本质是对SkinnedMeshRenderer的封装
     /// </remarks>
     [Serializable]
-    public class DressupItem
+    public class DressupOutlookItem
     {
-        [SerializeField] private DressupType _dressupType = DressupType.None;
+        [SerializeField] private OutlookType _outlookType = OutlookType.None;
         [SerializeField] private SkinnedMeshRenderer _renderer;
 
-        public DressupType DressupType => _dressupType;
+        public OutlookType OutlookType => _outlookType;
         public SkinnedMeshRenderer Renderer => _renderer;
-
-        public Material[] Materials { get; private set; }  // 材质
 
         public bool IsValid => _renderer.sharedMesh != null && _renderer.sharedMaterials != null && _renderer.sharedMaterials.Length > 0;
         public int SubmeshCount => _renderer.sharedMesh != null ? _renderer.sharedMesh.subMeshCount : 0;
-
-        public void Init()
-        {
-            if (_renderer == null)
-            {
-                Log.Error("[DressupItem] SkinnedMeshRenderer is null.");
-                return;
-            }
-
-            Materials = _renderer.sharedMaterials;
-        }
 
         /// <summary>
         /// 按骨骼名字重映射到新的骨骼
@@ -113,8 +100,8 @@ namespace XFramework.SimpleDressup
     /// <summary>
     /// 让_dressupType和_renderer两个字段并排显示
     /// </summary>
-    [CustomPropertyDrawer(typeof(DressupItem))]
-    public class DressupItemDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(DressupOutlookItem))]
+    public class DressupOutlookItemDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -131,7 +118,7 @@ namespace XFramework.SimpleDressup
             var typeRect = new Rect(position.x, position.y, position.width * 0.3f, position.height);
             var rendererRect = new Rect(position.x + position.width * 0.3f + 5, position.y, position.width * 0.7f - 5, position.height);
 
-            var dressupTypeProperty = property.FindPropertyRelative("_dressupType");
+            var dressupTypeProperty = property.FindPropertyRelative("_outlookType");
             var rendererProperty = property.FindPropertyRelative("_renderer");
 
             EditorGUI.PropertyField(typeRect, dressupTypeProperty, GUIContent.none);

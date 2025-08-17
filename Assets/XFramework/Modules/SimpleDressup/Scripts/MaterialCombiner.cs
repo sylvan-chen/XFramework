@@ -26,7 +26,7 @@ namespace XFramework.SimpleDressup
 
         #region 数据结构
 
-        public struct AtlasInfo
+        private struct AtlasInfo
         {
             public bool IsValid;
             public Texture2D BaseAtlas;
@@ -38,40 +38,39 @@ namespace XFramework.SimpleDressup
 
         #endregion
 
-        #region 字段/属性
-
-        private readonly Dictionary<DressupItem, DressupMaterialData> _itemToTextureUnit = new();
-
-        public Dictionary<DressupItem, DressupMaterialData> ItemToTextureUnit => _itemToTextureUnit;
-
-        #endregion
-
         #region 公开接口
 
         /// <summary>
         /// 从外观物品中提取材质数据
         /// </summary>
-        /// <param name="dressupItems">外观物品列表</param>
+        /// <remarks>
+        /// 只提取有效的材质（多于子网格的材质略过）
+        /// </remarks>
+        /// <param name="outlookItems">外观物品列表</param>
         /// <returns>材质数据数组</returns>
-        public DressupMaterialData[] ExtractMaterialData(IReadOnlyList<DressupItem> dressupItems)
+        public DressupMaterialData[] ExtractMaterialData(IReadOnlyList<DressupOutlookItem> outlookItems)
         {
             var materialDatas = new List<DressupMaterialData>();
 
-            foreach (var item in dressupItems)
+            foreach (var item in outlookItems)
             {
                 var materials = item.Renderer.sharedMaterials;
+                int submeshCount = item.Renderer.sharedMesh.subMeshCount;
+                if (materials.Length < submeshCount)
+                {
+                    Log.Warning($"[MaterialCombiner] Outlook item ({item.OutlookType}) has fewer materials than submeshes. " +
+                                $"Materials: {materials.Length}, Submeshes: {submeshCount}");
+                }
 
-                if (materials == null || materials.Length == 0) continue;
-
-                for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+                // 只提取有效的材质（多于子网格的材质略过）
+                for (int materialIndex = 0; materialIndex < materials.Length && materialIndex < submeshCount; materialIndex++)
                 {
                     var material = materials[materialIndex];
                     if (material == null) continue;
 
                     var data = new DressupMaterialData
                     {
-                        SourceItem = item,
-                        Shader = material.shader,
+                        Name = material.name,
                         BaseMap = ExtractTexture(material, TextureType.Base),
                         NormalMap = ExtractTexture(material, TextureType.Normal),
                         MetallicMap = ExtractTexture(material, TextureType.Metallic),
@@ -79,7 +78,6 @@ namespace XFramework.SimpleDressup
                         EmissionMap = ExtractTexture(material, TextureType.Emission)
                     };
 
-                    _itemToTextureUnit[item] = data;
                     materialDatas.Add(data);
                 }
             }
@@ -98,14 +96,8 @@ namespace XFramework.SimpleDressup
         {
             try
             {
-                var materialDatas = new DressupMaterialData[combineUnits.Length];
-                for (int i = 0; i < combineUnits.Length; i++)
-                {
-                    materialDatas[i] = combineUnits[i].MaterialData;
-                }
-
                 // 打包基础纹理图集
-                var baseAtlas = GenerateBaseAtlas(materialDatas, atlasSize);
+                var baseAtlas = GenerateBaseAtlas(combineUnits, atlasSize);
                 if (baseAtlas == null)
                 {
                     Log.Error("[MaterialCombiner] Failed to combine material.");
@@ -113,16 +105,16 @@ namespace XFramework.SimpleDressup
                 }
 
                 // 并行打包其他纹理图集
-                var normalPackTask = GenerateOtherAtlasAsync(materialDatas, atlasSize, TextureType.Normal);
-                var metallicPackTask = GenerateOtherAtlasAsync(materialDatas, atlasSize, TextureType.Metallic);
-                var occlusionPackTask = GenerateOtherAtlasAsync(materialDatas, atlasSize, TextureType.Occlusion);
-                var emissionPackTask = GenerateOtherAtlasAsync(materialDatas, atlasSize, TextureType.Emission);
+                var normalPackTask = GenerateOtherAtlasAsync(combineUnits, atlasSize, TextureType.Normal);
+                var metallicPackTask = GenerateOtherAtlasAsync(combineUnits, atlasSize, TextureType.Metallic);
+                var occlusionPackTask = GenerateOtherAtlasAsync(combineUnits, atlasSize, TextureType.Occlusion);
+                var emissionPackTask = GenerateOtherAtlasAsync(combineUnits, atlasSize, TextureType.Emission);
 
                 var (normalAtlas, metallicAtlas, occlusionAtlas, emissionAtlas) =
                     await UniTask.WhenAll(normalPackTask, metallicPackTask, occlusionPackTask, emissionPackTask);
 
                 // 重映射 UV
-                RemapMeshUVs(combineUnits);
+                ApplyAtlasRectRemapping(combineUnits);
 
                 // 构建图集材质
                 var atlasInfo = new AtlasInfo
@@ -144,6 +136,41 @@ namespace XFramework.SimpleDressup
             {
                 Log.Error($"[MaterialCombiner] Failed to combined material: {ex.Message}");
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// 应用图集UV重映射
+        /// </summary>
+        /// <param name="combineUnits">合并单元列表</param>
+        public void ApplyAtlasRectRemapping(DressupCombineUnit[] combineUnits)
+        {
+            for (int i = 0; i < combineUnits.Length; i++)
+            {
+                var materialData = combineUnits[i].MaterialData;
+                var subMeshData = combineUnits[i].SubmeshData;
+
+                var originalUVs = subMeshData.UVs;
+                if (originalUVs == null || originalUVs.Length == 0)
+                {
+                    Log.Warning($"[MaterialCombiner] SubmeshData in CombineUnit {i} has NO uv to remap.");
+                    continue;
+                }
+
+                var targetRect = materialData.AtlasRect;
+                var targetUVs = new Vector2[originalUVs.Length];
+
+                for (int uvIndex = 0; uvIndex < originalUVs.Length; uvIndex++)
+                {
+                    var originalUV = originalUVs[uvIndex];
+                    // 将原始 UV 映射到图集中的对应区域
+                    targetUVs[uvIndex] = new Vector2(
+                        targetRect.x + originalUV.x * targetRect.width,
+                        targetRect.y + originalUV.y * targetRect.height
+                    );
+                }
+
+                combineUnits[i].SubmeshData.UVs = targetUVs;
             }
         }
 
@@ -260,47 +287,16 @@ namespace XFramework.SimpleDressup
             return map;
         }
 
-        private void RemapMeshUVs(DressupCombineUnit[] combineUnits)
+        private Texture2D GenerateBaseAtlas(DressupCombineUnit[] combineUnits, int atlasSize)
         {
+            var baseTextures = new Texture2D[combineUnits.Length];
             for (int i = 0; i < combineUnits.Length; i++)
             {
-                var materialData = combineUnits[i].MaterialData;
-                var subMeshData = combineUnits[i].SubmeshData;
-
-                var originalUVs = subMeshData.UVs;
-                if (originalUVs == null || originalUVs.Length == 0)
-                {
-                    Log.Warning($"[MaterialCombiner] SubmeshData in CombineUnit {i} has NO uv to remap.");
-                    continue;
-                }
-
-                var targetRect = materialData.AtlasRect;
-                var targetUVs = new Vector2[originalUVs.Length];
-
-                for (int uvIndex = 0; uvIndex < originalUVs.Length; uvIndex++)
-                {
-                    var originalUV = originalUVs[uvIndex];
-                    // 将原始 UV 映射到图集中的对应区域
-                    targetUVs[uvIndex] = new Vector2(
-                        targetRect.x + originalUV.x * targetRect.width,
-                        targetRect.y + originalUV.y * targetRect.height
-                    );
-                }
-
-                combineUnits[i].SubmeshData.UVs = targetUVs;
-            }
-        }
-
-        private Texture2D GenerateBaseAtlas(DressupMaterialData[] materialDatas, int atlasSize)
-        {
-            var baseTextures = new Texture2D[materialDatas.Length];
-            for (int i = 0; i < materialDatas.Length; i++)
-            {
-                var data = materialDatas[i];
+                var data = combineUnits[i].MaterialData;
 
                 if (data == null || data.BaseMap == null)
                 {
-                    Log.Error($"[MaterialCombiner] Texture unit {i} (from {data?.SourceItem.Renderer.name}) has no BaseMap.");
+                    Log.Error($"[MaterialCombiner] Material data [{i}] has no BaseMap.");
                     return null;
                 }
 
@@ -315,15 +311,15 @@ namespace XFramework.SimpleDressup
             var atlasRects = atlas.PackTextures(baseTextures, 2, atlasSize);
 
             // 保存图集坐标
-            for (int i = 0; i < materialDatas.Length; i++)
+            for (int i = 0; i < combineUnits.Length; i++)
             {
-                materialDatas[i].AtlasRect = atlasRects[i];
+                combineUnits[i].MaterialData.AtlasRect = atlasRects[i];
             }
 
             return atlas;
         }
 
-        private async UniTask<Texture2D> GenerateOtherAtlasAsync(DressupMaterialData[] materialDatas, int atlasSize, TextureType textureType)
+        private async UniTask<Texture2D> GenerateOtherAtlasAsync(DressupCombineUnit[] combineUnits, int atlasSize, TextureType textureType)
         {
             var atlas = new Texture2D(atlasSize, atlasSize, TEXTURE_FORMAT, false)
             {
@@ -349,9 +345,9 @@ namespace XFramework.SimpleDressup
             atlas.SetPixels32(pixels);
 
             // 将存在的贴图绘制到图集的对应位置
-            for (int i = 0; i < materialDatas.Length; i++)
+            for (int i = 0; i < combineUnits.Length; i++)
             {
-                var data = materialDatas[i];
+                var data = combineUnits[i].MaterialData;
                 var texture = data.GetTexture(textureType);
 
                 if (texture == null) continue;

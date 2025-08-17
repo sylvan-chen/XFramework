@@ -31,14 +31,14 @@ namespace XFramework.SimpleDressup
         [SerializeField] private Transform _rootBone;
 
         [Header("外观部件")]
-        [SerializeField] private List<DressupItem> _dressupItems;
+        [SerializeField] private List<DressupOutlookItem> _outlookItems;
 
         // 核心组件
         private MeshCombiner _meshCombiner;                         // 网格合并器
         private Mesh _combinedMesh;                                 // 合并后的网格
 
-        private MaterialCombiner _materialCombiner;                    // 材质合并器
-        private Material _combinedMaterial;                            // 合并后的材质
+        private MaterialCombiner _materialCombiner;                 // 材质合并器
+        private Material _combinedMaterial;                         // 合并后的材质
 
         private SkinnedMeshRenderer _targetRenderer;
 
@@ -155,7 +155,7 @@ namespace XFramework.SimpleDressup
                 return false;
             }
 
-            if (_dressupItems.Count == 0)
+            if (_outlookItems.Count == 0)
             {
                 Log.Warning("[SimpleDressupController] No valid dressup items to apply.");
                 return false;
@@ -163,10 +163,10 @@ namespace XFramework.SimpleDressup
 
             IsDressing = true;
 
-            Log.Debug($"[SimpleDressupController] Start dressing process - {_dressupItems.Count} items.");
+            Log.Debug($"[SimpleDressupController] Start dressing process - {_outlookItems.Count} items.");
 
-            // 1. 初始化所有部件
-            InitDressupItems();
+            // 1. 验证所有部件
+            ValidateOutlookItems();
 
             // 2. 提取合并单元
             var combineUnits = ExtractCombineUnits();
@@ -177,7 +177,7 @@ namespace XFramework.SimpleDressup
                 return false;
             }
 
-            // 2. 生成纹理图集
+            // 3. 合并材质
             bool atlasSuccess = await CombineMaterialsAsync(combineUnits);
             if (!atlasSuccess)
             {
@@ -186,7 +186,7 @@ namespace XFramework.SimpleDressup
                 return false;
             }
 
-            // 3. 合并网格
+            // 4. 合并网格
             bool meshSuccess = await CombineMeshesAsync(combineUnits);
             if (!meshSuccess)
             {
@@ -195,7 +195,7 @@ namespace XFramework.SimpleDressup
                 return false;
             }
 
-            // 4. 应用到目标渲染器
+            // 5. 应用合并结果
             bool applySuccess = ApplyCombineResult();
             if (!applySuccess)
             {
@@ -212,16 +212,15 @@ namespace XFramework.SimpleDressup
         }
 
         /// <summary>
-        /// 初始化当前所有外观部件
+        /// 验证所有外观部件
         /// </summary>
-        private void InitDressupItems()
+        private void ValidateOutlookItems()
         {
-            var invalidItems = new List<DressupItem>();
+            var invalidItems = new List<DressupOutlookItem>();
 
-            foreach (var item in _dressupItems)
+            foreach (var item in _outlookItems)
             {
                 // 初始化
-                item.Init();
                 if (!item.IsValid)
                 {
                     Log.Error($"[SimpleDressupController] Clothing item '{item.Renderer.name}' is invalid.");
@@ -233,7 +232,7 @@ namespace XFramework.SimpleDressup
             // 移除无效的部件
             foreach (var invalidItem in invalidItems)
             {
-                _dressupItems.Remove(invalidItem);
+                _outlookItems.Remove(invalidItem);
             }
         }
 
@@ -242,12 +241,19 @@ namespace XFramework.SimpleDressup
         /// </summary>
         private DressupCombineUnit[] ExtractCombineUnits()
         {
-            var materialDatas = _materialCombiner.ExtractMaterialData(_dressupItems);
-            var submeshUnits = _meshCombiner.ExtractSubmeshData(_dressupItems);
+            var materialDatas = _materialCombiner.ExtractMaterialData(_outlookItems);
+            var submeshDatas = _meshCombiner.ExtractSubmeshData(_outlookItems);
 
-            if (materialDatas.Length != submeshUnits.Length)
+            if (materialDatas.Length > submeshDatas.Length)
             {
-                Log.Error("[SimpleDressupController] Mismatch between material data and submesh data counts.");
+                Log.Error("[SimpleDressupController] Mismatch between material data and submesh data counts (Materials > Submeshes), " +
+                    "there may be missing submesh data.");
+                return null;
+            }
+            if (materialDatas.Length < submeshDatas.Length)
+            {
+                Log.Error("[SimpleDressupController] Mismatch between material data and submesh data counts (Materials < Submeshes), " +
+                    "there may be missing material data.");
                 return null;
             }
 
@@ -257,7 +263,7 @@ namespace XFramework.SimpleDressup
                 combineUnits[i] = new DressupCombineUnit
                 {
                     MaterialData = materialDatas[i],
-                    SubmeshData = submeshUnits[i]
+                    SubmeshData = submeshDatas[i]
                 };
             }
 
@@ -295,7 +301,7 @@ namespace XFramework.SimpleDressup
                 return false;
             }
 
-            Log.Debug($"[SimpleDressupController] Items combined successfully - {_dressupItems.Count} items → {_combinedMesh.subMeshCount} submeshes.");
+            Log.Debug($"[SimpleDressupController] Items combined successfully - {_outlookItems.Count} items → {_combinedMesh.subMeshCount} submeshes.");
 
             return true;
         }
@@ -330,7 +336,7 @@ namespace XFramework.SimpleDressup
 
             Log.Debug("[SimpleDressupController] Successfully applied to target renderer.");
 
-            foreach (var item in _dressupItems)
+            foreach (var item in _outlookItems)
             {
                 if (item != null && item.Renderer != null)
                 {
@@ -347,7 +353,7 @@ namespace XFramework.SimpleDressup
         /// </summary>
         private void RecalculateLocalBounds(SkinnedMeshRenderer targetRenderer)
         {
-            if (_dressupItems.Count == 0)
+            if (_outlookItems.Count == 0)
             {
                 Log.Warning("[SimpleDressupController] No dressup items to calculate bounds from.");
                 return;
@@ -357,7 +363,7 @@ namespace XFramework.SimpleDressup
             Bounds combinedBounds = new();
             bool firstBounds = true;
 
-            foreach (var item in _dressupItems)
+            foreach (var item in _outlookItems)
             {
                 if (item?.Renderer != null)
                 {

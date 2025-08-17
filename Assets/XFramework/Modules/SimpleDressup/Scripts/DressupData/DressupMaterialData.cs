@@ -16,14 +16,13 @@ namespace XFramework.SimpleDressup
     /// </summary>
     public class DressupMaterialData
     {
-        public DressupItem SourceItem;
-        public Shader Shader;
-        public Texture2D BaseMap;
-        public Texture2D NormalMap;
-        public Texture2D MetallicMap;
-        public Texture2D OcclusionMap;
-        public Texture2D EmissionMap;
-        public Rect AtlasRect = new(0, 0, 1, 1);
+        public string Name { get; set; }
+        public Texture2D BaseMap { get; set; }
+        public Texture2D NormalMap { get; set; }
+        public Texture2D MetallicMap { get; set; }
+        public Texture2D OcclusionMap { get; set; }
+        public Texture2D EmissionMap { get; set; }
+        public Rect AtlasRect { get; set; } = new(0, 0, 1, 1);
 
         internal Texture2D GetTexture(TextureType type)
         {
