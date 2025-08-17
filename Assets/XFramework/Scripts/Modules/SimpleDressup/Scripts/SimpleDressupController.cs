@@ -20,10 +20,12 @@ namespace XFramework.SimpleDressup
         [IntDropdown(256, 512, 1024, 2048, 4096)]
         [SerializeField] private int _atlasSize = 1024;
         [SerializeField] private bool _autoApplyOnStart = false;
-        [SerializeField] private Shader _defaultShader;
 
-        [Header("目标对象")]
-        [SerializeField] private SkinnedMeshRenderer _targetRenderer;
+        [Header("材质合并设置")]
+        [SerializeField] private Material _baseMaterial;
+
+        [Header("网格合并设置")]
+        [SerializeField] private MeshCombiner.MeshCombineStrategy _meshCombineStrategy = MeshCombiner.MeshCombineStrategy.SingleSubmesh;
 
         [Header("骨骼数据")]
         [SerializeField] private Transform _rootBone;
@@ -35,8 +37,10 @@ namespace XFramework.SimpleDressup
         private MeshCombiner _meshCombiner;                         // 网格合并器
         private Mesh _combinedMesh;                                 // 合并后的网格
 
-        private AtlasGenerator _atlasGenerator;                     // 图集生成器
-        private Material _atlasMaterial;                            // 使用图集的材质
+        private MaterialCombiner _materialCombiner;                    // 材质合并器
+        private Material _combinedMaterial;                            // 合并后的材质
+
+        private SkinnedMeshRenderer _targetRenderer;
 
         // 骨骼数据
         private Transform[] _mainBones = new Transform[0];                // 主骨骼数组
@@ -53,7 +57,7 @@ namespace XFramework.SimpleDressup
         public System.Action<bool> OnDressupComplete;
 
 #if UNITY_EDITOR
-        public Material AtlasMaterial => _atlasMaterial;
+        public Material CombinedMaterial => _combinedMaterial;
 #endif
 
         private void Awake()
@@ -72,9 +76,9 @@ namespace XFramework.SimpleDressup
         private void OnDestroy()
         {
             // 清理临时创建的材质
-            if (_atlasMaterial != null && ShouldDestroyMaterial(_atlasMaterial))
+            if (_combinedMaterial != null && ShouldDestroyMaterial(_combinedMaterial))
             {
-                DestroyImmediate(_atlasMaterial);
+                DestroyImmediate(_combinedMaterial);
             }
 
             // 清理临时创建的网格
@@ -112,7 +116,7 @@ namespace XFramework.SimpleDressup
         {
             // 创建和初始化核心组件
             _meshCombiner = new MeshCombiner();
-            _atlasGenerator = new AtlasGenerator();
+            _materialCombiner = new MaterialCombiner();
 
             // 骨骼数据初始化
             _boneMap.Clear();
@@ -164,8 +168,17 @@ namespace XFramework.SimpleDressup
             // 1. 初始化所有部件
             InitDressupItems();
 
+            // 2. 提取合并单元
+            var combineUnits = ExtractCombineUnits();
+            if (combineUnits == null || combineUnits.Length == 0)
+            {
+                Log.Warning("[SimpleDressupController] No valid combine units found.");
+                IsDressing = false;
+                return false;
+            }
+
             // 2. 生成纹理图集
-            bool atlasSuccess = await GenerateAndApplyAtlasAsync();
+            bool atlasSuccess = await CombineMaterialsAsync(combineUnits);
             if (!atlasSuccess)
             {
                 Log.Error("[SimpleDressupController] Failed to generate texture atlas.");
@@ -174,7 +187,7 @@ namespace XFramework.SimpleDressup
             }
 
             // 3. 合并网格
-            bool meshSuccess = await CombineMeshesAsync();
+            bool meshSuccess = await CombineMeshesAsync(combineUnits);
             if (!meshSuccess)
             {
                 Log.Error("[SimpleDressupController] Failed to combine meshes.");
@@ -183,7 +196,7 @@ namespace XFramework.SimpleDressup
             }
 
             // 4. 应用到目标渲染器
-            bool applySuccess = ApplyToTargetRenderer();
+            bool applySuccess = ApplyCombineResult();
             if (!applySuccess)
             {
                 Log.Error("[SimpleDressupController] Failed to apply to target renderer.");
@@ -225,19 +238,40 @@ namespace XFramework.SimpleDressup
         }
 
         /// <summary>
-        /// 生成纹理图集
+        /// 提取合并单元
         /// </summary>
-        private async UniTask<bool> GenerateAndApplyAtlasAsync()
+        private DressupCombineUnit[] ExtractCombineUnits()
         {
-            if (_dressupItems.Count == 0)
+            var materialDatas = _materialCombiner.ExtractMaterialData(_dressupItems);
+            var submeshUnits = _meshCombiner.ExtractSubmeshData(_dressupItems);
+
+            if (materialDatas.Length != submeshUnits.Length)
             {
-                Log.Warning("[SimpleDressupController] No valid items to generate atlas.");
-                return false;
+                Log.Error("[SimpleDressupController] Mismatch between material data and submesh data counts.");
+                return null;
             }
 
-            _atlasMaterial = await _atlasGenerator.GenerateAndApplyAtlasAsync(_dressupItems, _atlasSize, _dressupItems[0].Renderer.sharedMaterial);
+            var combineUnits = new DressupCombineUnit[materialDatas.Length];
+            for (int i = 0; i < combineUnits.Length; i++)
+            {
+                combineUnits[i] = new DressupCombineUnit
+                {
+                    MaterialData = materialDatas[i],
+                    SubmeshData = submeshUnits[i]
+                };
+            }
 
-            if (_atlasMaterial == null)
+            return combineUnits;
+        }
+
+        /// <summary>
+        /// 合并材质
+        /// </summary>
+        private async UniTask<bool> CombineMaterialsAsync(DressupCombineUnit[] combineUnits)
+        {
+            _combinedMaterial = await _materialCombiner.CombineMaterialsAsync(combineUnits, _atlasSize, _baseMaterial);
+
+            if (_combinedMaterial == null)
             {
                 Log.Error("[SimpleDressupController] Failed to generate atlas material.");
                 return false;
@@ -245,21 +279,15 @@ namespace XFramework.SimpleDressup
 
             Log.Debug("[SimpleDressupController] Successfully generated atlas material.");
 
-            return _atlasMaterial != null;
+            return _combinedMaterial != null;
         }
 
         /// <summary>
         /// 合并网格
         /// </summary>
-        private async UniTask<bool> CombineMeshesAsync()
+        private async UniTask<bool> CombineMeshesAsync(DressupCombineUnit[] combineUnits)
         {
-            if (_dressupItems.Count == 0)
-            {
-                Log.Warning("[SimpleDressupController] No valid items to combine.");
-                return false;
-            }
-
-            _combinedMesh = await _meshCombiner.CombineMeshesAsync(_dressupItems, _bindPoses);
+            _combinedMesh = await _meshCombiner.CombineMeshesAsync(combineUnits, _bindPoses, _meshCombineStrategy);
 
             if (_combinedMesh == null)
             {
@@ -273,9 +301,9 @@ namespace XFramework.SimpleDressup
         }
 
         /// <summary>
-        /// 应用到目标渲染器
+        /// 应用合并结果
         /// </summary>
-        private bool ApplyToTargetRenderer()
+        private bool ApplyCombineResult()
         {
             if (_targetRenderer == null)
             {
@@ -289,7 +317,7 @@ namespace XFramework.SimpleDressup
             var atlasMaterials = new Material[_combinedMesh.subMeshCount];
             for (int i = 0; i < atlasMaterials.Length; i++)
             {
-                atlasMaterials[i] = _atlasMaterial;
+                atlasMaterials[i] = _combinedMaterial;
             }
             _targetRenderer.sharedMaterials = atlasMaterials;
             // 应用骨骼
@@ -298,7 +326,7 @@ namespace XFramework.SimpleDressup
             _targetRenderer.rootBone = _rootBone;
 
             // 计算合适的本地边界
-            CalculateAndSetLocalBounds(_targetRenderer);
+            RecalculateLocalBounds(_targetRenderer);
 
             Log.Debug("[SimpleDressupController] Successfully applied to target renderer.");
 
@@ -314,10 +342,10 @@ namespace XFramework.SimpleDressup
         }
 
         /// <summary>
-        /// 计算并设置合适的本地边界
+        /// 重新计算合适的本地边界
         /// 基于所有原始部件的localBounds计算合并后的边界
         /// </summary>
-        private void CalculateAndSetLocalBounds(SkinnedMeshRenderer targetRenderer)
+        private void RecalculateLocalBounds(SkinnedMeshRenderer targetRenderer)
         {
             if (_dressupItems.Count == 0)
             {

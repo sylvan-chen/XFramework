@@ -13,17 +13,17 @@ namespace XFramework.SimpleDressup.Editor
             var controller = (SimpleDressupController)target;
 
             // 在 Inspector 中显示合并后的材质
-            if (Application.isPlaying && controller.AtlasMaterial != null)
+            if (Application.isPlaying && controller.CombinedMaterial != null)
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Combined Material Preview", EditorStyles.boldLabel);
 
                 using (new EditorGUI.DisabledGroupScope(true))
                 {
-                    EditorGUILayout.ObjectField("Combined Material", controller.AtlasMaterial, typeof(Material), false);
+                    EditorGUILayout.ObjectField("Combined Material", controller.CombinedMaterial, typeof(Material), false);
                 }
 
-                DrawMaterialPreview(controller.AtlasMaterial);
+                DrawMaterialPreview(controller.CombinedMaterial);
             }
         }
 

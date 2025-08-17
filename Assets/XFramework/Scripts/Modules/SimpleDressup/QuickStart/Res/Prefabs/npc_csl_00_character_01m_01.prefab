@@ -4831,7 +4831,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _atlasSize: 2048
   _autoApplyOnStart: 1
-  _targetRenderer: {fileID: 1218303824044148593}
+  _baseMaterial: {fileID: 2100000, guid: 24b4c6d2135b2544fb55f131dfdaec16, type: 2}
+  _meshCombineStrategy: 0
   _rootBone: {fileID: 2788222124886035163}
   _dressupItems:
   - _dressupType: 1

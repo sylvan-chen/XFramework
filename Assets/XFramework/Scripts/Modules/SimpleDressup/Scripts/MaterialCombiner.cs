@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using XFramework.Utils;
@@ -7,9 +6,9 @@ using XFramework.Utils;
 namespace XFramework.SimpleDressup
 {
     /// <summary>
-    /// 图集材质生成器
+    /// 材质合并器
     /// </summary>
-    public class AtlasGenerator
+    public class MaterialCombiner
     {
         #region 常量定义
 
@@ -27,19 +26,9 @@ namespace XFramework.SimpleDressup
 
         #region 数据结构
 
-        public enum TextureType
-        {
-            Base,
-            Normal,
-            Metallic,
-            Occlusion,
-            Emission
-        }
-
         public struct AtlasInfo
         {
             public bool IsValid;
-            public Material ResultMaterial;
             public Texture2D BaseAtlas;
             public Texture2D NormalAtlas;
             public Texture2D MetallicAtlas;
@@ -47,117 +36,29 @@ namespace XFramework.SimpleDressup
             public Texture2D EmissionAtlas;
         }
 
-        public class TextureUnit
-        {
-            public DressupItem SourceItem;
-            public SkinnedMeshRenderer SourceRenderer;
-            public int SourceMaterialIndex;
-            public Texture2D BaseMap;
-            public Texture2D NormalMap;
-            public Texture2D MetallicMap;
-            public Texture2D OcclusionMap;
-            public Texture2D EmissionMap;
-            public Rect AtlasUV;
-
-            public Texture2D GetTexture(TextureType type)
-            {
-                return type switch
-                {
-                    TextureType.Base => BaseMap,
-                    TextureType.Normal => NormalMap,
-                    TextureType.Metallic => MetallicMap,
-                    TextureType.Occlusion => OcclusionMap,
-                    TextureType.Emission => EmissionMap,
-                    _ => null
-                };
-            }
-        }
-
         #endregion
 
         #region 字段/属性
 
-        private readonly Dictionary<DressupItem, TextureUnit> _itemToTextureUnit = new();
+        private readonly Dictionary<DressupItem, DressupMaterialData> _itemToTextureUnit = new();
 
-        public Dictionary<DressupItem, TextureUnit> ItemToTextureUnit => _itemToTextureUnit;
-
-        #endregion
-
-        #region 公共接口
-
-        /// <summary>
-        /// 生成纹理图集
-        /// </summary>
-        /// <param name="dressupItems">目标外观部位</param>
-        /// <param name="atlasSize">图集尺寸</param>
-        /// <param name="baseMaterial">基础材质</param>
-        /// <returns>图集材质</returns>
-        public async UniTask<Material> GenerateAndApplyAtlasAsync(IReadOnlyList<DressupItem> dressupItems, int atlasSize, Material baseMaterial)
-        {
-            if (dressupItems == null || dressupItems.Count == 0)
-            {
-                Log.Warning("[AtlasGenerator] No dressup items to generate atlas.");
-                return null;
-            }
-
-            // 1. 提取所有纹理单元
-            var textureUnits = ExtractTextureUnits(dressupItems);
-            if (textureUnits.Length == 0)
-            {
-                Log.Warning("[AtlasGenerator] No valid texture units extracted.");
-                return null;
-            }
-
-            Log.Debug($"[AtlasGenerator] Extracted {textureUnits.Length} texture units.");
-
-            // 2. 生成图集
-            var atlasInfo = await GenerateAtlasAsync(textureUnits, atlasSize);
-            if (!atlasInfo.IsValid)
-            {
-                Log.Error("[AtlasGenerator] Failed to generate atlas.");
-                return null;
-            }
-
-            // 3. 创建图集材质
-            var atlasMaterial = BuildMaterialWithAtlas(atlasInfo, baseMaterial);
-
-            // 4. 重映射UV坐标
-            RemapMeshUVs(textureUnits);
-
-            // 5. 应用材质到渲染器
-            foreach (var item in dressupItems)
-            {
-                if (!item.IsValid) continue;
-
-                var newMaterials = new Material[item.Renderer.sharedMaterials.Length];
-                for (int i = 0; i < newMaterials.Length; i++)
-                {
-                    newMaterials[i] = atlasMaterial;
-                }
-                item.Renderer.sharedMaterials = newMaterials;
-            }
-
-            Log.Debug("[AtlasGenerator] Successfully generated atlas and updated UV mappings.");
-            return atlasMaterial;
-        }
+        public Dictionary<DressupItem, DressupMaterialData> ItemToTextureUnit => _itemToTextureUnit;
 
         #endregion
 
-        #region 私有方法
+        #region 公开接口
 
         /// <summary>
-        /// 批量从外观物品中提取纹理单元
+        /// 从外观物品中提取材质数据
         /// </summary>
         /// <param name="dressupItems">外观物品列表</param>
-        /// <returns>纹理单元数组</returns>
-        private TextureUnit[] ExtractTextureUnits(IReadOnlyList<DressupItem> dressupItems)
+        /// <returns>材质数据数组</returns>
+        public DressupMaterialData[] ExtractMaterialData(IReadOnlyList<DressupItem> dressupItems)
         {
-            var textureUnits = new List<TextureUnit>();
+            var materialDatas = new List<DressupMaterialData>();
 
             foreach (var item in dressupItems)
             {
-                if (item == null || !item.IsValid) continue;
-
                 var materials = item.Renderer.sharedMaterials;
 
                 if (materials == null || materials.Length == 0) continue;
@@ -167,11 +68,10 @@ namespace XFramework.SimpleDressup
                     var material = materials[materialIndex];
                     if (material == null) continue;
 
-                    var unit = new TextureUnit
+                    var data = new DressupMaterialData
                     {
                         SourceItem = item,
-                        SourceRenderer = item.Renderer,
-                        SourceMaterialIndex = materialIndex,
+                        Shader = material.shader,
                         BaseMap = ExtractTexture(material, TextureType.Base),
                         NormalMap = ExtractTexture(material, TextureType.Normal),
                         MetallicMap = ExtractTexture(material, TextureType.Metallic),
@@ -179,144 +79,77 @@ namespace XFramework.SimpleDressup
                         EmissionMap = ExtractTexture(material, TextureType.Emission)
                     };
 
-                    _itemToTextureUnit[item] = unit;
-                    textureUnits.Add(unit);
+                    _itemToTextureUnit[item] = data;
+                    materialDatas.Add(data);
                 }
             }
 
-            return textureUnits.ToArray();
+            return materialDatas.ToArray();
         }
 
         /// <summary>
-        /// 生成图集
+        /// 合并材质
         /// </summary>
-        /// <param name="textureUnits">纹理单元数组</param>
+        /// <param name="combineUnits">合并单元列表</param>
         /// <param name="atlasSize">图集大小</param>
+        /// <param name="baseMaterial">基础材质</param>
         /// <returns>纹理图集</returns>
-        private async UniTask<AtlasInfo> GenerateAtlasAsync(TextureUnit[] textureUnits, int atlasSize)
+        public async UniTask<Material> CombineMaterialsAsync(DressupCombineUnit[] combineUnits, int atlasSize, Material baseMaterial)
         {
-            var result = new AtlasInfo() { IsValid = false };
-
-            if (textureUnits == null || textureUnits.Length == 0)
-            {
-                Log.Warning("[AtlasGenerator] No texture units to build material.");
-                return result;
-            }
-
             try
             {
-                var baseAtlas = GenerateBaseAtlasAndGetUVs(textureUnits, atlasSize);
-                if (baseAtlas == null)
+                var materialDatas = new DressupMaterialData[combineUnits.Length];
+                for (int i = 0; i < combineUnits.Length; i++)
                 {
-                    Log.Error("[AtlasGenerator] Failed to generate base atlas.");
-                    return result;
+                    materialDatas[i] = combineUnits[i].MaterialData;
                 }
 
-                // 并行打包其他纹理
-                var normalPackTask = PackOtherTexturesAsync(textureUnits, atlasSize, TextureType.Normal);
-                var metallicPackTask = PackOtherTexturesAsync(textureUnits, atlasSize, TextureType.Metallic);
-                var occlusionPackTask = PackOtherTexturesAsync(textureUnits, atlasSize, TextureType.Occlusion);
-                var emissionPackTask = PackOtherTexturesAsync(textureUnits, atlasSize, TextureType.Emission);
+                // 打包基础纹理图集
+                var baseAtlas = GenerateBaseAtlas(materialDatas, atlasSize);
+                if (baseAtlas == null)
+                {
+                    Log.Error("[MaterialCombiner] Failed to combine material.");
+                    return null;
+                }
+
+                // 并行打包其他纹理图集
+                var normalPackTask = GenerateOtherAtlasAsync(materialDatas, atlasSize, TextureType.Normal);
+                var metallicPackTask = GenerateOtherAtlasAsync(materialDatas, atlasSize, TextureType.Metallic);
+                var occlusionPackTask = GenerateOtherAtlasAsync(materialDatas, atlasSize, TextureType.Occlusion);
+                var emissionPackTask = GenerateOtherAtlasAsync(materialDatas, atlasSize, TextureType.Emission);
 
                 var (normalAtlas, metallicAtlas, occlusionAtlas, emissionAtlas) =
                     await UniTask.WhenAll(normalPackTask, metallicPackTask, occlusionPackTask, emissionPackTask);
 
-                result.BaseAtlas = baseAtlas;
-                result.NormalAtlas = normalAtlas;
-                result.MetallicAtlas = metallicAtlas;
-                result.OcclusionAtlas = occlusionAtlas;
-                result.EmissionAtlas = emissionAtlas;
+                // 重映射 UV
+                RemapMeshUVs(combineUnits);
+
+                // 构建图集材质
+                var atlasInfo = new AtlasInfo
+                {
+                    IsValid = false,
+                    BaseAtlas = baseAtlas,
+                    NormalAtlas = normalAtlas,
+                    MetallicAtlas = metallicAtlas,
+                    OcclusionAtlas = occlusionAtlas,
+                    EmissionAtlas = emissionAtlas
+                };
+
+                var combinedMaterial = BuildAtlasMaterialFromBaseMaterial(atlasInfo, baseMaterial);
+
+                Log.Debug($"[MaterialCombiner] Successfully combine material from {combineUnits.Length} materials.");
+                return combinedMaterial;
             }
             catch (System.Exception ex)
             {
-                Log.Error($"[AtlasGenerator] Failed to generated atlas and build material with atlas: {ex.Message}");
-                return result;
-            }
-
-            result.IsValid = true;
-            Log.Debug($"[XFramework] [AtlasGenerator] Successfully generated atlas with {textureUnits.Length} textures.");
-            return result;
-        }
-
-        /// <summary>
-        /// 重映射网格的UV坐标以匹配图集
-        /// </summary>
-        /// <param name="textureUnits">纹理单元数组</param>
-        private void RemapMeshUVs(TextureUnit[] textureUnits)
-        {
-            if (textureUnits == null || textureUnits.Length == 0)
-            {
-                Log.Warning("[XFramework] [MeshUVRemapper] No texture units to remap UVs.");
-                return;
-            }
-
-            for (int itemIndex = 0; itemIndex < textureUnits.Length; itemIndex++)
-            {
-                var unit = textureUnits[itemIndex];
-
-                var sourceRenderer = unit?.SourceItem?.Renderer;
-                if (sourceRenderer == null)
-                {
-                    Log.Warning($"[AtlasGenerator] Texture unit {itemIndex} has no valid source renderer.");
-                    continue;
-                }
-
-                var originalMesh = sourceRenderer.sharedMesh;
-                if (originalMesh == null)
-                {
-                    Log.Warning($"[AtlasGenerator] Texture unit {itemIndex} (from {sourceRenderer.name}) has no valid mesh.");
-                    continue;
-                }
-
-                var originalUVs = originalMesh.uv;
-                if (originalUVs == null || originalUVs.Length == 0)
-                {
-                    Log.Warning($"[AtlasGenerator] Mesh '{originalMesh.name}' has no UV coordinates.");
-                    continue;
-                }
-
-                var newMesh = Object.Instantiate(originalMesh);
-                newMesh.name = $"{originalMesh.name}_Atlas";
-
-                var atlasUV = unit.AtlasUV;
-                var newUVs = new Vector2[originalUVs.Length];
-
-                for (int i = 0; i < originalUVs.Length; i++)
-                {
-                    var originalUV = originalUVs[i];
-                    // 将原始 UV 映射到图集中的对应区域
-                    newUVs[i] = new Vector2(
-                        atlasUV.x + originalUV.x * atlasUV.width,
-                        atlasUV.y + originalUV.y * atlasUV.height
-                    );
-                }
-
-                newMesh.uv = newUVs;
-                sourceRenderer.sharedMesh = newMesh;
-            }
-        }
-
-        /// <summary>
-        /// 使用图集构建材质
-        /// </summary>
-        /// <param name="atlasInfo">图集信息</param>
-        /// <param name="baseMaterial">基础材质</param>
-        /// <returns>构建的材质</returns>
-        private Material BuildMaterialWithAtlas(AtlasInfo atlasInfo, Material baseMaterial)
-        {
-            if (baseMaterial == null)
-            {
-                Log.Error("[AtlasGenerator] Base material is null, cannot build atlas material.");
+                Log.Error($"[MaterialCombiner] Failed to combined material: {ex.Message}");
                 return null;
             }
-
-            var resultMaterial = Object.Instantiate(baseMaterial);
-            resultMaterial.name = $"{baseMaterial.name}_Atlas";
-
-            ApplyTexturesToMaterial(resultMaterial, atlasInfo.BaseAtlas, atlasInfo.NormalAtlas, atlasInfo.MetallicAtlas, atlasInfo.OcclusionAtlas, atlasInfo.EmissionAtlas);
-
-            return resultMaterial;
         }
+
+        #endregion
+
+        #region 内部实现
 
         private Texture2D ExtractTexture(Material material, TextureType type)
         {
@@ -427,20 +260,51 @@ namespace XFramework.SimpleDressup
             return map;
         }
 
-        private Texture2D GenerateBaseAtlasAndGetUVs(TextureUnit[] textureUnits, int atlasSize)
+        private void RemapMeshUVs(DressupCombineUnit[] combineUnits)
         {
-            var baseTextures = new Texture2D[textureUnits.Length];
-            for (int i = 0; i < textureUnits.Length; i++)
+            for (int i = 0; i < combineUnits.Length; i++)
             {
-                var unit = textureUnits[i];
+                var materialData = combineUnits[i].MaterialData;
+                var subMeshData = combineUnits[i].SubmeshData;
 
-                if (unit == null || unit.BaseMap == null)
+                var originalUVs = subMeshData.UVs;
+                if (originalUVs == null || originalUVs.Length == 0)
                 {
-                    Log.Error($"[AtlasGenerator] Texture unit {i} (from {unit?.SourceItem.Renderer.name}) has no BaseMap.");
+                    Log.Warning($"[MaterialCombiner] SubmeshData in CombineUnit {i} has NO uv to remap.");
+                    continue;
+                }
+
+                var targetRect = materialData.AtlasRect;
+                var targetUVs = new Vector2[originalUVs.Length];
+
+                for (int uvIndex = 0; uvIndex < originalUVs.Length; uvIndex++)
+                {
+                    var originalUV = originalUVs[uvIndex];
+                    // 将原始 UV 映射到图集中的对应区域
+                    targetUVs[uvIndex] = new Vector2(
+                        targetRect.x + originalUV.x * targetRect.width,
+                        targetRect.y + originalUV.y * targetRect.height
+                    );
+                }
+
+                combineUnits[i].SubmeshData.UVs = targetUVs;
+            }
+        }
+
+        private Texture2D GenerateBaseAtlas(DressupMaterialData[] materialDatas, int atlasSize)
+        {
+            var baseTextures = new Texture2D[materialDatas.Length];
+            for (int i = 0; i < materialDatas.Length; i++)
+            {
+                var data = materialDatas[i];
+
+                if (data == null || data.BaseMap == null)
+                {
+                    Log.Error($"[MaterialCombiner] Texture unit {i} (from {data?.SourceItem.Renderer.name}) has no BaseMap.");
                     return null;
                 }
 
-                baseTextures[i] = unit.BaseMap;
+                baseTextures[i] = data.BaseMap;
             }
 
             var atlas = new Texture2D(atlasSize, atlasSize, TEXTURE_FORMAT, false)
@@ -448,18 +312,18 @@ namespace XFramework.SimpleDressup
                 name = $"CombinedAtlas_{atlasSize}"
             };
 
-            var atlasUVs = atlas.PackTextures(baseTextures, 2, atlasSize);
+            var atlasRects = atlas.PackTextures(baseTextures, 2, atlasSize);
 
-            // 保存每个纹理单元在图集中的UV
-            for (int i = 0; i < textureUnits.Length; i++)
+            // 保存图集坐标
+            for (int i = 0; i < materialDatas.Length; i++)
             {
-                textureUnits[i].AtlasUV = atlasUVs[i];
+                materialDatas[i].AtlasRect = atlasRects[i];
             }
 
             return atlas;
         }
 
-        private async UniTask<Texture2D> PackOtherTexturesAsync(TextureUnit[] textureUnits, int atlasSize, TextureType textureType)
+        private async UniTask<Texture2D> GenerateOtherAtlasAsync(DressupMaterialData[] materialDatas, int atlasSize, TextureType textureType)
         {
             var atlas = new Texture2D(atlasSize, atlasSize, TEXTURE_FORMAT, false)
             {
@@ -485,14 +349,14 @@ namespace XFramework.SimpleDressup
             atlas.SetPixels32(pixels);
 
             // 将存在的贴图绘制到图集的对应位置
-            for (int i = 0; i < textureUnits.Length; i++)
+            for (int i = 0; i < materialDatas.Length; i++)
             {
-                var unit = textureUnits[i];
-                var sourceTexture = unit.GetTexture(textureType);
+                var data = materialDatas[i];
+                var texture = data.GetTexture(textureType);
 
-                if (sourceTexture == null) continue;
+                if (texture == null) continue;
 
-                await DrawTextureToAtlasAsync(sourceTexture, atlas, unit.AtlasUV);
+                await BlitTextureToAtlasAsync(texture, atlas, data.AtlasRect);
             }
 
             atlas.Apply(true, false);
@@ -500,11 +364,24 @@ namespace XFramework.SimpleDressup
             return atlas;
         }
 
-        private async UniTask DrawTextureToAtlasAsync(Texture2D texture, Texture2D atlas, Rect uvRect)
+        private Color GetTextureDefaultColor(TextureType type)
+        {
+            return type switch
+            {
+                TextureType.Base => Color.white,
+                TextureType.Normal => new Color(0.5f, 0.5f, 1f),
+                TextureType.Metallic => Color.black,
+                TextureType.Occlusion => Color.white,
+                TextureType.Emission => Color.black,
+                _ => Color.white
+            };
+        }
+
+        private async UniTask BlitTextureToAtlasAsync(Texture2D texture, Texture2D atlas, Rect uvRect)
         {
             if (!texture.isReadable)
             {
-                Log.Error($"[AtlasGenerator] Pack textures failed. Source texture '{texture.name}' is not readable.");
+                Log.Error($"[MaterialCombiner] Pack textures failed. Source texture '{texture.name}' is not readable.");
                 return;
             }
 
@@ -541,6 +418,50 @@ namespace XFramework.SimpleDressup
             }
         }
 
+        private Material BuildAtlasMaterialFromBaseMaterial(AtlasInfo atlasInfo, Material baseMaterial)
+        {
+            if (baseMaterial == null)
+            {
+                Log.Error("[MaterialCombiner] Base material is null, cannot build new material.");
+                return null;
+            }
+
+            var resultMaterial = Object.Instantiate(baseMaterial);
+            resultMaterial.name = $"{baseMaterial.name}_Atlas";
+#if UNITY_EDITOR
+            resultMaterial.hideFlags = HideFlags.DontSave;
+#else
+            resultMaterial.hideFlags = HideFlags.HideAndDontSave;
+#endif
+
+            ApplyTexturesToMaterial(resultMaterial, atlasInfo.BaseAtlas, atlasInfo.NormalAtlas, atlasInfo.MetallicAtlas, atlasInfo.OcclusionAtlas, atlasInfo.EmissionAtlas);
+
+            return resultMaterial;
+        }
+
+        private Material BuildAtlasMaterialWithShader(AtlasInfo atlasInfo, Shader shader)
+        {
+            if (shader == null)
+            {
+                Log.Error("[MaterialCombiner] Shader is null, cannot build new material.");
+                return null;
+            }
+
+            var resultMaterial = new Material(shader)
+            {
+                name = $"{shader.name}_Atlas",
+#if UNITY_EDITOR
+                hideFlags = HideFlags.DontSave,
+#else
+                hideFlags = HideFlags.HideAndDontSave,
+#endif
+            };
+
+            ApplyTexturesToMaterial(resultMaterial, atlasInfo.BaseAtlas, atlasInfo.NormalAtlas, atlasInfo.MetallicAtlas, atlasInfo.OcclusionAtlas, atlasInfo.EmissionAtlas);
+
+            return resultMaterial;
+        }
+
         private void ApplyTexturesToMaterial(Material material, Texture2D baseAtlas, Texture2D normalAtlas, Texture2D metallicAtlas, Texture2D occlusionAtlas, Texture2D emissionAtlas)
         {
             if (baseAtlas != null)
@@ -571,20 +492,6 @@ namespace XFramework.SimpleDressup
             }
         }
 
-        private Color GetTextureDefaultColor(TextureType type)
-        {
-            return type switch
-            {
-                TextureType.Base => Color.white,
-                TextureType.Normal => new Color(0.5f, 0.5f, 1f),
-                TextureType.Metallic => Color.black,
-                TextureType.Occlusion => Color.white,
-                TextureType.Emission => Color.black,
-                _ => Color.white
-            };
-        }
-
         #endregion
-
     }
 }
