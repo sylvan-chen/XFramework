@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using XFramework.Utils;
+using UnityEngine.Rendering.Universal;
 
 namespace XFramework
 {
@@ -33,7 +34,7 @@ namespace XFramework
                 _closedPanelRoot = new GameObject("[ClosedPanels]").transform;
                 _closedPanelRoot.SetParent(_uiRoot, false);
             }
-            CreateUICamera();
+            CreateUICamera().Forget();
             CreateUILayers();
         }
 
@@ -63,11 +64,13 @@ namespace XFramework
             base.Update(deltaTime, unscaledDeltaTime);
         }
 
-        private void CreateUICamera()
+        private async UniTaskVoid CreateUICamera()
         {
             // 创建专用的UI摄像机
-            var cameraObj = new GameObject("[UICamera]");
-            cameraObj.layer = LayerMask.NameToLayer("UI");
+            var cameraObj = new GameObject("[UICamera]")
+            {
+                layer = LayerMask.NameToLayer("UI")
+            };
             cameraObj.transform.SetParent(_uiRoot);
             cameraObj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
 
@@ -77,6 +80,22 @@ namespace XFramework
             _uiCamera.orthographic = true;                             // 使用正交投影
             _uiCamera.depth = 100;                                     // 确保在其他摄像机之上
             _uiCamera.useOcclusionCulling = false;                     // 不需要遮挡剔除，节约性能
+
+            await UniTask.WaitUntil(() => Camera.main != null);
+
+            if (_uiCamera != Camera.main)
+            {
+                var mainCamData = Camera.main.GetUniversalAdditionalCameraData();
+                var uiCamData = _uiCamera.GetUniversalAdditionalCameraData();
+
+                uiCamData.renderShadows = false;
+
+                mainCamData.renderType = CameraRenderType.Base;
+                uiCamData.renderType = CameraRenderType.Overlay;
+                // 添加进 Stack
+                if (!mainCamData.cameraStack.Contains(_uiCamera))
+                    mainCamData.cameraStack.Add(_uiCamera);
+            }
         }
 
         private void CreateUILayers()

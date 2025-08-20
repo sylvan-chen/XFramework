@@ -4,7 +4,8 @@
     "references": [
         "YooAsset",
         "UniTask",
-        "MagicaClothV2"
+        "MagicaClothV2",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
