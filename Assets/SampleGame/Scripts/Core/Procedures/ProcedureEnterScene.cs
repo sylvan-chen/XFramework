@@ -14,5 +14,7 @@ public sealed class ProcedureEnterScene : ProcedureBase
     private async UniTaskVoid EnterScene()
     {
         await Global.AssetManager.LoadSceneAsync("Game02", LoadSceneMode.Single);
+
+        Global.UIManager.OpenPanel(100001);
     }
 }

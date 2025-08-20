@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -29,6 +30,7 @@ public class PlayerController : MonoBehaviour
     {
         HandleLook();
         HandleMove();
+        HandleClick();
     }
 
     void HandleLook()
@@ -52,5 +54,31 @@ public class PlayerController : MonoBehaviour
 
         Vector3 move = (transform.right * h + transform.forward * v).normalized;
         controller.SimpleMove(move * moveSpeed);
+    }
+
+    void HandleClick()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                return;
+            }
+
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+
+            if (EventSystem.current.IsPointerOverGameObject()) return;
+
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                Debug.Log($"Clicked on: {hit.collider.name}");
+            }
+
+            // 重新锁定鼠标光标
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
 }
