@@ -43,7 +43,8 @@ public static partial class Consts
                 "ProcedureStartup",
                 "ProcedureSplash",
                 "ProcedureInitAssets",
-                "ProcedurePreload"
+                "ProcedurePreload",
+                "ProcedureEnterScene"
             };
         }
     }

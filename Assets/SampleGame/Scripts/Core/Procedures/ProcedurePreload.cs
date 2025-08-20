@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
-using UnityEngine.SceneManagement;
 using XFramework;
-using XFramework.Utils;
 
 public sealed class ProcedurePreload : ProcedureBase
 {
@@ -9,22 +7,16 @@ public sealed class ProcedurePreload : ProcedureBase
     {
         base.OnEnter(fsm);
 
-        Preload().Forget();
+        Preload(fsm).Forget();
     }
 
-    private async UniTask Preload()
+    private async UniTaskVoid Preload(StateMachine<ProcedureManager> fsm)
     {
+        // Preload resources here
         await Global.UIManager.LoadPanelAsync(100001);
         await Global.UIManager.LoadPanelAsync(100002);
         await Global.UIManager.LoadPanelAsync(100003);
 
-        await Global.AssetManager.LoadSceneAsync("Game01", LoadSceneMode.Single);
-        Global.UIManager.OpenPanel(100001);
-        await UniTask.Delay(2000);
-        Global.UIManager.OpenPanel(100002);
-        await UniTask.Delay(3000);
-        Global.UIManager.OpenPanel(100003);
-        await UniTask.Delay(5000);
-        Global.UIManager.ClosePanel(100003);
+        fsm.ChangeState<ProcedureEnterScene>();
     }
 }
