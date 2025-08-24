@@ -37,7 +37,7 @@ namespace XFramework
         public Canvas Canvas => _canvas;
         public Transform Transform => _canvas.transform;
 
-        public UILayer(Transform uiRoot, Camera uiCamera, UILayerConfig config)
+        public UILayer(Transform uiRoot, Camera uiCamera, GameConfig.UiLayer config)
         {
             _id = config.Id;
             _name = config.Name;

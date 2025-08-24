@@ -8,17 +8,17 @@ namespace XFramework
     /// </summary>
     public abstract class UIPanelBase : MonoBehaviour
     {
-        private UIPanelConfig _config;
+        private GameConfig.UiPanel _config;
         private bool _isInitialized;
         private bool _isVisible;
         private bool _isPaused;
 
-        public UIPanelConfig Config => _config;
+        public GameConfig.UiPanel Config => _config;
         public bool IsInitialized => _isInitialized;
         public bool IsVisible => _isVisible;
         public bool IsPaused => _isPaused;
 
-        public void Init(UIPanelConfig config)
+        public void Init(GameConfig.UiPanel config)
         {
             _config = config;
             SetVisibilityInternal(false); // 初始状态为隐藏

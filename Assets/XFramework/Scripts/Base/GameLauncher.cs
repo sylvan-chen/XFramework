@@ -79,7 +79,7 @@ namespace XFramework
                         Log.Error($"[XFramework] [GameLauncher] Config type {fieldInfo.Name} not found.");
                         continue;
                     }
-                    await ConfigHelper.PreloadConfigAsync(configType, fieldInfo.GetValue(null) as string);
+                    await ConfigLoader.LoadConfigAsync(fieldInfo.GetValue(null) as string, configType);
                 }
             }
         }

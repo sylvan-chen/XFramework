@@ -5,16 +5,17 @@
 /// ------------------------------------------------------------------------------
 
 using System.Collections.Generic;
+using XFramework;
 
 namespace GameConfig
 {
     [System.Serializable]
-    public class UiPanel
+    public class UiPanel : IConfig
     {
-        public int Id;
-        public string Name;
-        public string Address;
-        public int ParentLayer;
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Address { get; set; }
+        public int ParentLayer { get; set; }
     }
 
     [System.Serializable]
@@ -23,8 +24,8 @@ namespace GameConfig
         public Dictionary<int, UiPanel> AllConfigs;
 
         public UiPanel GetConfigById(int id)
-         {
-             return AllConfigs.TryGetValue(id, out var config) ? config : null;
-         }
+        {
+            return AllConfigs.TryGetValue(id, out var config) ? config : null;
+        }
     }
 }
