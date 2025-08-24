@@ -100,7 +100,7 @@ namespace XFramework
 
         private void CreateUILayers()
         {
-            var configTable = ConfigTableHelper.GetTable<UILayerConfigTable>();
+            var configTable = ConfigHelper.GetTable<UILayerConfigTable>();
             foreach (var config in configTable.Configs)
             {
                 // 检查是否已经存在该层级
@@ -148,7 +148,7 @@ namespace XFramework
                 return loadedPanel;
             }
 
-            var configTable = ConfigTableHelper.GetTable<UIPanelConfigTable>();
+            var configTable = ConfigHelper.GetTable<UIPanelConfigTable>();
             var config = configTable.GetConfigById(id);
             var assetHandler = await Global.AssetManager.LoadAssetAsync<GameObject>(config.Address);
             _assetHandlers.Add(assetHandler);

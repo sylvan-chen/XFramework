@@ -3,32 +3,32 @@
         {
             "id": 110001,
             "name": "Background",
-            "sortingorder": -1000,
-            "stackswitchtype": 3
+            "sorting_order": -1000,
+            "stack_switch_type": 3
         },
         {
             "id": 110002,
             "name": "Default",
-            "sortingorder": 0,
-            "stackswitchtype": 3
+            "sorting_order": 0,
+            "stack_switch_type": 3
         },
         {
             "id": 110003,
             "name": "Window",
-            "sortingorder": 1000,
-            "stackswitchtype": 2
+            "sorting_order": 1000,
+            "stack_switch_type": 2
         },
         {
             "id": 110004,
             "name": "Popup",
-            "sortingorder": 2000,
-            "stackswitchtype": 0
+            "sorting_order": 2000,
+            "stack_switch_type": 0
         },
         {
             "id": 110005,
             "name": "Top",
-            "sortingorder": 5000,
-            "stackswitchtype": 0
+            "sorting_order": 5000,
+            "stack_switch_type": 0
         }
     ]
 }

@@ -10,17 +10,17 @@ namespace XFramework.Utils
     /// <summary>
     /// 配置表助手类，需要先预加载才能获取配置表类
     /// </summary>
-    public static class ConfigTableHelper
+    public static class ConfigHelper
     {
         private static readonly Dictionary<Type, string> _tableCache = new();
-        private static readonly string _configTableDirectory = Path.Combine(Application.streamingAssetsPath, "GameConfigs");
+        private static readonly string _configTableDirectory = Path.Combine(Application.streamingAssetsPath, "Schemes");
 
         /// <summary>
         /// 获取配置表类
         /// </summary>
         /// <typeparam name="T">配置表类型</typeparam>
         /// <returns>配置文件实例</returns>
-        public static T GetTable<T>() where T : ConfigTableBase
+        public static T GetTable<T>() where T : class
         {
             Type tableType = typeof(T);
 
@@ -30,7 +30,7 @@ namespace XFramework.Utils
             }
             else
             {
-                Log.Error($"[XFramework] [ConfigLoader] Config not found in cache: {tableType}");
+                Log.Error($"[ConfigLoader] Config not found in cache: {tableType}");
                 return null;
             }
         }
@@ -46,26 +46,20 @@ namespace XFramework.Utils
             {
                 throw new ArgumentNullException(nameof(configType), "Config type cannot be null.");
             }
-            
+
             if (string.IsNullOrEmpty(fileName))
             {
                 throw new ArgumentException("Config file name cannot be null or empty.", nameof(fileName));
             }
-            
-            // 检查配置类型是否为 ConfigTableBase 的子类
-            if (!typeof(ConfigTableBase).IsAssignableFrom(configType))
-            {
-                throw new ArgumentException($"Config type must be a subclass of ConfigTableBase. Type: {configType}", nameof(configType));
-            }
 
             if (_tableCache.TryGetValue(configType, out var _)) // 检查缓存
             {
-                Log.Warning($"[XFramework] [ConfigLoader] Config already loaded but still trying to preload:" +
+                Log.Warning($"[ConfigLoader] Config already loaded but still trying to preload:" +
                     $"Type: {configType}, File: {fileName}");
             }
             else
             {
-                await ReadConfigTableFileAsync(fileName, configType);
+                await PreloadConfigInternal(configType, fileName);
             }
         }
 
@@ -74,7 +68,7 @@ namespace XFramework.Utils
         /// </summary>
         /// <typeparam name="T">配置文件类型</typeparam>
         /// <param name="fileName">配置文件名（包含扩展名）</param>
-        public static async UniTask PreloadConfigAsync<T>(string fileName) where T : ConfigTableBase
+        public static async UniTask PreloadConfigAsync<T>(string fileName) where T : class
         {
             await PreloadConfigAsync(typeof(T), fileName);
         }
@@ -85,16 +79,16 @@ namespace XFramework.Utils
         public static void ClearAllConfigCache()
         {
             _tableCache.Clear();
-            Log.Debug("[XFramework] [ConfigLoader] All config caches cleared.");
+            Log.Debug("[ConfigLoader] All config caches cleared.");
         }
 
-        private static async UniTask<string> ReadConfigTableFileAsync(string fileName, Type tableType)
+        private static async UniTask<string> PreloadConfigInternal(Type tableType, string fileName)
         {
             string jsonContent;
             string filePath = Path.Combine(_configTableDirectory, $"{fileName}");
             if (!FileHelper.Exists(filePath))
             {
-                Log.Error($"[XFramework] [ConfigLoader] Config file not found: {filePath}");
+                Log.Error($"[ConfigLoader] Config file not found: {filePath}");
                 return null;
             }
             // 根据平台选择不同的读取方式
@@ -108,7 +102,7 @@ namespace XFramework.Utils
                 }
                 else
                 {
-                    Log.Error($"[XFramework] [ConfigLoader] Failed to read config file from web request: {result.Error}");
+                    Log.Error($"[ConfigLoader] Failed to read config file from web request: {result.Error}");
                     return null;
                 }
             }
@@ -119,7 +113,7 @@ namespace XFramework.Utils
             }
 
             _tableCache[tableType] = jsonContent; // 缓存配置内容
-            Log.Debug($"[XFramework] [ConfigLoader] Config file cached: {fileName}");
+            Log.Debug($"[ConfigLoader] Config file cached: {fileName}");
             return jsonContent;
         }
     }

@@ -4,19 +4,19 @@
             "id": 100001,
             "name": "MainMenu",
             "address": "mainmenu",
-            "parentlayer": 110003
+            "parent_layer": 110003
         },
         {
             "id": 100002,
             "name": "Background",
             "address": "background",
-            "parentlayer": 110001
+            "parent_layer": 110001
         },
         {
             "id": 100003,
             "name": "Info",
             "address": "popup",
-            "parentlayer": 110004
+            "parent_layer": 110004
         }
     ]
 }
