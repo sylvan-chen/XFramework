@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace XFramework.Utils
 {
     /// <summary>
-    /// 对 C# LinkedList 的封装，增加了节点缓存机制（利用节点池），减少内存分配和 GC 以提升性能
+    /// 对 C# LinkedList 的封装，增加了节点缓存机制，减少内存分配和 GC 以提升性能
     /// </summary>
     public sealed partial class XLinkedList<T> : ICollection<T>, ICollection
     {

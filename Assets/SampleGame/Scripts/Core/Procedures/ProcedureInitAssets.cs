@@ -16,7 +16,7 @@ public sealed class ProcedureInitAssets : ProcedureBase
 
     private async UniTask InitPackage()
     {
-        var initResult = await Global.AssetManager.InitPackageAsync();
+        var initResult = await Game.AssetManager.InitPackageAsync();
 
         if (initResult.Succeed)
         {

@@ -8,17 +8,19 @@ using XFramework.Utils;
 namespace XFramework
 {
     /// <summary>
-    /// 驱动框架的根节点
+    /// 总启动器
     /// </summary>
-    /// <remarks>
-    /// 管理框架的各个组件，并保证框架的安全关闭
-    /// </remarks>
     [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Game Launcher")]
     internal sealed class GameLauncher : MonoSingletonPersistent<GameLauncher>
     {
-        private readonly List<XFrameworkComponent> _cachedComponents = new();
-        private Coroutine _initCoroutine;
+        [Header("XFramework Component Datas")]
+        [SerializeField] private ConfigManagerData _configManagerData = null;
+
+        private readonly List<FrameworkComponent> _cachedComponents = new();
+        private readonly Dictionary<Type, FrameworkComponent> _componentMap = new();
+
+        public bool IsInitialized { get; private set; } = false;
 
         protected override void Awake()
         {
@@ -29,13 +31,40 @@ namespace XFramework
 
         private void Start()
         {
-            UniTask initTask = InitGameAsync();
-            _initCoroutine = StartCoroutine(initTask.ToCoroutine());
+            // 加载所有管理器组件
+            // 分四层 Base -> Core -> System -> Game
+            // 上层依赖下层，下层不可依赖上层
+            LoadBaseComponents();
+            LoadCoreComponents();
+            LoadSystemComponents();
+            LoadGameComponents();
+
+            InitComponents().Forget();
+            EnterGame().Forget();
+        }
+
+        private async UniTaskVoid InitComponents()
+        {
+            foreach (FrameworkComponent component in _cachedComponents)
+            {
+                component.Init();
+                await UniTask.NextFrame(); // 等待一帧让组件完成初始化
+            }
+
+            IsInitialized = true;
+        }
+
+        private async UniTaskVoid EnterGame()
+        {
+            await UniTask.WaitUntil(() => IsInitialized);
+
+            var procedureManager = GetFrameworkComponent<ProcedureManager>();
+            procedureManager.StartProcedure();
         }
 
         private void Update()
         {
-            foreach (XFrameworkComponent component in _cachedComponents)
+            foreach (FrameworkComponent component in _cachedComponents)
             {
                 component.Update(Time.deltaTime, Time.unscaledDeltaTime);
             }
@@ -46,56 +75,79 @@ namespace XFramework
             ShutdownFramework();
         }
 
-        /// <summary>
-        /// 初始化游戏
-        /// </summary>
-        private async UniTask InitGameAsync()
+        public T GetFrameworkComponent<T>() where T : FrameworkComponent
         {
-            // 预加载配置表
-            await PreloadConfigTablesAsync();
-            // 开始游戏流程
-            Global.ProcedureManager.StartProcedure();
-            _initCoroutine = null;
+            _componentMap.TryGetValue(typeof(T), out var component);
+            return component as T;
         }
 
-        private async UniTask PreloadConfigTablesAsync()
+        public FrameworkComponent GetFrameworkComponent(Type type)
         {
-            Log.Info("[XFramework] [GameLauncher] Preload Config Tables...");
-            var fieldInfos = typeof(Consts.ConfigConsts).GetFields(BindingFlags.Public | BindingFlags.Static);
-            if (fieldInfos == null || fieldInfos.Length == 0)
+            _componentMap.TryGetValue(type, out var component);
+            return component;
+        }
+
+        /// <summary>
+        /// 加载Base层组件
+        /// </summary>
+        private void LoadBaseComponents()
+        {
+            var cachePool = new CachePool();
+            CacheComponentInstance(typeof(CachePool), cachePool);
+
+            var gameSetting = new GameSetting();
+            CacheComponentInstance(typeof(GameSetting), gameSetting);
+        }
+
+        /// <summary>
+        /// 加载Core层组件
+        /// </summary>
+        private void LoadCoreComponents()
+        {
+            var poolManager = new PoolManager();
+            CacheComponentInstance(typeof(PoolManager), poolManager);
+
+            var configManager = new ConfigManager(_configManagerData);
+            CacheComponentInstance(typeof(ConfigManager), configManager);
+
+            var assetManager = new AssetManager();
+            CacheComponentInstance(typeof(AssetManager), assetManager);
+
+            var eventManager = new EventManager();
+            CacheComponentInstance(typeof(EventManager), eventManager);
+
+            var stateMachineManager = new StateMachineManager();
+            CacheComponentInstance(typeof(StateMachineManager), stateMachineManager);
+        }
+
+        /// <summary>
+        /// 加载System层组件
+        /// </summary>
+        private void LoadSystemComponents()
+        {
+            var uiManager = new UIManager();
+            CacheComponentInstance(typeof(UIManager), uiManager);
+        }
+
+        /// <summary>
+        /// 加载Game层组件
+        /// </summary>
+        private void LoadGameComponents()
+        {
+            var procedureManager = new ProcedureManager();
+            CacheComponentInstance(typeof(ProcedureManager), procedureManager);
+        }
+
+        private void CacheComponentInstance(Type componentType, FrameworkComponent instance)
+        {
+            if (_cachedComponents.Contains(instance) || _componentMap.ContainsKey(componentType))
             {
-                Log.Warning("[XFramework] [GameLauncher] No config constants found to preload.");
+                Log.Warning($"[GameLauncher] Duplicate component cache attempted: {componentType.Name}");
                 return;
             }
 
-            foreach (var fieldInfo in fieldInfos)
-            {
-                // 筛选字符串常量字段
-                if (fieldInfo != null && fieldInfo.FieldType == typeof(string) && fieldInfo.IsLiteral)
-                {
-                    Type configType = TypeHelper.GetType(fieldInfo.Name, "XFramework");
-                    if (configType == null)
-                    {
-                        Log.Error($"[XFramework] [GameLauncher] Config type {fieldInfo.Name} not found.");
-                        continue;
-                    }
-                    await ConfigLoader.LoadConfigAsync(fieldInfo.GetValue(null) as string, configType);
-                }
-            }
-        }
-
-        internal void Register(XFrameworkComponent component)
-        {
-            if (component == null)
-            {
-                throw new ArgumentNullException(nameof(component), "Register component failed. Component can not be null.");
-            }
-            if (_cachedComponents.Contains(component))
-            {
-                throw new InvalidOperationException($"Register component failed. Component of type {component.GetType().Name} has already been registered.");
-            }
-            _cachedComponents.Add(component);
-            _cachedComponents.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+            _cachedComponents.Add(instance);
+            _componentMap[componentType] = instance;
         }
 
         /// <summary>
@@ -103,16 +155,11 @@ namespace XFramework
         /// </summary>
         private void ShutdownFramework()
         {
-            if (_initCoroutine != null)
-            {
-                StopCoroutine(_initCoroutine);
-                _initCoroutine = null;
-            }
-            Log.Info("[XFramework] [GameLauncher] Shutdown XFramework...");
+            Log.Debug("[GameLauncher] Shutdown XFramework...");
             _cachedComponents.Reverse();
-            foreach (XFrameworkComponent manager in _cachedComponents)
+            foreach (FrameworkComponent component in _cachedComponents)
             {
-                manager.Shutdown();
+                component.Shutdown();
             }
             _cachedComponents.Clear();
         }

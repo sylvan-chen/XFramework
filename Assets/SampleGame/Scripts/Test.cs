@@ -35,15 +35,15 @@ public class Test : UIPanelBase
 
     private void Start()
     {
-        Global.EventManager.Subscribe(TestEvent.ID, OnEventBtnClick);
+        Game.EventManager.Subscribe(TestEvent.ID, OnEventBtnClick);
 
-        Pool<Image> imagePool = Global.PoolManager.CreatePool<Image>(1, 10f, 15f);
+        Pool<Image> imagePool = Game.PoolManager.CreatePool<Image>(1, 10f, 15f);
 
         // Global.AssetManager.LoadAssetAsync<Sprite>("bg", (handle) => { _bg = handle.AssetObject as Sprite; });
 
         _eventBtn.onClick.AddListener(() =>
         {
-            Global.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 3f);
+            Game.EventManager.PublishLater(TestEvent.ID, TestEvent.Create("Hello, world!"), 3f);
         });
         int index = 0;
 
@@ -98,13 +98,13 @@ public class Test : UIPanelBase
         });
         _quitBtn.onClick.AddListener(() =>
         {
-            Global.Shutdown();
+            Game.Shutdown();
         });
     }
 
     private void OnDestroy()
     {
-        Global.EventManager?.Unsubscribe(TestEvent.ID, OnEventBtnClick);
+        Game.EventManager?.Unsubscribe(TestEvent.ID, OnEventBtnClick);
     }
 
     private void OnEventBtnClick(IEvent args)

@@ -13,9 +13,9 @@ public sealed class ProcedurePreload : ProcedureBase
     private async UniTaskVoid Preload(StateMachine<ProcedureManager> fsm)
     {
         // Preload resources here
-        await Global.UIManager.LoadPanelAsync(100001);
-        await Global.UIManager.LoadPanelAsync(100002);
-        await Global.UIManager.LoadPanelAsync(100003);
+        await Game.UIManager.LoadPanelAsync(100001);
+        await Game.UIManager.LoadPanelAsync(100002);
+        await Game.UIManager.LoadPanelAsync(100003);
 
         fsm.ChangeState<ProcedureEnterScene>();
     }

@@ -13,8 +13,8 @@ public sealed class ProcedureEnterScene : ProcedureBase
 
     private async UniTaskVoid EnterScene()
     {
-        await Global.AssetManager.LoadSceneAsync("Game02", LoadSceneMode.Single);
+        await Game.AssetManager.LoadSceneAsync("Game02", LoadSceneMode.Single);
 
-        Global.UIManager.OpenPanel(100001);
+        Game.UIManager.OpenPanel(100001);
     }
 }

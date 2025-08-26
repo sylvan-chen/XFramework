@@ -7,7 +7,7 @@ public class TestEvent : IEvent
 
     public static TestEvent Create(string message)
     {
-        TestEvent evt = Global.CachePool.Spawn<TestEvent>();
+        TestEvent evt = Game.CachePool.Spawn<TestEvent>();
         evt.Message = message;
         return evt;
     }
