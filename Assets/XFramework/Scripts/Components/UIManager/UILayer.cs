@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GameConfig;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UnityEngine;
@@ -37,7 +38,7 @@ namespace XFramework
         public Canvas Canvas => _canvas;
         public Transform Transform => _canvas.transform;
 
-        public UILayer(Transform uiRoot, Camera uiCamera, GameConfig.UiLayer config)
+        public UILayer(Transform uiRoot, Camera uiCamera, UiLayerConfig config)
         {
             _id = config.Id;
             _name = config.Name;

@@ -15,7 +15,8 @@ namespace XFramework
     internal sealed class GameLauncher : MonoSingletonPersistent<GameLauncher>
     {
         [Header("XFramework Component Datas")]
-        [SerializeField] private ConfigManagerData _configManagerData = null;
+        [SerializeField] private ConfigManagerSetting _configManagerSetting = null;
+        [SerializeField] private AssetManagerSetting _assetManagerSetting = null;
 
         private readonly List<FrameworkComponent> _cachedComponents = new();
         private readonly Dictionary<Type, FrameworkComponent> _componentMap = new();
@@ -107,10 +108,10 @@ namespace XFramework
             var poolManager = new PoolManager();
             CacheComponentInstance(typeof(PoolManager), poolManager);
 
-            var configManager = new ConfigManager(_configManagerData);
+            var configManager = new ConfigManager(_configManagerSetting);
             CacheComponentInstance(typeof(ConfigManager), configManager);
 
-            var assetManager = new AssetManager();
+            var assetManager = new AssetManager(_assetManagerSetting);
             CacheComponentInstance(typeof(AssetManager), assetManager);
 
             var eventManager = new EventManager();

@@ -5,27 +5,26 @@
 /// ------------------------------------------------------------------------------
 
 using System.Collections.Generic;
-using XFramework;
 
 namespace GameConfig
 {
     [System.Serializable]
-    public class UiPanel : IConfig
+    public class UiLayerConfig : XFramework.IConfig
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Address { get; set; }
-        public int ParentLayer { get; set; }
+        public int SortingOrder { get; set; }
+        public int StackSwitchType { get; set; }
     }
 
     [System.Serializable]
-    public class UiPanelTable
+    public class UiLayerConfigTable
     {
-        public Dictionary<int, UiPanel> AllConfigs;
+        public Dictionary<int, UiLayerConfig> AllConfigs;
 
-        public UiPanel GetConfigById(int id)
-        {
-            return AllConfigs.TryGetValue(id, out var config) ? config : null;
-        }
+        public UiLayerConfig GetConfigById(int id)
+         {
+             return AllConfigs.TryGetValue(id, out var config) ? config : null;
+         }
     }
 }

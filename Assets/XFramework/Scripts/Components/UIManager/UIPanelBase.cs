@@ -1,4 +1,4 @@
-using System;
+using GameConfig;
 using UnityEngine;
 
 namespace XFramework
@@ -8,17 +8,17 @@ namespace XFramework
     /// </summary>
     public abstract class UIPanelBase : MonoBehaviour
     {
-        private GameConfig.UiPanel _config;
+        private UiPanelConfig _config;
         private bool _isInitialized;
         private bool _isVisible;
         private bool _isPaused;
 
-        public GameConfig.UiPanel Config => _config;
+        public UiPanelConfig Config => _config;
         public bool IsInitialized => _isInitialized;
         public bool IsVisible => _isVisible;
         public bool IsPaused => _isPaused;
 
-        public void Init(GameConfig.UiPanel config)
+        public void Init(UiPanelConfig config)
         {
             _config = config;
             SetVisibilityInternal(false); // 初始状态为隐藏

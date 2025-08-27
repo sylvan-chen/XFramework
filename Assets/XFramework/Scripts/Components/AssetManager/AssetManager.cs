@@ -25,15 +25,12 @@ namespace XFramework
             WebGL,   // 针对 WebGL 的特殊模式
         }
 
-        private readonly BuildMode _buildMode = Consts.XFrameworkConsts.AssetManagerProperty.BuildMode;
-        private readonly string _mainPackageName = Consts.XFrameworkConsts.AssetManagerProperty.MainPackageName;
-        private readonly string _defaultHostServer = Consts.XFrameworkConsts.AssetManagerProperty.DefaultHostServer;
-        private readonly string _fallbackHostServer = Consts.XFrameworkConsts.AssetManagerProperty.FallbackHostServer;
-        private readonly int _maxConcurrentDownloadCount = Consts.XFrameworkConsts.AssetManagerProperty.MaxConcurrentDownloadCount;
-        private readonly int _failedDownloadRetryCount = Consts.XFrameworkConsts.AssetManagerProperty.FailedDownloadRetryCount;
+        private readonly AssetManagerSetting _setting;
 
         private ResourcePackage _package;
         private InitResult _initResult;
+
+        public delegate void ProgressCallBack(float progress);
 
         // 资源下载回调
         public Action<DownloaderFinishData> OnDownloadFinishedEvent;
@@ -41,7 +38,10 @@ namespace XFramework
         public Action<DownloadUpdateData> OnDownloadUpdateEvent;
         public Action<DownloadFileData> OnDownloadFileBeginEvent;
 
-        public delegate void ProgressCallBack(float progress);
+        public AssetManager(AssetManagerSetting setting)
+        {
+            _setting = setting;
+        }
 
         internal override void Init()
         {
@@ -50,10 +50,10 @@ namespace XFramework
             YooAssets.Initialize();
             // 获取资源包对象，如果资源包不存在，则创建资源包
             // 注意：需要先在 Collector 创建同名 Package
-            _package = YooAssets.TryGetPackage(_mainPackageName);
+            _package = YooAssets.TryGetPackage(_setting.MainPackageName);
             if (_package == null)
             {
-                _package = YooAssets.CreatePackage(_mainPackageName);
+                _package = YooAssets.CreatePackage(_setting.MainPackageName);
             }
             // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载该资源包内容
             YooAssets.SetDefaultPackage(_package);
@@ -136,10 +136,10 @@ namespace XFramework
         async private UniTask InitPackageInternal()
         {
             InitializationOperation operation = null;
-            switch (_buildMode)
+            switch (_setting.BuildMode)
             {
                 case BuildMode.Editor:
-                    var simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(_mainPackageName);
+                    var simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(_setting.MainPackageName);
                     var initParametersEditor = new EditorSimulateModeParameters()
                     {
                         EditorFileSystemParameters = FileSystemParameters.CreateDefaultEditorFileSystemParameters(simulateBuildResult.PackageRootDirectory)
@@ -154,7 +154,7 @@ namespace XFramework
                     operation = _package.InitializeAsync(initParametersOffline);
                     break;
                 case BuildMode.Online:
-                    IRemoteServices remoteServicesOnline = new RemoteServices(_defaultHostServer, _fallbackHostServer);
+                    IRemoteServices remoteServicesOnline = new RemoteServices(_setting.DefaultHostServer, _setting.FallbackHostServer);
                     var initParametersOnline = new HostPlayModeParameters
                     {
                         BuildinFileSystemParameters = FileSystemParameters.CreateDefaultBuildinFileSystemParameters(),
@@ -163,7 +163,7 @@ namespace XFramework
                     operation = _package.InitializeAsync(initParametersOnline);
                     break;
                 case BuildMode.WebGL:
-                    IRemoteServices remoteServicesWebGL = new RemoteServices(_defaultHostServer, _fallbackHostServer);
+                    IRemoteServices remoteServicesWebGL = new RemoteServices(_setting.DefaultHostServer, _setting.FallbackHostServer);
                     var initParametersWebGL = new WebPlayModeParameters
                     {
                         WebServerFileSystemParameters = FileSystemParameters.CreateDefaultWebServerFileSystemParameters(),
@@ -172,19 +172,19 @@ namespace XFramework
                     operation = _package.InitializeAsync(initParametersWebGL);
                     break;
                 default:
-                    Log.Error($"[XFramework] [AssetManager] Invalid package mode: {_buildMode}");
+                    Log.Error($"[XFramework] [AssetManager] Invalid package mode: {_setting.BuildMode}");
                     break;
             }
             await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Initialize package succeed. ({_buildMode})");
+                Log.Debug($"[XFramework] [AssetManager] Initialize package succeed. ({_setting.BuildMode})");
                 await RequestPackageVersion();
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Initialize package failed. ({_buildMode}) {operation.Error}");
+                Log.Error($"[XFramework] [AssetManager] Initialize package failed. ({_setting.BuildMode}) {operation.Error}");
                 _initResult.Succeed = false;
                 _initResult.ErrorMessage = operation.Error;
             }
@@ -238,7 +238,7 @@ namespace XFramework
         /// </summary>
         async private UniTask UpdatePackageFiles()
         {
-            var downloader = _package.CreateResourceDownloader(_maxConcurrentDownloadCount, _failedDownloadRetryCount);
+            var downloader = _package.CreateResourceDownloader(_setting.MaxConcurrentDownloadCount, _setting.FailedDownloadRetryCount);
 
             if (downloader.TotalDownloadCount == 0)
             {
@@ -837,7 +837,7 @@ namespace XFramework
             Loading,        // 加载中
             LoadedInactive, // 已加载但未激活（预加载状态）
             LoadedActive,   // 已加载且激活
-            Unloading      // 卸载中
+            Unloading       // 卸载中
         }
 
         /// <summary>

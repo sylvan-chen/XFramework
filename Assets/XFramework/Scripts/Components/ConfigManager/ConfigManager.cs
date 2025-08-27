@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using XFramework.Utils;
 
@@ -14,24 +15,24 @@ namespace XFramework
     /// </summary>
     public class ConfigManager : FrameworkComponent
     {
-        private readonly ConfigManagerData _configManagerData;
+        private readonly ConfigManagerSetting _setting;
 
         // 所有配置表缓存: typeof(T) -> Dictionary<id, 对象>
         private readonly Dictionary<Type, object> _tableMap = new();
         // 配置表目录
         private readonly string _tableDirectory;
 
-        public ConfigManager(ConfigManagerData configManagerData)
+        public ConfigManager(ConfigManagerSetting setting)
         {
-            _configManagerData = configManagerData;
-            _tableDirectory = Path.Combine(Application.streamingAssetsPath, _configManagerData.TablePath);
+            _setting = setting;
+            _tableDirectory = Path.Combine(Application.streamingAssetsPath, _setting.TableFolderName);
         }
 
         internal override void Init()
         {
             base.Init();
 
-            if (_configManagerData.AutoPreload)
+            if (_setting.AutoPreload)
             {
                 PreloadTables().Forget();
             }
@@ -57,7 +58,8 @@ namespace XFramework
             {
                 string fileName = Path.GetFileNameWithoutExtension(jsonPath);
                 fileName = ToPascalCase(fileName);
-                Type configType = TypeHelper.GetType(fileName);
+                fileName = $"GameConfig.{fileName}ConfigTable";
+                Type configType = TypeHelper.GetType(fileName, "XFramework");
                 if (configType == null)
                 {
                     Log.Error($"[ConfigManager] Config type {fileName} not found.");
@@ -158,13 +160,13 @@ namespace XFramework
         /// 异步加载配置文件
         /// </summary>
         /// <param name="filePath">配置文件路径</param>
-        /// <param name="configType">配置文件类型</param>
+        /// <param name="tableType">配置表类型</param>
         /// <param name="isCover">是否覆盖已加载的配置</param>
-        public async UniTask LoadConfigAsync(string filePath, Type configType, bool isCover = false)
+        public async UniTask LoadConfigAsync(string filePath, Type tableType, bool isCover = false)
         {
-            if (configType == null)
+            if (tableType == null)
             {
-                throw new ArgumentNullException(nameof(configType), "Config type cannot be null.");
+                throw new ArgumentNullException(nameof(tableType), "Config type cannot be null.");
             }
 
             if (string.IsNullOrEmpty(filePath))
@@ -172,17 +174,17 @@ namespace XFramework
                 throw new ArgumentException("Config file path cannot be null or empty.", nameof(filePath));
             }
 
-            if (_tableMap.TryGetValue(configType, out var _))
+            if (_tableMap.TryGetValue(tableType, out var _))
             {
                 if (isCover)
                 {
                     Log.Debug($"[ConfigManager] Duplicate config load attempt, covering it:" +
-                        $"Type: {configType}, File: {filePath}");
+                        $"Type: {tableType}, File: {filePath}");
                 }
                 else
                 {
                     Log.Warning($"[ConfigManager] Duplicate config load attempt, skip it:" +
-                        $"Type: {configType}, File: {filePath}");
+                        $"Type: {tableType}, File: {filePath}");
                     return;
                 }
             }
@@ -194,14 +196,14 @@ namespace XFramework
                 return;
             }
 
-            var listType = typeof(List<>).MakeGenericType(configType);
+            var listType = typeof(List<>).MakeGenericType(tableType);
             var configs = JsonConvert.DeserializeObject(jsonContent, listType);
 
-            var mapType = typeof(Dictionary<,>).MakeGenericType(typeof(int), configType);
+            var mapType = typeof(Dictionary<,>).MakeGenericType(typeof(int), tableType);
             var map = Activator.CreateInstance(mapType);
 
             var addMethod = mapType.GetMethod("Add");
-            var idProperty = configType.GetProperty("Id");
+            var idProperty = tableType.GetProperty("Id");
 
             foreach (var config in (System.Collections.IEnumerable)configs)
             {
@@ -209,7 +211,7 @@ namespace XFramework
                 addMethod.Invoke(map, new object[] { id, config });
             }
 
-            _tableMap[configType] = map; // 缓存配置对象
+            _tableMap[tableType] = map; // 缓存配置对象
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using XFramework.Utils;
 using UnityEngine.Rendering.Universal;
+using GameConfig;
 
 namespace XFramework
 {
@@ -98,7 +99,7 @@ namespace XFramework
 
         private void CreateUILayers()
         {
-            var configTable = Game.ConfigManager.GetTable<GameConfig.UiLayer>();
+            var configTable = Game.ConfigManager.GetTable<UiLayerConfig>();
             foreach (var config in configTable.Values)
             {
                 // 检查是否已经存在该层级
@@ -146,7 +147,7 @@ namespace XFramework
                 return loadedPanel;
             }
 
-            var config = Game.ConfigManager.GetConfig<GameConfig.UiPanel>(id);
+            var config = Game.ConfigManager.GetConfig<UiPanelConfig>(id);
             var assetHandler = await Game.AssetManager.LoadAssetAsync<GameObject>(config.Address);
             _assetHandlers.Add(assetHandler);
             var panelObj = await assetHandler.InstantiateAsync();
