@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using GamePlay.Table;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UnityEngine;
@@ -38,20 +37,20 @@ namespace XGame.Core
         public Canvas Canvas => _canvas;
         public Transform Transform => _canvas.transform;
 
-        public UILayer(Transform uiRoot, Camera uiCamera, UiLayerItem config)
+        public UILayer(Transform uiRoot, Camera uiCamera, Table.UiLayerItem tableItem)
         {
-            _id = config.Id;
-            _name = config.Name;
-            _switchType = (StackSwitchType)config.StackSwitchType;
+            _id = tableItem.Id;
+            _name = tableItem.Name;
+            _switchType = (StackSwitchType)tableItem.StackSwitchType;
 
-            var layerObj = new GameObject(config.Name);
+            var layerObj = new GameObject(tableItem.Name);
             layerObj.transform.SetParent(uiRoot, false);
 
             _canvas = layerObj.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceCamera;
             _canvas.worldCamera = uiCamera;
             _canvas.overrideSorting = true;
-            _canvas.sortingOrder = config.SortingOrder;
+            _canvas.sortingOrder = tableItem.SortingOrder;
 
             // 设置 Canvas 的其他必要组件
             layerObj.AddComponent<CanvasRenderer>();

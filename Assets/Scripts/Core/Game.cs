@@ -16,7 +16,7 @@ namespace XGame.Core
         private static ProcedureManager _procedureManager;
         private static AssetManager _assetManager;
         private static UIManager _uiManager;
-        private static ConfigManager _configManager;
+        private static TableManager _tableManager;
 
         public static CachePool CachePool
         {
@@ -122,16 +122,16 @@ namespace XGame.Core
             }
         }
 
-        public static ConfigManager ConfigManager
+        public static TableManager TableManager
         {
             get
             {
-                _configManager ??= GameLauncher.Instance.GetFrameworkComponent<ConfigManager>();
-                if (_configManager.IsShutDown)
+                _tableManager ??= GameLauncher.Instance.GetFrameworkComponent<TableManager>();
+                if (_tableManager.IsShutDown)
                 {
                     Log.Error("[Global] ConfigManager is already shut down but you still try to access it.");
                 }
-                return _configManager;
+                return _tableManager;
             }
         }
 

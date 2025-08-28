@@ -98,7 +98,7 @@ namespace XGame.Core
 
         private void CreateUILayers()
         {
-            var configTable = Game.ConfigManager.GetTable<Table.UiLayer>();
+            var configTable = Game.TableManager.GetTable<Table.UiLayer>();
             // foreach (var config in configTable.Values)
             // {
             //     // 检查是否已经存在该层级
@@ -146,8 +146,9 @@ namespace XGame.Core
                 return loadedPanel;
             }
 
-            var uiPanelTable = Game.ConfigManager.GetTable<Table.UiPanel>();
+            var uiPanelTable = Game.TableManager.GetTable<Table.UiPanel>();
             var uiPanelTableItem = uiPanelTable.GetItemById(id);
+
             var assetHandler = await Game.AssetManager.LoadAssetAsync<GameObject>(uiPanelTableItem.Address);
             _assetHandlers.Add(assetHandler);
             var panelObj = await assetHandler.InstantiateAsync();

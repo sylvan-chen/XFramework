@@ -12,14 +12,14 @@ namespace XGame.Core
     /// <summary>
     /// 配置表加载器
     /// </summary>
-    public class ConfigManager : FrameworkComponent
+    public class TableManager : FrameworkComponent
     {
-        private readonly ConfigManagerSetting _setting;
+        private readonly TableManagerSetting _setting;
 
         // 所有配置表缓存: typeof(T) -> T类实例
         private readonly Dictionary<Type, object> _cachedTables = new();
 
-        public ConfigManager(ConfigManagerSetting setting)
+        public TableManager(TableManagerSetting setting)
         {
             _setting = setting;
         }
