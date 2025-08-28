@@ -1,0 +1,4 @@
+namespace XGame.Core
+{
+
+}

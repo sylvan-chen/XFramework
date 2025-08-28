@@ -1,0 +1,11 @@
+namespace XGame.Module.SimpleDressup
+{
+    /// <summary>
+    /// 合并单元
+    /// </summary>
+    public class DressupCombineUnit
+    {
+        public DressupMaterialData MaterialData;
+        public DressupSubmeshData SubmeshData;
+    }
+}
