@@ -21,7 +21,7 @@ namespace XGame.Editor
         private const string NAMESPACE_KEY = "ConfigGenerator_Namespace";
         private const string SEARCH_OPTION_KEY = "ConfigGenerator_SearchOption";
 
-        private SearchOption _searchOption = SearchOption.TopDirectoryOnly;
+        private SearchOption _searchOption = SearchOption.AllDirectories;
         private string _jsonDirectory = DEFAULT_JSON_DIR;
         private string _outputDirectory = DEFAULT_OUTPUT_DIR;
         private string _namespaceName = DEFAULT_NAMESPACE;
@@ -41,7 +41,7 @@ namespace XGame.Editor
             _jsonDirectory = EditorPrefs.GetString(JSON_DIR_KEY, DEFAULT_JSON_DIR);
             _outputDirectory = EditorPrefs.GetString(OUTPUT_DIR_KEY, DEFAULT_OUTPUT_DIR);
             _namespaceName = EditorPrefs.GetString(NAMESPACE_KEY, DEFAULT_NAMESPACE);
-            _searchOption = (SearchOption)EditorPrefs.GetInt(SEARCH_OPTION_KEY, (int)SearchOption.TopDirectoryOnly);
+            _searchOption = (SearchOption)EditorPrefs.GetInt(SEARCH_OPTION_KEY, (int)SearchOption.AllDirectories);
         }
 
         private void OnDisable()
@@ -141,7 +141,7 @@ namespace XGame.Editor
                 _jsonDirectory = DEFAULT_JSON_DIR;
                 _outputDirectory = DEFAULT_OUTPUT_DIR;
                 _namespaceName = DEFAULT_NAMESPACE;
-                _searchOption = SearchOption.TopDirectoryOnly;
+                _searchOption = SearchOption.AllDirectories;
             }
         }
 
@@ -202,7 +202,7 @@ namespace XGame.Editor
                         string className = ToPascalCase(fileName);
                         string code = GenerateClassCode(className, firstObj);
 
-                        string outputPath = Path.Combine(_outputDirectory, $"{className}.cs");
+                        string outputPath = Path.Combine(_outputDirectory, $"Table{className}.cs");
                         File.WriteAllText(outputPath, code, Encoding.UTF8);
 
                         Debug.Log($"[ConfigClassGenerator] 生成配表数据类: {className} -> {outputPath}");
@@ -242,7 +242,7 @@ namespace XGame.Editor
             {
                 string propertyType = InferTypeName(property.Value);
                 string propertyName = ToPascalCase(property.Name);
-                propertyDefs.Add($"public {propertyType} {propertyName};");
+                propertyDefs.Add($"public {propertyType} {propertyName} {{ get; set; }}");
             }
 
             var sb = new StringBuilder();
@@ -254,23 +254,24 @@ namespace XGame.Editor
             sb.AppendLine("/// ------------------------------------------------------------------------------");
             sb.AppendLine();
             sb.AppendLine("using System.Collections.Generic;");
+            sb.AppendLine("using XGame.Core;");
             sb.AppendLine();
             sb.AppendLine($"namespace {_namespaceName}");
             sb.AppendLine("{");
             sb.AppendLine("    [System.Serializable]");
-            sb.AppendLine($"    public class {className}Item : ITableItem");
+            sb.AppendLine($"    public class Config{className} : IConfig");
             sb.AppendLine("    {");
             sb.AppendLine($"        {string.Join("\n        ", propertyDefs)}");
             sb.AppendLine("    }");
             sb.AppendLine();
             sb.AppendLine("    [System.Serializable]");
-            sb.AppendLine($"    public class {className}");
+            sb.AppendLine($"    public class Table{className}");
             sb.AppendLine("    {");
-            sb.AppendLine($"        public Dictionary<int, {className}Item> Items;");
+            sb.AppendLine($"        public Dictionary<int, Config{className}> Configs;");
             sb.AppendLine();
-            sb.AppendLine($"        public {className}Item GetItemById(int id)");
+            sb.AppendLine($"        public Config{className} GetConfigById(int id)");
             sb.AppendLine("         {");
-            sb.AppendLine("             return Items.TryGetValue(id, out var item) ? item : null;");
+            sb.AppendLine("             return Configs.TryGetValue(id, out var config) ? config : null;");
             sb.AppendLine("         }");
             sb.AppendLine("    }");
             sb.AppendLine("}");

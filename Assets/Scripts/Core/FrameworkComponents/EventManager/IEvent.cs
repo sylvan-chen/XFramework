@@ -7,7 +7,7 @@ namespace XGame.Core
     {
         internal void Destroy()
         {
-            Game.CachePool.Unspawn(this);
+            CachePool.Unspawn(this);
         }
     }
 }

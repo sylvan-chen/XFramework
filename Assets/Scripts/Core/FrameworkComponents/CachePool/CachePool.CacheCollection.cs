@@ -4,7 +4,7 @@ using XGame.Utils;
 
 namespace XGame.Core
 {
-    public sealed partial class CachePool
+    public static partial class CachePool
     {
         private class CacheCollection
         {

@@ -24,13 +24,12 @@ namespace XGame.Editor
 
             // 选项：是否显示完整类型名
             var targetObject = target as CachePoolDebugger;
-            var targetComponent = targetObject.Component as CachePool;
 
             _showFullTypeName = EditorGUILayout.Toggle("Show Full Type Name", _showFullTypeName);
 
             // 获取缓存池信息
             _cacheCollectionInfosDict.Clear();
-            CacheCollectionInfo[] cacheCollectionInfoArray = targetComponent.GetAllCacheCollectionInfos();
+            CacheCollectionInfo[] cacheCollectionInfoArray = CachePool.GetAllCacheCollectionInfos();
             foreach (CacheCollectionInfo cacheCollectionInfo in cacheCollectionInfoArray)
             {
                 string assemblyName = cacheCollectionInfo.CacheType.Assembly.GetName().Name;

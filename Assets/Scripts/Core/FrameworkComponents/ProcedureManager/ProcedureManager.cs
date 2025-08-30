@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using UnityEngine;
 using XGame.Utils;
 
@@ -43,14 +42,14 @@ namespace XGame.Core
                 throw new InvalidOperationException($"ProcedureManager init failed. Startup procedure '{_startupProcedureTypeName}' not found or failed to initialize.");
             }
 
-            _procedureStateMachine = Game.StateMachineManager.Create(this, procedures);
+            _procedureStateMachine = M.StateMachineManager.Create(this, procedures);
         }
 
         internal override void Shutdown()
         {
             base.Shutdown();
 
-            Game.StateMachineManager.Destroy<ProcedureManager>();
+            M.StateMachineManager.Destroy<ProcedureManager>();
             _procedureStateMachine = null;
             _startupProcedure = null;
         }

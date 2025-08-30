@@ -72,7 +72,7 @@ namespace XGame.Core
 
         internal static StateMachine<T> Create(string name, T owner, params StateBase<T>[] states)
         {
-            var fsm = Game.CachePool.Spawn<StateMachine<T>>();
+            var fsm = CachePool.Spawn<StateMachine<T>>();
             fsm._name = name ?? throw new ArgumentNullException(nameof(name), $"Create StateMachine failed. Name cannot be null.");
             fsm._owner = owner ?? throw new ArgumentNullException(nameof(owner), $"Create StateMachine failed. Owner cannot be null.");
             foreach (StateBase<T> state in states)
@@ -111,7 +111,7 @@ namespace XGame.Core
                 state.Destroy();
             }
             _isDestroyed = true;
-            Game.CachePool.Unspawn(this);
+            CachePool.Unspawn(this);
         }
 
         /// <summary>

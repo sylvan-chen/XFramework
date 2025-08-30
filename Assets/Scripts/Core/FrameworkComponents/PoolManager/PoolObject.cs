@@ -47,7 +47,7 @@ namespace XGame.Core
 
         internal static PoolObject Create(object target, bool locked = false)
         {
-            PoolObject poolObject = Game.CachePool.Spawn<PoolObject>();
+            PoolObject poolObject = CachePool.Spawn<PoolObject>();
             poolObject.Target = target ?? throw new ArgumentNullException(nameof(target), "Target can not be null.");
             poolObject.Locked = locked;
             poolObject.LastUseUtcTime = DateTime.UtcNow;
@@ -83,7 +83,7 @@ namespace XGame.Core
         internal void Destroy()
         {
             OnDiscard?.Invoke();
-            Game.CachePool.Unspawn(this);
+            CachePool.Unspawn(this);
         }
 
         public void Clear()

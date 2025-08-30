@@ -28,12 +28,15 @@ namespace XGame.Core
         {
             base.Init();
 
-            if (_setting.AutoPreload)
+            if (_setting.PreloadOnInit)
             {
                 PreloadTables().Forget();
             }
         }
 
+        /// <summary>
+        /// 预加载配置表
+        /// </summary>
         public async UniTaskVoid PreloadTables()
         {
             Log.Debug("[ConfigManager] Start Preload tables...");
@@ -61,14 +64,14 @@ namespace XGame.Core
                 {
                     string fileName = PathHelper.GetFileNameWithoutExtension(jsonPath);
                     fileName = StringHelper.ToPascalCase(fileName);
-                    string typeFullName = $"{_setting.PreloadTableNameSpace}.{fileName}";
-                    Type configType = TypeHelper.GetTypeDeeply(typeFullName);
-                    if (configType == null)
+                    string typeFullName = $"XGame.Table.Table{fileName}";
+                    Type tableType = TypeHelper.GetTypeDeeply(typeFullName);
+                    if (tableType == null)
                     {
                         Log.Error($"[ConfigManager] Config type {typeFullName} not found.");
                         continue;
                     }
-                    await LoadTableAsync(jsonPath, configType);
+                    await LoadTableAsync(jsonPath, tableType);
                 }
             }
 
@@ -98,10 +101,10 @@ namespace XGame.Core
         /// </summary>
         /// <typeparam name="T">配置表类型</typeparam>
         /// <param name="filePath">配置文件路径</param>
-        /// <param name="isCover">是否覆盖已加载的配置</param>
-        public async UniTask LoadTableAsync<T>(string filePath, bool isCover = false) where T : class
+        /// <param name="isOverride">是否覆盖已加载的配置</param>
+        public async UniTask LoadTableAsync<T>(string filePath, bool isOverride = false) where T : class
         {
-            await LoadTableAsync(filePath, typeof(T), isCover);
+            await LoadTableAsync(filePath, typeof(T), isOverride);
         }
 
         /// <summary>
@@ -109,8 +112,8 @@ namespace XGame.Core
         /// </summary>
         /// <param name="filePath">配置表路径</param>
         /// <param name="tableType">配置表类型</param>
-        /// <param name="isCover">是否覆盖已加载的配置</param>
-        public async UniTask LoadTableAsync(string filePath, Type tableType, bool isCover = false)
+        /// <param name="isOverride">是否覆盖已加载的配置</param>
+        public async UniTask LoadTableAsync(string filePath, Type tableType, bool isOverride = false)
         {
             if (tableType == null)
             {
@@ -124,7 +127,7 @@ namespace XGame.Core
 
             if (_cachedTables.TryGetValue(tableType, out var _))
             {
-                if (isCover)
+                if (isOverride)
                 {
                     Log.Debug($"[ConfigManager] Duplicate config load attempt, covering it:" +
                         $"Type: {tableType}, File: {filePath}");

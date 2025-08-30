@@ -10,22 +10,22 @@ using XGame.Core;
 namespace XGame.Table
 {
     [System.Serializable]
-    public class UiLayerItem : ITableItem
+    public class ConfigUiPanels : IConfig
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int SortingOrder { get; set; }
-        public int StackSwitchType { get; set; }
+        public string Address { get; set; }
+        public int ParentLayer { get; set; }
     }
 
     [System.Serializable]
-    public class UiLayer
+    public class TableUiPanels
     {
-        public Dictionary<int, UiLayerItem> Items;
+        public Dictionary<int, ConfigUiPanels> Configs;
 
-        public UiLayerItem GetItemById(int id)
-        {
-            return Items.TryGetValue(id, out var item) ? item : null;
-        }
+        public ConfigUiPanels GetConfigById(int id)
+         {
+             return Configs.TryGetValue(id, out var config) ? config : null;
+         }
     }
 }

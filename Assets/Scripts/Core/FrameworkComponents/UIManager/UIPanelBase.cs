@@ -7,20 +7,21 @@ namespace XGame.Core
     /// </summary>
     public abstract class UIPanelBase : MonoBehaviour
     {
-        private Table.UiPanelItem _tableItem;
+        private int _id;
         private bool _isInitialized;
         private bool _isVisible;
         private bool _isPaused;
 
-        public Table.UiPanelItem Config => _tableItem;
+        public int ID => _id;
         public bool IsInitialized => _isInitialized;
         public bool IsVisible => _isVisible;
         public bool IsPaused => _isPaused;
 
-        public void Init(Table.UiPanelItem tableItem)
+        public void Init(int id)
         {
-            _tableItem = tableItem;
-            SetVisibilityInternal(false); // 初始状态为隐藏
+            _id = id;
+
+            SetVisibilityInternal(false);
             _isPaused = false;
 
             OnInit();
@@ -32,7 +33,6 @@ namespace XGame.Core
         {
             OnClear();
 
-            _tableItem = null;
             _isInitialized = false;
         }
 

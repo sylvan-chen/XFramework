@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using XGame.Utils;
@@ -14,9 +13,15 @@ namespace XGame.Core
     [AddComponentMenu("XFramework/Game Launcher")]
     internal sealed class GameLauncher : MonoSingletonPersistent<GameLauncher>
     {
-        [Header("XFramework Component Settings")]
-        [SerializeField] private TableManagerSetting _tableManagerSetting = null;
-        [SerializeField] private AssetManagerSetting _assetManagerSetting = null;
+        private const int FOUNDATION_COMPONENT_PRIORITY = 0;
+        private const int KERNEL_COMPONENT_PRIORITY = 100;
+        private const int SYSTEM_COMPONENT_PRIORITY = 200;
+        private const int GAME_COMPONENT_PRIORITY = 300;
+
+        [Header("Framework Component Settings")]
+        [SerializeField] private TableManagerSetting _tableManagerSetting;
+        [SerializeField] private AssetManagerSetting _assetManagerSetting;
+        [SerializeField] private UIManagerSetting _uiManagerSetting;
 
         private readonly List<FrameworkComponent> _cachedComponents = new();
         private readonly Dictionary<Type, FrameworkComponent> _componentMap = new();
@@ -32,13 +37,12 @@ namespace XGame.Core
 
         private void Start()
         {
-            // 加载所有管理器组件
-            // 分四层 Base -> Core -> System -> Game
-            // 上层依赖下层，下层不可依赖上层
-            LoadBaseComponents();
-            LoadCoreComponents();
+            LoadFoundationComponents();
+            LoadKernelComponents();
             LoadSystemComponents();
             LoadGameComponents();
+
+            _cachedComponents.Sort((a, b) => a.Priority.CompareTo(b.Priority));
 
             InitComponents().Forget();
             EnterGame().Forget();
@@ -78,64 +82,52 @@ namespace XGame.Core
 
         public T GetFrameworkComponent<T>() where T : FrameworkComponent
         {
-            _componentMap.TryGetValue(typeof(T), out var component);
-            return component as T;
+            return GetFrameworkComponent(typeof(T)) as T;
         }
 
         public FrameworkComponent GetFrameworkComponent(Type type)
         {
             _componentMap.TryGetValue(type, out var component);
+
+            if (component == null)
+                Log.Error($"[GameLauncher] Framework component not found: {type.Name}");
+
             return component;
         }
 
-        /// <summary>
-        /// 加载Base层组件
-        /// </summary>
-        private void LoadBaseComponents()
+        private void LoadFoundationComponents()
         {
-            var cachePool = new CachePool();
-            CacheComponentInstance(typeof(CachePool), cachePool);
-
-            var gameSetting = new GameSetting();
+            var gameSetting = new GameSetting() { Priority = FOUNDATION_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(GameSetting), gameSetting);
         }
 
-        /// <summary>
-        /// 加载Core层组件
-        /// </summary>
-        private void LoadCoreComponents()
+        private void LoadKernelComponents()
         {
-            var poolManager = new PoolManager();
+            var poolManager = new PoolManager() { Priority = KERNEL_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(PoolManager), poolManager);
 
-            var configManager = new TableManager(_tableManagerSetting);
+            var configManager = new TableManager(_tableManagerSetting) { Priority = KERNEL_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(TableManager), configManager);
 
-            var assetManager = new AssetManager(_assetManagerSetting);
+            var assetManager = new AssetManager(_assetManagerSetting) { Priority = KERNEL_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(AssetManager), assetManager);
 
-            var eventManager = new EventManager();
+            var eventManager = new EventManager() { Priority = KERNEL_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(EventManager), eventManager);
 
-            var stateMachineManager = new StateMachineManager();
+            var stateMachineManager = new StateMachineManager() { Priority = KERNEL_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(StateMachineManager), stateMachineManager);
         }
 
-        /// <summary>
-        /// 加载System层组件
-        /// </summary>
         private void LoadSystemComponents()
         {
-            var uiManager = new UIManager();
+            var uiManager = new UIManager(_uiManagerSetting) { Priority = SYSTEM_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(UIManager), uiManager);
         }
 
-        /// <summary>
-        /// 加载Game层组件
-        /// </summary>
         private void LoadGameComponents()
         {
-            var procedureManager = new ProcedureManager();
+            var procedureManager = new ProcedureManager() { Priority = GAME_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(ProcedureManager), procedureManager);
         }
 
@@ -163,6 +155,9 @@ namespace XGame.Core
                 component.Shutdown();
             }
             _cachedComponents.Clear();
+            _componentMap.Clear();
+
+            IsInitialized = false;
         }
     }
 }

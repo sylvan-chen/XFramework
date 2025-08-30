@@ -9,6 +9,7 @@ namespace XGame.Core
     {
         public bool IsInitialized { get; private set; }
         public bool IsShutDown { get; private set; }
+        public int Priority { get; internal set; }
 
         internal virtual void Init()
         {

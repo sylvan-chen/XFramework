@@ -37,20 +37,20 @@ namespace XGame.Core
         public Canvas Canvas => _canvas;
         public Transform Transform => _canvas.transform;
 
-        public UILayer(Transform uiRoot, Camera uiCamera, Table.UiLayerItem tableItem)
+        public UILayer(Transform uiRoot, Camera uiCamera, int id, string name, StackSwitchType switchType, int sortingOrder)
         {
-            _id = tableItem.Id;
-            _name = tableItem.Name;
-            _switchType = (StackSwitchType)tableItem.StackSwitchType;
+            _id = id;
+            _name = name;
+            _switchType = switchType;
 
-            var layerObj = new GameObject(tableItem.Name);
+            var layerObj = new GameObject(name);
             layerObj.transform.SetParent(uiRoot, false);
 
             _canvas = layerObj.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceCamera;
             _canvas.worldCamera = uiCamera;
             _canvas.overrideSorting = true;
-            _canvas.sortingOrder = tableItem.SortingOrder;
+            _canvas.sortingOrder = sortingOrder;
 
             // 设置 Canvas 的其他必要组件
             layerObj.AddComponent<CanvasRenderer>();
@@ -59,7 +59,7 @@ namespace XGame.Core
             canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             canvasScaler.matchWidthOrHeight = 0.5f;
-            canvasScaler.referenceResolution = Consts.SystemConsts.ScreenResolution;
+            // canvasScaler.referenceResolution = Consts.SystemConsts.ScreenResolution;
 
             // 初始化栈
             _panelStack.Clear();

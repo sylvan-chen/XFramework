@@ -15,13 +15,13 @@ namespace XGame.Core
 
             public static EventHandlerChain Create()
             {
-                EventHandlerChain handlerChain = Game.CachePool.Spawn<EventHandlerChain>();
+                EventHandlerChain handlerChain = CachePool.Spawn<EventHandlerChain>();
                 return handlerChain;
             }
 
             public void Destroy()
             {
-                Game.CachePool.Unspawn(this);
+                CachePool.Unspawn(this);
             }
 
             public int Count

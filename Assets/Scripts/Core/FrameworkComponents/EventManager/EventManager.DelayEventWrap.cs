@@ -15,7 +15,7 @@ namespace XGame.Core
 
             public static DelayEventWrapper Create(IEvent evt, EventHandlerChain handlerChain, float delaySeconds)
             {
-                var wrapper = Game.CachePool.Spawn<DelayEventWrapper>();
+                var wrapper = CachePool.Spawn<DelayEventWrapper>();
                 wrapper.Event = evt ?? throw new ArgumentNullException(nameof(evt), "Spawn DelayEventWrapper failed. Args is null.");
                 wrapper.HandlerChain = handlerChain ?? throw new ArgumentNullException(nameof(handlerChain), "Spawn DelayEventWrapper failed. HandlerChain is null.");
                 wrapper.DelaySeconds = delaySeconds;
@@ -24,7 +24,7 @@ namespace XGame.Core
 
             public void Destroy()
             {
-                Game.CachePool.Unspawn(this);
+                CachePool.Unspawn(this);
             }
 
             public void Clear()

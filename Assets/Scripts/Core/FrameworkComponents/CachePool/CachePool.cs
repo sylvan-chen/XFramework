@@ -4,39 +4,17 @@ using UnityEngine;
 
 namespace XGame.Core
 {
-    [DisallowMultipleComponent]
     [AddComponentMenu("XFramework/Cache Pool")]
-    public sealed partial class CachePool : FrameworkComponent
+    public static partial class CachePool
     {
-        private readonly Dictionary<Type, CacheCollection> _cacheCollections = new();
+        private static readonly Dictionary<Type, CacheCollection> _cacheCollections = new();
 
         /// <summary>
         /// 缓存集合的数量（也是缓存池中的类型数量）
         /// </summary>
-        public int CacheCollectionCount => _cacheCollections.Count;
+        public static int CacheCollectionCount => _cacheCollections.Count;
 
-        internal override void Init()
-        {
-            base.Init();
-        }
-
-        internal override void Shutdown()
-        {
-            base.Shutdown();
-
-            foreach (CacheCollection cacheCollection in _cacheCollections.Values)
-            {
-                cacheCollection.DiscardAll();
-            }
-            _cacheCollections.Clear();
-        }
-
-        internal override void Update(float deltaTime, float unscaledDeltaTime)
-        {
-            base.Update(deltaTime, unscaledDeltaTime);
-        }
-
-        public CacheCollectionInfo[] GetAllCacheCollectionInfos()
+        public static CacheCollectionInfo[] GetAllCacheCollectionInfos()
         {
             CacheCollectionInfo[] infos = new CacheCollectionInfo[_cacheCollections.Count];
             int index = 0;
@@ -61,7 +39,7 @@ namespace XGame.Core
         /// </summary>
         /// <param name="type">要获取的缓存类型</param>
         /// <returns>得到的缓存</returns>
-        public ICache Spawn(Type type)
+        public static ICache Spawn(Type type)
         {
             CheckTypeCompilance(type);
             return GetCacheableCollection(type).Spawn();
@@ -72,7 +50,7 @@ namespace XGame.Core
         /// </summary>
         /// <typeparam name="T">要获取的缓存类型</typeparam>
         /// <returns>得到的缓存</returns>
-        public T Spawn<T>() where T : class, ICache, new()
+        public static T Spawn<T>() where T : class, ICache, new()
         {
             return GetCacheableCollection(typeof(T)).Spawn() as T;
         }
@@ -81,7 +59,7 @@ namespace XGame.Core
         /// 放入一个缓存
         /// </summary>
         /// <param name="cache">要放入的缓存</param>
-        public void Unspawn(ICache cache)
+        public static void Unspawn(ICache cache)
         {
             if (cache == null)
             {
@@ -98,7 +76,7 @@ namespace XGame.Core
         /// </summary>
         /// <param name="type">要预留的缓存类型</param>
         /// <param name="count">要预留的数量</param>
-        public void Reserve(Type type, int count)
+        public static void Reserve(Type type, int count)
         {
             CheckTypeCompilance(type);
             GetCacheableCollection(type).Reserve(count);
@@ -109,7 +87,7 @@ namespace XGame.Core
         /// </summary>
         /// <typeparam name="T">要预留的缓存类型</typeparam>
         /// <param name="count">要预留的数量</param>
-        public void Reserve<T>(int count) where T : class, ICache, new()
+        public static void Reserve<T>(int count) where T : class, ICache, new()
         {
             GetCacheableCollection(typeof(T)).Reserve(count);
         }
@@ -119,7 +97,7 @@ namespace XGame.Core
         /// </summary>
         /// <param name="type">要丢弃的缓存类型</param>
         /// <param name="count">要丢弃的数量</param>
-        public void Discard(Type type, int count)
+        public static void Discard(Type type, int count)
         {
             CheckTypeCompilance(type);
             GetCacheableCollection(type).Discard(count);
@@ -130,7 +108,7 @@ namespace XGame.Core
         /// </summary>
         /// <typeparam name="T">要丢弃的缓存类型</typeparam>
         /// <param name="count">要丢弃的数量</param>
-        public void Discard<T>(int count) where T : class, ICache, new()
+        public static void Discard<T>(int count) where T : class, ICache, new()
         {
             GetCacheableCollection(typeof(T)).Discard(count);
         }
@@ -139,18 +117,18 @@ namespace XGame.Core
         /// 丢弃指定类型的所有缓存
         /// </summary>
         /// <param name="type">要丢弃的缓存类型</param>
-        public void DiscardAll(Type type)
+        public static void DiscardAll(Type type)
         {
             CheckTypeCompilance(type);
             GetCacheableCollection(type).DiscardAll();
         }
 
-        public void DiscardAll<T>() where T : class, ICache, new()
+        public static void DiscardAll<T>() where T : class, ICache, new()
         {
             GetCacheableCollection(typeof(T)).DiscardAll();
         }
 
-        private void CheckTypeCompilance(Type type)
+        private static void CheckTypeCompilance(Type type)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (type == null)
@@ -168,19 +146,19 @@ namespace XGame.Core
 #endif
         }
 
-        private CacheCollection GetCacheableCollection(Type type)
+        private static CacheCollection GetCacheableCollection(Type type)
         {
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type), "Get GetCacheableCollection failed. Type is null.");
             }
 
-            if (!_cacheCollections.TryGetValue(type, out CacheCollection cacheableCollection))
+            if (!_cacheCollections.TryGetValue(type, out CacheCollection collection))
             {
-                cacheableCollection = new CacheCollection(type);
-                _cacheCollections.Add(type, cacheableCollection);
+                collection = new CacheCollection(type);
+                _cacheCollections.Add(type, collection);
             }
-            return cacheableCollection;
+            return collection;
         }
     }
 }

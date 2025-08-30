@@ -8,8 +8,7 @@ namespace XGame.Core
     [CreateAssetMenu(fileName = "TableManagerSetting", menuName = "XFramework/TableManagerSetting")]
     public class TableManagerSetting : ScriptableObject
     {
-        public bool AutoPreload = true;
-        public string PreloadTableNameSpace = "XGame.Table";
+        public bool PreloadOnInit = true;
         public string[] PreloadTableFolderNames = new[] { "Schemes" };
     }
 }
