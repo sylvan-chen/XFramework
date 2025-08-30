@@ -11,14 +11,20 @@ namespace XGame.Core
     [AddComponentMenu("XFramework/Procedure Manager")]
     public sealed class ProcedureManager : FrameworkComponent
     {
-        private readonly string[] _availableProcedureTypeNames = Consts.XFrameworkConsts.ProcedureManagerProperty.AvailableProcedureTypeNames;
-        private readonly string _startupProcedureTypeName = Consts.XFrameworkConsts.ProcedureManagerProperty.StartupProcedureTypeName;
+        private readonly string[] _availableProcedureTypeNames;
+        private readonly string _startupProcedureTypeName;
 
         private StateMachine<ProcedureManager> _procedureStateMachine;
         private ProcedureBase _startupProcedure;
 
         public ProcedureBase CurrentProcedure => _procedureStateMachine?.CurrentState as ProcedureBase;
         public float CurrentProcedureTime => _procedureStateMachine?.CurrentStateTime ?? 0;
+
+        public ProcedureManager(ProcedureManagerSetting setting)
+        {
+            _availableProcedureTypeNames = setting.AvailableProcedureTypeNames;
+            _startupProcedureTypeName = setting.StartupProcedureTypeName;
+        }
 
         internal override void Init()
         {

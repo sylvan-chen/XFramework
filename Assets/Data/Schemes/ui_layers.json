@@ -1,34 +1,32 @@
 {
-    "configs": [
-        {
-            "id": 110001,
-            "name": "Background",
-            "sorting_order": -1000,
-            "stack_switch_type": 3
-        },
-        {
-            "id": 110002,
-            "name": "Default",
-            "sorting_order": 0,
-            "stack_switch_type": 3
-        },
-        {
-            "id": 110003,
-            "name": "Window",
-            "sorting_order": 1000,
-            "stack_switch_type": 2
-        },
-        {
-            "id": 110004,
-            "name": "Popup",
-            "sorting_order": 2000,
-            "stack_switch_type": 0
-        },
-        {
-            "id": 110005,
-            "name": "Top",
-            "sorting_order": 5000,
-            "stack_switch_type": 0
-        }
-    ]
+    "110001": {
+        "id": 110001,
+        "name": "Background",
+        "sorting_order": -1000,
+        "stack_switch_type": 3
+    },
+    "110002": {
+        "id": 110002,
+        "name": "Default",
+        "sorting_order": 0,
+        "stack_switch_type": 3
+    },
+    "110003": {
+        "id": 110003,
+        "name": "Window",
+        "sorting_order": 1000,
+        "stack_switch_type": 2
+    },
+    "110004": {
+        "id": 110004,
+        "name": "Popup",
+        "sorting_order": 2000,
+        "stack_switch_type": 0
+    },
+    "110005": {
+        "id": 110005,
+        "name": "Top",
+        "sorting_order": 5000,
+        "stack_switch_type": 0
+    }
 }

@@ -43,7 +43,11 @@ namespace XGame.Core
 
             foreach (var folderName in _setting.PreloadTableFolderNames)
             {
+#if UNITY_EDITOR
+                var tableDirectory = Path.Combine(Application.dataPath, "Data", folderName);
+#else
                 var tableDirectory = Path.Combine(Application.streamingAssetsPath, folderName);
+#endif
 
                 Log.Debug($"[TableManager] Preloading tables from directory: {tableDirectory}");
 

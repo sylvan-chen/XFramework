@@ -22,6 +22,7 @@ namespace XGame.Core
         [SerializeField] private TableManagerSetting _tableManagerSetting;
         [SerializeField] private AssetManagerSetting _assetManagerSetting;
         [SerializeField] private UIManagerSetting _uiManagerSetting;
+        [SerializeField] private ProcedureManagerSetting _procedureManagerSetting;
 
         private readonly List<FrameworkComponent> _cachedComponents = new();
         private readonly Dictionary<Type, FrameworkComponent> _componentMap = new();
@@ -33,6 +34,7 @@ namespace XGame.Core
             base.Awake();
 
             gameObject.name ??= "[GameLauncher]";
+            if (Camera.main != null) DontDestroyOnLoad(Camera.main.gameObject);
         }
 
         private void Start()
@@ -127,7 +129,7 @@ namespace XGame.Core
 
         private void LoadGameComponents()
         {
-            var procedureManager = new ProcedureManager() { Priority = GAME_COMPONENT_PRIORITY };
+            var procedureManager = new ProcedureManager(_procedureManagerSetting) { Priority = GAME_COMPONENT_PRIORITY };
             CacheComponentInstance(typeof(ProcedureManager), procedureManager);
         }
 

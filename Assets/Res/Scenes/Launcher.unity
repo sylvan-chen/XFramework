@@ -355,6 +355,7 @@ MonoBehaviour:
   _tableManagerSetting: {fileID: 11400000, guid: 8c897966deb02564289ec358c6f29d48, type: 2}
   _assetManagerSetting: {fileID: 11400000, guid: f85278e7c5911ee45a325585fc842c0b, type: 2}
   _uiManagerSetting: {fileID: 11400000, guid: 9710ba25a0b8c8b4b8982c4a11ab24fd, type: 2}
+  _procedureManagerSetting: {fileID: 11400000, guid: 786abd11c7ae0fa4b9544b6dc1bdabfd, type: 2}
 --- !u!1 &1211876723
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,22 +1,20 @@
 {
-    "configs": [
-        {
-            "id": 100001,
-            "name": "MainMenu",
-            "address": "mainmenu",
-            "parent_layer": 110003
-        },
-        {
-            "id": 100002,
-            "name": "Background",
-            "address": "background",
-            "parent_layer": 110001
-        },
-        {
-            "id": 100003,
-            "name": "Info",
-            "address": "popup",
-            "parent_layer": 110004
-        }
-    ]
+    "100001": {
+        "id": 100001,
+        "name": "MainMenu",
+        "address": "mainmenu",
+        "parent_layer": 110003
+    },
+    "100002": {
+        "id": 100002,
+        "name": "Background",
+        "address": "background",
+        "parent_layer": 110001
+    },
+    "100003": {
+        "id": 100003,
+        "name": "Info",
+        "address": "popup",
+        "parent_layer": 110004
+    }
 }
