@@ -10,11 +10,11 @@ namespace XGame.Editor
     /// <summary>
     /// 策划工具 - 配表数据类生成工具
     /// </summary>
-    public class ConfigClassGenerator : EditorWindow
+    public class TableClassGenerator : EditorWindow
     {
         private const string DEFAULT_JSON_DIR = "Assets/Data/Schemes";
         private const string DEFAULT_OUTPUT_DIR = "Assets/Data/Classes";
-        private const string DEFAULT_NAMESPACE = "XGame.Table";
+        private const string DEFAULT_NAMESPACE = "XGame.Data";
 
         private const string JSON_DIR_KEY = "ConfigGenerator_JsonDir";
         private const string OUTPUT_DIR_KEY = "ConfigGenerator_OutputDir";
@@ -29,7 +29,7 @@ namespace XGame.Editor
         [MenuItem("Tools/策划工具/配表数据类生成工具")]
         private static void ShowWindow()
         {
-            var window = GetWindow<ConfigClassGenerator>();
+            var window = GetWindow<TableClassGenerator>();
             window.titleContent = new GUIContent("配表数据类生成工具");
             window.minSize = new Vector2(600, 600);
             window.Show();
@@ -242,7 +242,10 @@ namespace XGame.Editor
             {
                 string propertyType = InferTypeName(property.Value);
                 string propertyName = ToPascalCase(property.Name);
+
+                propertyDefs.Add($"[JsonProperty(\"{property.Name}\")]");
                 propertyDefs.Add($"public {propertyType} {propertyName} {{ get; set; }}");
+                propertyDefs.Add(string.Empty);
             }
 
             var sb = new StringBuilder();
@@ -253,8 +256,8 @@ namespace XGame.Editor
             sb.AppendLine("/// </auto-generated>");
             sb.AppendLine("/// ------------------------------------------------------------------------------");
             sb.AppendLine();
+            sb.AppendLine("using Newtonsoft.Json;");
             sb.AppendLine("using System.Collections.Generic;");
-            sb.AppendLine("using XGame.Core;");
             sb.AppendLine();
             sb.AppendLine($"namespace {_namespaceName}");
             sb.AppendLine("{");

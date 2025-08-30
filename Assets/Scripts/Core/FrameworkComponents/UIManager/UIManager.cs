@@ -4,7 +4,7 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using XGame.Utils;
 using UnityEngine.Rendering.Universal;
-using XGame.Table;
+// using XGame.Data;
 
 namespace XGame.Core
 {

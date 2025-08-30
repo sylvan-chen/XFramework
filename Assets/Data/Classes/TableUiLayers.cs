@@ -4,18 +4,26 @@
 /// </auto-generated>
 /// ------------------------------------------------------------------------------
 
+using Newtonsoft.Json;
 using System.Collections.Generic;
-using XGame.Core;
 
-namespace XGame.Table
+namespace XGame.Data
 {
     [System.Serializable]
     public class ConfigUiLayers : IConfig
     {
+        [JsonProperty("id")]
         public int Id { get; set; }
+        
+        [JsonProperty("name")]
         public string Name { get; set; }
+        
+        [JsonProperty("sorting_order")]
         public int SortingOrder { get; set; }
+        
+        [JsonProperty("stack_switch_type")]
         public int StackSwitchType { get; set; }
+        
     }
 
     [System.Serializable]

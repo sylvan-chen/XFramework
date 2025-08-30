@@ -39,24 +39,24 @@ namespace XGame.Core
         /// </summary>
         public async UniTaskVoid PreloadTables()
         {
-            Log.Debug("[ConfigManager] Start Preload tables...");
+            Log.Debug("[TableManager] Start Preload tables...");
 
             foreach (var folderName in _setting.PreloadTableFolderNames)
             {
                 var tableDirectory = Path.Combine(Application.streamingAssetsPath, folderName);
 
-                Log.Debug($"[ConfigManager] Preloading tables from directory: {tableDirectory}");
+                Log.Debug($"[TableManager] Preloading tables from directory: {tableDirectory}");
 
                 if (!Directory.Exists(tableDirectory))
                 {
-                    Log.Error($"[ConfigManager] Table directory not found: {tableDirectory}");
+                    Log.Error($"[TableManager] Table directory not found: {tableDirectory}");
                     return;
                 }
 
                 var jsonPaths = Directory.GetFiles(tableDirectory, "*.json", SearchOption.AllDirectories);
                 if (jsonPaths == null || jsonPaths.Length == 0)
                 {
-                    Log.Warning($"[ConfigManager] No config JSON files found in directory: {tableDirectory}");
+                    Log.Warning($"[TableManager] No JSON files found in directory: {tableDirectory}");
                     return;
                 }
 
@@ -64,18 +64,18 @@ namespace XGame.Core
                 {
                     string fileName = PathHelper.GetFileNameWithoutExtension(jsonPath);
                     fileName = StringHelper.ToPascalCase(fileName);
-                    string typeFullName = $"XGame.Table.Table{fileName}";
+                    string typeFullName = $"XGame.Data.Table{fileName}";
                     Type tableType = TypeHelper.GetTypeDeeply(typeFullName);
                     if (tableType == null)
                     {
-                        Log.Error($"[ConfigManager] Config type {typeFullName} not found.");
+                        Log.Error($"[TableManager] Table type {typeFullName} not found.");
                         continue;
                     }
                     await LoadTableAsync(jsonPath, tableType);
                 }
             }
 
-            Log.Debug("[ConfigManager] Preload tables finished.");
+            Log.Debug("[TableManager] Preload tables finished.");
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace XGame.Core
                 return table as T;
             }
 
-            Log.Error($"[ConfigManager] Table not found: {tableType}");
+            Log.Error($"[TableManager] Table not found: {tableType}");
             return null;
         }
 
@@ -129,12 +129,12 @@ namespace XGame.Core
             {
                 if (isOverride)
                 {
-                    Log.Debug($"[ConfigManager] Duplicate config load attempt, covering it:" +
+                    Log.Debug($"[TableManager] Duplicate config load attempt, covering it:" +
                         $"Type: {tableType}, File: {filePath}");
                 }
                 else
                 {
-                    Log.Warning($"[ConfigManager] Duplicate config load attempt, skip it:" +
+                    Log.Warning($"[TableManager] Duplicate config load attempt, skip it:" +
                         $"Type: {tableType}, File: {filePath}");
                     return;
                 }
@@ -143,7 +143,7 @@ namespace XGame.Core
             string jsonContent = await FileHelper.ReadAllTextAsync(filePath);
             if (jsonContent == null)
             {
-                Log.Error($"[ConfigManager] Failed to read config file: {filePath}");
+                Log.Error($"[TableManager] Failed to read config file: {filePath}");
                 return;
             }
 
@@ -158,7 +158,7 @@ namespace XGame.Core
         public void ClearAllConfigCache()
         {
             _cachedTables.Clear();
-            Log.Debug("[ConfigManager] All config caches cleared.");
+            Log.Debug("[TableManager] All config caches cleared.");
         }
     }
 }

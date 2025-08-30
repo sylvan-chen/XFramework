@@ -4,18 +4,26 @@
 /// </auto-generated>
 /// ------------------------------------------------------------------------------
 
+using Newtonsoft.Json;
 using System.Collections.Generic;
-using XGame.Core;
 
-namespace XGame.Table
+namespace XGame.Data
 {
     [System.Serializable]
     public class ConfigUiPanels : IConfig
     {
+        [JsonProperty("id")]
         public int Id { get; set; }
+        
+        [JsonProperty("name")]
         public string Name { get; set; }
+        
+        [JsonProperty("address")]
         public string Address { get; set; }
+        
+        [JsonProperty("parent_layer")]
         public int ParentLayer { get; set; }
+        
     }
 
     [System.Serializable]
