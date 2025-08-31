@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace XGame.Core
 {
     /// <summary>
-    /// UI 层
+    /// UI层
     /// </summary>
     /// <remarks>
     /// 每个层维护自己的栈，栈顶的界面是当前层显示的界面，每层只能有一个显示界面。
@@ -20,43 +20,37 @@ namespace XGame.Core
             HideAndPause = 3,
         }
 
-        private readonly int _id;
-        private readonly string _name;
-        private readonly StackSwitchType _switchType;
+        private readonly UILayerSetting _setting;
+
         private readonly Canvas _canvas;
         private readonly Stack<UIPanelBase> _panelStack = new();
 
-        public int Id => _id;
-        public string Name => _name;
-        public StackSwitchType SwitchType => _switchType;
+        public string Name => _setting.Name;
         public Canvas Canvas => _canvas;
         public Transform Transform => _canvas.transform;
 
-        public UILayer(Transform uiRoot, Camera uiCamera, int id, string name, StackSwitchType switchType, int sortingOrder)
+        public UILayer(Transform uiRoot, Camera uiCamera, Vector2 referenceResolution, UILayerSetting setting)
         {
-            _id = id;
-            _name = name;
-            _switchType = switchType;
+            _setting = setting;
 
-            var layerObj = new GameObject(name);
+            var layerObj = new GameObject(_setting.Name);
             layerObj.transform.SetParent(uiRoot, false);
 
+            // Canvas设置
             _canvas = layerObj.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceCamera;
             _canvas.worldCamera = uiCamera;
             _canvas.overrideSorting = true;
-            _canvas.sortingOrder = sortingOrder;
+            _canvas.sortingOrder = _setting.SortingOrder;
 
-            // 设置 Canvas 的其他必要组件
             layerObj.AddComponent<CanvasRenderer>();
             layerObj.AddComponent<GraphicRaycaster>();
             var canvasScaler = layerObj.AddComponent<CanvasScaler>();
             canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             canvasScaler.matchWidthOrHeight = 0.5f;
-            // canvasScaler.referenceResolution = Consts.SystemConsts.ScreenResolution;
+            canvasScaler.referenceResolution = referenceResolution;
 
-            // 初始化栈
             _panelStack.Clear();
         }
 
@@ -74,11 +68,11 @@ namespace XGame.Core
             if (_panelStack.Count > 0)
             {
                 var topPanel = _panelStack.Peek();
-                if (_switchType == StackSwitchType.Hide || _switchType == StackSwitchType.HideAndPause)
+                if (_setting.StackSwitchType == StackSwitchType.Hide || _setting.StackSwitchType == StackSwitchType.HideAndPause)
                 {
                     topPanel.Hide();
                 }
-                if (_switchType == StackSwitchType.Pause || _switchType == StackSwitchType.HideAndPause)
+                if (_setting.StackSwitchType == StackSwitchType.Pause || _setting.StackSwitchType == StackSwitchType.HideAndPause)
                 {
                     topPanel.Pause();
                 }
@@ -112,11 +106,11 @@ namespace XGame.Core
                 if (_panelStack.Count > 0)
                 {
                     var topPanel = _panelStack.Peek();
-                    if (_switchType == StackSwitchType.Hide || _switchType == StackSwitchType.HideAndPause)
+                    if (_setting.StackSwitchType == StackSwitchType.Hide || _setting.StackSwitchType == StackSwitchType.HideAndPause)
                     {
                         topPanel.Show();
                     }
-                    if (_switchType == StackSwitchType.Pause || _switchType == StackSwitchType.HideAndPause)
+                    if (_setting.StackSwitchType == StackSwitchType.Pause || _setting.StackSwitchType == StackSwitchType.HideAndPause)
                     {
                         topPanel.Resume();
                     }

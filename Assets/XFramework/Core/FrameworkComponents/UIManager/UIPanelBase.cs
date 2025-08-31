@@ -8,18 +8,21 @@ namespace XGame.Core
     public abstract class UIPanelBase : MonoBehaviour
     {
         private int _id;
+        private string _parentLayer;
         private bool _isInitialized;
         private bool _isVisible;
         private bool _isPaused;
 
         public int ID => _id;
+        public string ParentLayer => _parentLayer;
         public bool IsInitialized => _isInitialized;
         public bool IsVisible => _isVisible;
         public bool IsPaused => _isPaused;
 
-        public void Init(int id)
+        public void Init(int id, string parentLayer)
         {
             _id = id;
+            _parentLayer = parentLayer;
 
             SetVisibilityInternal(false);
             _isPaused = false;
