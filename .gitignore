@@ -9,15 +9,9 @@ MobileDependencyResolver/
 MobileDependencyResolver.meta
 TextMesh Pro/
 TextMesh Pro.meta
-Example/
-Examples/
+Example[s]/
 Example[s].meta
-Examples & Extras/
-MagicDressup/
-MagicDressup.meta
-MagicaDressup/
-MagicaDressup.meta
-
+MagicaCloth2_SysInfo_*
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
