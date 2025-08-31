@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     public static class PathHelper
     {

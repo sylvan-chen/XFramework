@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace XGame.Core
 {
-    [AddComponentMenu("XFramework/Cache Pool")]
     public static partial class CachePool
     {
         private static readonly Dictionary<Type, CacheCollection> _cacheCollections = new();

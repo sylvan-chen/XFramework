@@ -1,4 +1,4 @@
-namespace XGame.Utils
+namespace XGame.Core
 {
     public enum WebRequestStatus
     {

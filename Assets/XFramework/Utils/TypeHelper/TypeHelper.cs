@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     public static class TypeHelper
     {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using XGame.Utils;
+using XGame.Core;
 
 namespace XGame.Modules.SimpleDressup
 {

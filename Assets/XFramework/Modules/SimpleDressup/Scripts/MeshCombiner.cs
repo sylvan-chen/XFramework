@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using XGame.Utils;
+using XGame.Core;
 
 namespace XGame.Modules.SimpleDressup
 {

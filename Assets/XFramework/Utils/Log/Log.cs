@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     /// <summary>
     /// 日志工具类

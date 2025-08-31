@@ -1,11 +1,6 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using UnityEngine;
 using UnityEngine.UI;
-using XGame.Utils;
 
 namespace XGame.Core
 {

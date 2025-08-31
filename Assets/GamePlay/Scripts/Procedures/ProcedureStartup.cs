@@ -1,6 +1,4 @@
-using Cysharp.Threading.Tasks;
 using XGame.Core;
-using XGame.Utils;
 
 public class ProcedureStartup : ProcedureBase
 {

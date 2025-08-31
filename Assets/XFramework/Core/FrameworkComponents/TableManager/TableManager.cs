@@ -4,8 +4,6 @@ using System.IO;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
-using XFramework.Utils;
-using XGame.Utils;
 
 namespace XGame.Core
 {

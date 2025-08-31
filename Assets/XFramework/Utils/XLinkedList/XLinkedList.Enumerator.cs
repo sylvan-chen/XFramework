@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     public sealed partial class XLinkedList<T> : ICollection<T>, ICollection
     {

@@ -1,7 +1,6 @@
-using System;
 using UnityEngine;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     public class MonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {

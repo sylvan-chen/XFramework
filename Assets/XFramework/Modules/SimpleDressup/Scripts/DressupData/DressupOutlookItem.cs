@@ -1,7 +1,8 @@
 using System;
 using UnityEngine;
-using XGame.Utils;
 using System.Collections.Generic;
+using XGame.Core;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif

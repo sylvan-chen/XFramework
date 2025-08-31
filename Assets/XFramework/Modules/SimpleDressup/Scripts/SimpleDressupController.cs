@@ -1,8 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using XGame.Utils;
 using XGame.Extensions;
+using XGame.Core;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif

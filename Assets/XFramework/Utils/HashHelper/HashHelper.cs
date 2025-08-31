@@ -3,7 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     public static class HashHelper
     {

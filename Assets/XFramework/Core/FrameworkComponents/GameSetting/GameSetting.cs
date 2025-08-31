@@ -1,5 +1,4 @@
 using UnityEngine;
-using XGame.Utils;
 
 namespace XGame.Core
 {

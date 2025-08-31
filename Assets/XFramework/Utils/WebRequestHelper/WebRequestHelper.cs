@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     public static class WebRequestHelper
     {

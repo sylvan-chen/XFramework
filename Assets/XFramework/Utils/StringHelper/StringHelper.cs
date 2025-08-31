@@ -1,4 +1,4 @@
-namespace XFramework.Utils
+namespace XGame.Core
 {
     public static class StringHelper
     {

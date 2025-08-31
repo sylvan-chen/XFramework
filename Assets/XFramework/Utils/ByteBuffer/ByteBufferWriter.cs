@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     public sealed class ByteBufferWriter
     {

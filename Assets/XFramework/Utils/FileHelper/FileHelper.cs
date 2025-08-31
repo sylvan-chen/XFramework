@@ -5,7 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace XGame.Utils
+namespace XGame.Core
 {
     public static class FileHelper
     {
