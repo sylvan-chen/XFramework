@@ -99,7 +99,7 @@ namespace XGame.Core
         {
             if (_package == null)
             {
-                Log.Warning("[XFramework] [AssetManager] DestroyPackageAsync: Package is null, nothing to destroy.");
+                Log.Warning("[AssetManager] DestroyPackageAsync: Package is null, nothing to destroy.");
                 return;
             }
 
@@ -109,20 +109,20 @@ namespace XGame.Core
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Destroy package ({packageName}) succeed.");
+                Log.Debug($"[AssetManager] Destroy package ({packageName}) succeed.");
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Destroy package ({packageName}) failed. {operation.Error}");
+                Log.Error($"[AssetManager] Destroy package ({packageName}) failed. {operation.Error}");
             }
 
             if (YooAssets.RemovePackage(_package))
             {
-                Log.Debug($"[XFramework] [AssetManager] Remove package ({packageName}) from YooAssets succeed.");
+                Log.Debug($"[AssetManager] Remove package ({packageName}) from YooAssets succeed.");
             }
             else
             {
-                Log.Warning($"[XFramework] [AssetManager] Remove package ({packageName}) from YooAssets failed, it may not exist.");
+                Log.Warning($"[AssetManager] Remove package ({packageName}) from YooAssets failed, it may not exist.");
             }
         }
 
@@ -168,19 +168,19 @@ namespace XGame.Core
                     operation = _package.InitializeAsync(initParametersWebGL);
                     break;
                 default:
-                    Log.Error($"[XFramework] [AssetManager] Invalid package mode: {_setting.BuildMode}");
+                    Log.Error($"[AssetManager] Invalid package mode: {_setting.BuildMode}");
                     break;
             }
             await operation.ToUniTask();
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Initialize package succeed. ({_setting.BuildMode})");
+                Log.Debug($"[AssetManager] Initialize package succeed. ({_setting.BuildMode})");
                 await RequestPackageVersion();
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Initialize package failed. ({_setting.BuildMode}) {operation.Error}");
+                Log.Error($"[AssetManager] Initialize package failed. ({_setting.BuildMode}) {operation.Error}");
                 _initResult.Succeed = false;
                 _initResult.ErrorMessage = operation.Error;
             }
@@ -197,12 +197,12 @@ namespace XGame.Core
             if (operation.Status == EOperationStatus.Succeed)
             {
                 _initResult.PackageVersion = operation.PackageVersion;
-                Log.Debug($"[XFramework] [AssetManager] Request package version succeed. {_initResult.PackageVersion}");
+                Log.Debug($"[AssetManager] Request package version succeed. {_initResult.PackageVersion}");
                 await UpdatePackageManifest();
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Request package version failed. {operation.Error}");
+                Log.Error($"[AssetManager] Request package version failed. {operation.Error}");
                 _initResult.Succeed = false;
                 _initResult.ErrorMessage = operation.Error;
             }
@@ -218,12 +218,12 @@ namespace XGame.Core
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Update package manifest succeed. Latest version: {_initResult.PackageVersion}");
+                Log.Debug($"[AssetManager] Update package manifest succeed. Latest version: {_initResult.PackageVersion}");
                 await UpdatePackageFiles();
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Update package manifest failed. (Latest version: {_initResult.PackageVersion}) {operation.Error}");
+                Log.Error($"[AssetManager] Update package manifest failed. (Latest version: {_initResult.PackageVersion}) {operation.Error}");
                 _initResult.Succeed = false;
                 _initResult.ErrorMessage = operation.Error;
             }
@@ -238,7 +238,7 @@ namespace XGame.Core
 
             if (downloader.TotalDownloadCount == 0)
             {
-                Log.Debug("[XFramework] [AssetManager] No package files need to update.");
+                Log.Debug("[AssetManager] No package files need to update.");
                 _initResult.Succeed = true;
                 _initResult.ErrorMessage = string.Empty;
                 _initResult.DownloadCount = 0;
@@ -276,7 +276,7 @@ namespace XGame.Core
 
             if (downloader.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Update package files succeed. Total download count: {totalDownloadCount}, Total download bytes: {totalDownloadBytes}");
+                Log.Debug($"[AssetManager] Update package files succeed. Total download count: {totalDownloadCount}, Total download bytes: {totalDownloadBytes}");
                 _initResult.Succeed = true;
                 _initResult.ErrorMessage = string.Empty;
                 _initResult.DownloadCount = totalDownloadCount;
@@ -285,7 +285,7 @@ namespace XGame.Core
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Update package files failed. {downloader.Error}");
+                Log.Error($"[AssetManager] Update package files failed. {downloader.Error}");
                 _initResult.Succeed = false;
                 _initResult.ErrorMessage = downloader.Error;
             }
@@ -305,11 +305,11 @@ namespace XGame.Core
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Clear all cache bundle files succeed.");
+                Log.Debug($"[AssetManager] Clear all cache bundle files succeed.");
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Clear all cache bundle files failed. {operation.Error}");
+                Log.Error($"[AssetManager] Clear all cache bundle files failed. {operation.Error}");
             }
         }
 
@@ -323,11 +323,11 @@ namespace XGame.Core
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Clear unused cache bundle files succeed.");
+                Log.Debug($"[AssetManager] Clear unused cache bundle files succeed.");
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Clear unused cache bundle files failed. {operation.Error}");
+                Log.Error($"[AssetManager] Clear unused cache bundle files failed. {operation.Error}");
             }
         }
 
@@ -341,11 +341,11 @@ namespace XGame.Core
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Clear all cache manifest files succeed.");
+                Log.Debug($"[AssetManager] Clear all cache manifest files succeed.");
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Clear all cache manifest files failed. {operation.Error}");
+                Log.Error($"[AssetManager] Clear all cache manifest files failed. {operation.Error}");
             }
         }
 
@@ -359,11 +359,11 @@ namespace XGame.Core
 
             if (operation.Status == EOperationStatus.Succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Clear unused cache manifest files succeed.");
+                Log.Debug($"[AssetManager] Clear unused cache manifest files succeed.");
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Clear unused cache manifest files failed. {operation.Error}");
+                Log.Error($"[AssetManager] Clear unused cache manifest files failed. {operation.Error}");
             }
         }
 
@@ -408,7 +408,7 @@ namespace XGame.Core
 
             if (_package == null)
             {
-                Log.Error($"[XFramework] [AssetManager] Cannot load asset '{address}'. Package is not initialized.");
+                Log.Error($"[AssetManager] Cannot load asset '{address}'. Package is not initialized.");
                 return null;
             }
 
@@ -416,7 +416,7 @@ namespace XGame.Core
             if (_assetHandlerCache.TryGetValue(address, out AssetHandler cachedHandler))
             {
                 cachedHandler.RefCount++;
-                Log.Debug($"[XFramework] [AssetManager] Reuse cached asset ({address}), ref count: {cachedHandler.RefCount}");
+                Log.Debug($"[AssetManager] Reuse cached asset ({address}), ref count: {cachedHandler.RefCount}");
                 return cachedHandler;
             }
 
@@ -428,12 +428,12 @@ namespace XGame.Core
             {
                 var handler = new AssetHandler(yooHandle, address);
                 _assetHandlerCache[address] = handler;
-                Log.Debug($"[XFramework] [AssetManager] Load asset ({address}) succeed, ref count: {handler.RefCount}");
+                Log.Debug($"[AssetManager] Load asset ({address}) succeed, ref count: {handler.RefCount}");
                 return handler;
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Failed to load asset: {address}. Error: {yooHandle.LastError}");
+                Log.Error($"[AssetManager] Failed to load asset: {address}. Error: {yooHandle.LastError}");
                 yooHandle.Release();
                 return null;
             }
@@ -481,7 +481,7 @@ namespace XGame.Core
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"[XFramework] [AssetManager] Failed to load asset in batch: {address}. Error: {ex.Message}");
+                    Log.Error($"[AssetManager] Failed to load asset in batch: {address}. Error: {ex.Message}");
                     failedAddresses.Add(address);
                 }
 
@@ -509,7 +509,7 @@ namespace XGame.Core
         {
             if (string.IsNullOrEmpty(address))
             {
-                Log.Warning("[XFramework] [AssetManager] TryUnloadUnusedAsset: address is null or empty.");
+                Log.Warning("[AssetManager] TryUnloadUnusedAsset: address is null or empty.");
                 return false;
             }
 
@@ -532,7 +532,7 @@ namespace XGame.Core
         /// <returns>卸载操作的结果信息</returns>
         public async UniTask<UnloadResult> UnloadUnusedAssetsAsync()
         {
-            Log.Debug($"[XFramework] [AssetManager] Starting to unload unused assets...");
+            Log.Debug($"[AssetManager] Starting to unload unused assets...");
 
             var startTime = DateTime.Now;
 
@@ -545,12 +545,12 @@ namespace XGame.Core
 
             if (succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Unload unused assets completed successfully. " +
+                Log.Debug($"[AssetManager] Unload unused assets completed successfully. " +
                          $"Duration: {duration.TotalMilliseconds:F2}ms");
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Unload unused assets failed: {operation.Error}");
+                Log.Error($"[AssetManager] Unload unused assets failed: {operation.Error}");
                 errorMessage = operation.Error;
             }
 
@@ -567,7 +567,7 @@ namespace XGame.Core
         /// <returns>卸载操作的结果信息</returns>
         public async UniTask<UnloadResult> ForceUnloadAllAssetsAsync()
         {
-            Log.Debug($"[XFramework] [AssetManager] Starting to force unload all assets...");
+            Log.Debug($"[AssetManager] Starting to force unload all assets...");
 
             var startTime = DateTime.Now;
 
@@ -584,12 +584,12 @@ namespace XGame.Core
 
             if (succeed)
             {
-                Log.Debug($"[XFramework] [AssetManager] Force unload all assets completed successfully. " +
+                Log.Debug($"[AssetManager] Force unload all assets completed successfully. " +
                          $"Duration: {duration.TotalMilliseconds:F2}ms");
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Force unload all assets failed: {operation.Error}");
+                Log.Error($"[AssetManager] Force unload all assets failed: {operation.Error}");
                 errorMessage = operation.Error;
             }
 
@@ -622,12 +622,12 @@ namespace XGame.Core
             var currentState = GetSceneState(address);
             if (currentState == SceneState.Loading)
             {
-                Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is already loading.");
+                Log.Warning($"[AssetManager] Scene ({address}) is already loading.");
                 return false;
             }
             else if (currentState == SceneState.LoadedActive || currentState == SceneState.LoadedInactive)
             {
-                Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is already loaded.");
+                Log.Warning($"[AssetManager] Scene ({address}) is already loaded.");
                 return true;
             }
 
@@ -656,12 +656,12 @@ namespace XGame.Core
             {
                 // 更新状态
                 sceneInfo.State = suspendLoad ? SceneState.LoadedInactive : SceneState.LoadedActive;
-                Log.Debug($"[XFramework] [AssetManager] Load scene ({handle.SceneName}) succeed. State: {sceneInfo.State}");
+                Log.Debug($"[AssetManager] Load scene ({handle.SceneName}) succeed. State: {sceneInfo.State}");
                 return true;
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Load scene ({address}) failed: {handle.LastError}");
+                Log.Error($"[AssetManager] Load scene ({address}) failed: {handle.LastError}");
                 handle.Release();
                 _sceneInfoCache.Remove(address);
                 return false;
@@ -693,18 +693,18 @@ namespace XGame.Core
             {
                 if (sceneInfo.State != SceneState.LoadedInactive)
                 {
-                    Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is not in preloaded state. Current state: {sceneInfo.State}");
+                    Log.Warning($"[AssetManager] Scene ({address}) is not in preloaded state. Current state: {sceneInfo.State}");
                     return false;
                 }
 
                 sceneInfo.Handle.ActivateScene();
                 sceneInfo.State = SceneState.LoadedActive;
-                Log.Debug($"[XFramework] [AssetManager] Activate preloaded scene ({address}).");
+                Log.Debug($"[AssetManager] Activate preloaded scene ({address}).");
                 return true;
             }
             else
             {
-                Log.Error($"[XFramework] [AssetManager] Scene ({address}) is not preloaded.");
+                Log.Error($"[AssetManager] Scene ({address}) is not preloaded.");
                 return false;
             }
         }
@@ -720,7 +720,7 @@ namespace XGame.Core
             {
                 if (sceneInfo.State == SceneState.Unloading)
                 {
-                    Log.Warning($"[XFramework] [AssetManager] Scene ({address}) is already unloading.");
+                    Log.Warning($"[AssetManager] Scene ({address}) is already unloading.");
                     return false;
                 }
 
@@ -733,20 +733,20 @@ namespace XGame.Core
                 if (unloadOperation.Status == EOperationStatus.Succeed)
                 {
                     _sceneInfoCache.Remove(address);
-                    Log.Debug($"[XFramework] [AssetManager] Unload scene ({address}) succeed.");
+                    Log.Debug($"[AssetManager] Unload scene ({address}) succeed.");
                     return true;
                 }
                 else
                 {
                     // 卸载失败，恢复状态
                     sceneInfo.State = SceneState.LoadedActive; // 或之前的状态
-                    Log.Error($"[XFramework] [AssetManager] Unload scene ({address}) failed: {unloadOperation.Error}");
+                    Log.Error($"[AssetManager] Unload scene ({address}) failed: {unloadOperation.Error}");
                     return false;
                 }
             }
             else
             {
-                Log.Warning($"[XFramework] [AssetManager] Try to unload scene ({address}) that is not loaded.");
+                Log.Warning($"[AssetManager] Try to unload scene ({address}) that is not loaded.");
                 return false;
             }
         }
