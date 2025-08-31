@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using Cysharp.Threading.Tasks;
 
-namespace XGame.Module.SimpleDressup.Editor
+namespace XGame.Modules.SimpleDressup.Editor
 {
     [CustomEditor(typeof(SimpleDressupController))]
     public class SimpleDressupControllerEditor : UnityEditor.Editor

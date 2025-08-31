@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace XGame.Module.SimpleDressup
+namespace XGame.Modules.SimpleDressup
 {
     /// <summary>
     /// 子网格数据

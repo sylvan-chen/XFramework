@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using XGame.Utils;
 
-namespace XGame.Module.SimpleDressup
+namespace XGame.Modules.SimpleDressup
 {
     /// <summary>
     /// 网格合并器

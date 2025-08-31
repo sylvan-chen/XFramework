@@ -1,4 +1,4 @@
-namespace XGame.Data
+namespace XGame.Configs
 {
     /// <summary>
     /// 配置表数据项接口

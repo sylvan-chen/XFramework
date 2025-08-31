@@ -1,4 +1,4 @@
-namespace XGame.Module.SimpleDressup
+namespace XGame.Modules.SimpleDressup
 {
     /// <summary>
     /// 合并单元

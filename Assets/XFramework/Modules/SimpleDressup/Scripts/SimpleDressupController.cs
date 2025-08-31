@@ -7,7 +7,7 @@ using XGame.Extensions;
 using UnityEditor;
 #endif
 
-namespace XGame.Module.SimpleDressup
+namespace XGame.Modules.SimpleDressup
 {
     /// <summary>
     /// 简单换装系统主控制器

@@ -9,6 +9,6 @@ namespace XGame.Core
     public class TableManagerSetting : ScriptableObject
     {
         public bool PreloadOnInit = true;
-        public string[] PreloadTableFolderNames = new[] { "Schemes" };
+        public string[] PreloadTablePaths = new[] { "Configs/Schemes" };
     }
 }

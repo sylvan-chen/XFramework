@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XGame.Utils;
 
-namespace XGame.Module.SimpleDressup
+namespace XGame.Modules.SimpleDressup
 {
     /// <summary>
     /// 材质合并器

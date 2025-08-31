@@ -41,12 +41,12 @@ namespace XGame.Core
         {
             Log.Debug("[TableManager] Start Preload tables...");
 
-            foreach (var folderName in _setting.PreloadTableFolderNames)
+            foreach (var path in _setting.PreloadTablePaths)
             {
 #if UNITY_EDITOR
-                var tableDirectory = Path.Combine(Application.dataPath, "Data", folderName);
+                var tableDirectory = Path.Combine(Application.dataPath, path);
 #else
-                var tableDirectory = Path.Combine(Application.streamingAssetsPath, folderName);
+                var tableDirectory = Path.Combine(Application.streamingAssetsPath, path);
 #endif
 
                 Log.Debug($"[TableManager] Preloading tables from directory: {tableDirectory}");
@@ -68,7 +68,7 @@ namespace XGame.Core
                 {
                     string fileName = PathHelper.GetFileNameWithoutExtension(jsonPath);
                     fileName = StringHelper.ToPascalCase(fileName);
-                    string typeFullName = $"XGame.Data.Table{fileName}";
+                    string typeFullName = $"XGame.Configs.Table{fileName}";
                     Type tableType = TypeHelper.GetTypeDeeply(typeFullName);
                     if (tableType == null)
                     {

@@ -12,9 +12,9 @@ namespace XGame.Editor
     /// </summary>
     public class TableClassGenerator : EditorWindow
     {
-        private const string DEFAULT_JSON_DIR = "Assets/Data/Schemes";
-        private const string DEFAULT_OUTPUT_DIR = "Assets/Data/Classes";
-        private const string DEFAULT_NAMESPACE = "XGame.Data";
+        private const string DEFAULT_JSON_DIR = "Assets/Configs/Schemes";
+        private const string DEFAULT_OUTPUT_DIR = "Assets/Configs/Classes";
+        private const string DEFAULT_NAMESPACE = "XGame.Configs";
 
         private const string JSON_DIR_KEY = "ConfigGenerator_JsonDir";
         private const string OUTPUT_DIR_KEY = "ConfigGenerator_OutputDir";

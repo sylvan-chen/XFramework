@@ -7,23 +7,23 @@
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace XGame.Data
+namespace XGame.Configs
 {
     [System.Serializable]
     public class ConfigUiPanels : IConfig
     {
         [JsonProperty("id")]
         public int Id { get; set; }
-        
+
         [JsonProperty("name")]
         public string Name { get; set; }
-        
+
         [JsonProperty("address")]
         public string Address { get; set; }
-        
+
         [JsonProperty("parent_layer")]
         public int ParentLayer { get; set; }
-        
+
     }
 
     [System.Serializable]
@@ -32,8 +32,8 @@ namespace XGame.Data
         public Dictionary<int, ConfigUiPanels> Configs;
 
         public ConfigUiPanels GetConfigById(int id)
-         {
-             return Configs.TryGetValue(id, out var config) ? config : null;
-         }
+        {
+            return Configs.TryGetValue(id, out var config) ? config : null;
+        }
     }
 }
