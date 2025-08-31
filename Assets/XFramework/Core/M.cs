@@ -107,7 +107,7 @@ namespace XGame.Core
         /// <summary>
         /// 退出游戏程序
         /// </summary>
-        public static void Shutdown()
+        public static void ShutdownGame()
         {
             Log.Info("[M] Shutdown game...");
             Application.Quit();

@@ -9,6 +9,6 @@ public class ProcedureEnterGame : ProcedureBase
 
         Log.Debug("[ProcedureEnterGame] Enter Game");
 
-        M.AssetManager.LoadSceneAsync("Test").Forget();
+
     }
 }
