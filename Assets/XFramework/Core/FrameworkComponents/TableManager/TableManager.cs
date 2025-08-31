@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace XGame.Core
@@ -149,9 +150,16 @@ namespace XGame.Core
                 return;
             }
 
-            var table = JsonConvert.DeserializeObject(jsonContent, tableType);
+            try
+            {
+                var table = JsonConvert.DeserializeObject(jsonContent, tableType);
 
-            _cachedTables[tableType] = table;
+                _cachedTables[tableType] = table;
+            }
+            catch (JsonException ex)
+            {
+                Log.Error($"[TableManager] Json parsing error for '{tableType}': {ex.Message}");
+            }
         }
 
         /// <summary>

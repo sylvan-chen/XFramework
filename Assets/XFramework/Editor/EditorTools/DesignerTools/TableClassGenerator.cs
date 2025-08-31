@@ -184,13 +184,22 @@ namespace XGame.Editor
                     string jsonContent = File.ReadAllText(file);
                     try
                     {
-                        JObject rootObj = JObject.Parse(jsonContent);
-                        var firstProperty = rootObj.Properties().FirstOrDefault();
+                        var rootObj = JObject.Parse(jsonContent);
+
+                        var configsContainer = rootObj["configs"] as JObject;
+                        if (configsContainer == null || !configsContainer.Properties().Any())
+                        {
+                            Debug.LogError($"[ConfigClassGenerator] JSON文件未找到有效的配置数据容器 (configs): {file}");
+                            continue;
+                        }
+
+                        var firstProperty = configsContainer.Properties().FirstOrDefault();
                         if (firstProperty == null || firstProperty.Value.Type != JTokenType.Object)
                         {
                             Debug.LogError($"[ConfigClassGenerator] JSON文件未读取到有效对象: {file}");
                             continue;
                         }
+
                         JObject firstConfigObj = firstProperty.Value as JObject;
                         if (firstConfigObj == null)
                         {
@@ -273,9 +282,9 @@ namespace XGame.Editor
             sb.AppendLine($"        public Dictionary<int, Config{className}> Configs;");
             sb.AppendLine();
             sb.AppendLine($"        public Config{className} GetConfigById(int id)");
-            sb.AppendLine("         {");
-            sb.AppendLine("             return Configs.TryGetValue(id, out var config) ? config : null;");
-            sb.AppendLine("         }");
+            sb.AppendLine("        {");
+            sb.AppendLine("            return Configs.TryGetValue(id, out var config) ? config : null;");
+            sb.AppendLine("        }");
             sb.AppendLine("    }");
             sb.AppendLine("}");
 

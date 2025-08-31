@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using XGame.Core;
 
 public class ProcedureEnterGame : ProcedureBase
@@ -9,6 +8,6 @@ public class ProcedureEnterGame : ProcedureBase
 
         Log.Debug("[ProcedureEnterGame] Enter Game");
 
-
+        M.UIManager.OpenPanel(100001);
     }
 }

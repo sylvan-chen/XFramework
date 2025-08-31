@@ -16,4 +16,5 @@ MonoBehaviour:
   AvailableProcedureTypeNames:
   - ProcedureStartup
   - ProcedureInitAsset
+  - ProcedurePreload
   - ProcedureEnterGame

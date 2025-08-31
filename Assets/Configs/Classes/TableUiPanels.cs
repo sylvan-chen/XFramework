@@ -16,14 +16,11 @@ namespace XGame.Configs
         [JsonProperty("id")]
         public int Id { get; set; }
         
-        [JsonProperty("name")]
-        public string Name { get; set; }
-        
         [JsonProperty("address")]
         public string Address { get; set; }
         
         [JsonProperty("parent_layer")]
-        public int ParentLayer { get; set; }
+        public string ParentLayer { get; set; }
         
     }
 
@@ -33,8 +30,8 @@ namespace XGame.Configs
         public Dictionary<int, ConfigUiPanels> Configs;
 
         public ConfigUiPanels GetConfigById(int id)
-         {
-             return Configs.TryGetValue(id, out var config) ? config : null;
-         }
+        {
+            return Configs.TryGetValue(id, out var config) ? config : null;
+        }
     }
 }

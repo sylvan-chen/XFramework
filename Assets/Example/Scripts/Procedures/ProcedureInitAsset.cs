@@ -15,7 +15,7 @@ public class ProcedureInitAsset : ProcedureBase
         var result = await M.AssetManager.InitPackageAsync();
 
         if (result.Succeed)
-            fsm.ChangeState<ProcedureEnterGame>();
+            fsm.ChangeState<ProcedurePreload>();
         else
             Log.Debug("[ProcedureInitAsset] Init Asset Failed");
     }

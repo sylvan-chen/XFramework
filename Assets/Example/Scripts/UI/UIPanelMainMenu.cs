@@ -20,6 +20,7 @@ public class UIPanelMainMenu : UIPanelBase
     {
         Log.Info("Start Game button clicked.");
         M.AssetManager.LoadSceneAsync("Test").Forget();
+        M.UIManager.ClosePanel(ID);
     }
 
     private void OnExitGameClicked()
