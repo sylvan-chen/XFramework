@@ -6,7 +6,7 @@ namespace XGame.Core
     public abstract class StateMachineBase
     {
         internal abstract void Update(float deltaTime, float unscaleDeltaTime);
-        internal abstract void Destroy();
+        internal abstract void Shutdown();
     }
 
     /// <summary>
@@ -102,12 +102,12 @@ namespace XGame.Core
             _currentState.OnUpdate(this, deltaTime, unscaleDeltaTime);
         }
 
-        internal override void Destroy()
+        internal override void Shutdown()
         {
             _currentState?.OnExit(this);
             foreach (StateBase<T> state in _stateDict.Values)
             {
-                state.OnFsmDestroy(this);
+                state.OnShutdown(this);
                 state.Destroy();
             }
             _isDestroyed = true;
@@ -118,7 +118,7 @@ namespace XGame.Core
         /// 启动状态机
         /// </summary>
         /// <typeparam name="TState">启动时的状态类型</typeparam>
-        public void Start<TState>() where TState : StateBase<T>
+        public void Startup<TState>() where TState : StateBase<T>
         {
             if (_isDestroyed)
             {
@@ -145,7 +145,7 @@ namespace XGame.Core
         /// 启动状态机
         /// </summary>
         /// <param name="startStateType">启动时的状态类型</param>
-        public void Start(Type startStateType)
+        public void Startup(Type startStateType)
         {
             if (_isDestroyed)
             {

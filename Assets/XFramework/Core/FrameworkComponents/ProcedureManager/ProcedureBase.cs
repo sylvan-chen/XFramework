@@ -41,9 +41,9 @@ namespace XGame.Core
         /// 流程销毁时
         /// </summary>
         /// <param name="fsm">流程管理器的状态机</param>
-        public override void OnFsmDestroy(StateMachine<ProcedureManager> fsm)
+        public override void OnShutdown(StateMachine<ProcedureManager> fsm)
         {
-            base.OnFsmDestroy(fsm);
+            base.OnShutdown(fsm);
         }
 
         /// <summary>

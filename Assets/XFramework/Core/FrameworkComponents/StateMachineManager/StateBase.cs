@@ -62,14 +62,14 @@ namespace XGame.Core
         }
 
         /// <summary>
-        /// 状态机销毁时
+        /// 状态机关闭时
         /// </summary>
         /// <param name="fsm">所属状态机实例</param>
-        public virtual void OnFsmDestroy(StateMachine<T> fsm)
+        public virtual void OnShutdown(StateMachine<T> fsm)
         {
             if (fsm == null)
             {
-                throw new ArgumentNullException(nameof(fsm), "OnDestroy failed. FSM is null.");
+                throw new ArgumentNullException(nameof(fsm), "OnShutdown failed. FSM is null.");
             }
         }
 

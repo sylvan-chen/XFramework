@@ -28,9 +28,6 @@ namespace XGame.Core
         /// <returns>获取到的类型</returns>
         public static Type GetType(string typeName, string assemblyName = null)
         {
-            if (string.IsNullOrEmpty(typeName))
-                throw new ArgumentException("Type name cannot be null or empty.", nameof(typeName));
-
             if (string.IsNullOrEmpty(assemblyName))
                 assemblyName = Assembly.GetCallingAssembly().GetName().Name;
 

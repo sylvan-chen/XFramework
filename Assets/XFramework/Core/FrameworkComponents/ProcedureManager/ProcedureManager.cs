@@ -32,7 +32,7 @@ namespace XGame.Core
             for (int i = 0; i < _setting.AvailableProcedureTypeNames.Length; i++)
             {
                 string typeName = _setting.AvailableProcedureTypeNames[i];
-                Type type = TypeHelper.GetType(typeName) ?? throw new InvalidOperationException($"ProcedureManager init failed. Type '{typeName}' not found.");
+                Type type = TypeHelper.GetTypeDeeply(typeName) ?? throw new InvalidOperationException($"ProcedureManager init failed. Type '{typeName}' not found.");
                 procedures[i] = Activator.CreateInstance(type) as ProcedureBase;
                 if (typeName == _setting.StartupProcedureTypeName)
                 {
@@ -45,14 +45,14 @@ namespace XGame.Core
                 throw new InvalidOperationException($"ProcedureManager init failed. Startup procedure '{_setting.StartupProcedureTypeName}' not found or failed to initialize.");
             }
 
-            _procedureStateMachine = M.StateMachineManager.Create(this, procedures);
+            _procedureStateMachine = M.StateMachineManager.CreateFsm(this, procedures);
         }
 
         internal override void Shutdown()
         {
             base.Shutdown();
 
-            M.StateMachineManager.Destroy<ProcedureManager>();
+            M.StateMachineManager.ShutdownFsm<ProcedureManager>();
             _procedureStateMachine = null;
             _startupProcedure = null;
         }
@@ -64,7 +64,7 @@ namespace XGame.Core
 
         public void StartProcedure()
         {
-            _procedureStateMachine.Start(_startupProcedure.GetType());
+            _procedureStateMachine.Startup(_startupProcedure.GetType());
         }
 
         public T GetProcedure<T>() where T : ProcedureBase

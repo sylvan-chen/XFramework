@@ -26,7 +26,7 @@ namespace XGame.Core
 
             foreach (StateMachineBase stateMachine in _stateMachines.Values)
             {
-                stateMachine.Destroy();
+                stateMachine.Shutdown();
             }
             _stateMachines.Clear();
         }
@@ -41,7 +41,22 @@ namespace XGame.Core
             }
         }
 
-        public StateMachine<T> Create<T>(string name, T owner, params StateBase<T>[] states) where T : class
+        public StateMachine<T> CreateFsm<T>(T owner, List<StateBase<T>> states) where T : class
+        {
+            return CreateFsm(DefaultStateMachineName, owner, states.ToArray());
+        }
+
+        public StateMachine<T> CreateFsm<T>(T owner, params StateBase<T>[] states) where T : class
+        {
+            return CreateFsm(DefaultStateMachineName, owner, states);
+        }
+
+        public StateMachine<T> CreateFsm<T>(string name, T owner, List<StateBase<T>> states) where T : class
+        {
+            return CreateFsm(name, owner, states.ToArray());
+        }
+
+        public StateMachine<T> CreateFsm<T>(string name, T owner, params StateBase<T>[] states) where T : class
         {
             if (name == null)
             {
@@ -66,27 +81,12 @@ namespace XGame.Core
             return stateMachine;
         }
 
-        public StateMachine<T> Create<T>(T owner, params StateBase<T>[] states) where T : class
+        public StateMachine<T> GetFsm<T>() where T : class
         {
-            return Create(DefaultStateMachineName, owner, states);
+            return GetFsm<T>(DefaultStateMachineName);
         }
 
-        public StateMachine<T> Create<T>(T owner, List<StateBase<T>> states) where T : class
-        {
-            return Create(DefaultStateMachineName, owner, states.ToArray());
-        }
-
-        public StateMachine<T> Create<T>(string name, T owner, List<StateBase<T>> states) where T : class
-        {
-            return Create(name, owner, states.ToArray());
-        }
-
-        public StateMachine<T> Get<T>() where T : class
-        {
-            return Get<T>(DefaultStateMachineName);
-        }
-
-        public StateMachine<T> Get<T>(string name) where T : class
+        public StateMachine<T> GetFsm<T>(string name) where T : class
         {
             if (name == null)
             {
@@ -100,12 +100,12 @@ namespace XGame.Core
             return null;
         }
 
-        public void Destroy<T>() where T : class
+        public void ShutdownFsm<T>() where T : class
         {
-            Destroy<T>(DefaultStateMachineName);
+            ShutdownFsm<T>(DefaultStateMachineName);
         }
 
-        public void Destroy<T>(string name) where T : class
+        public void ShutdownFsm<T>(string name) where T : class
         {
             if (name == null)
             {
@@ -114,7 +114,7 @@ namespace XGame.Core
             int id = GetID(typeof(T), name);
             if (_stateMachines.TryGetValue(id, out StateMachineBase stateMachine))
             {
-                stateMachine.Destroy();
+                stateMachine.Shutdown();
                 _stateMachines.Remove(id);
             }
         }
