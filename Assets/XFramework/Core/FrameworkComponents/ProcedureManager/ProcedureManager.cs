@@ -10,8 +10,7 @@ namespace XGame.Core
     [AddComponentMenu("XFramework/Procedure Manager")]
     public sealed class ProcedureManager : FrameworkComponent
     {
-        private readonly string[] _availableProcedureTypeNames;
-        private readonly string _startupProcedureTypeName;
+        private readonly ProcedureManagerSetting _setting;
 
         private StateMachine<ProcedureManager> _procedureStateMachine;
         private ProcedureBase _startupProcedure;
@@ -21,22 +20,21 @@ namespace XGame.Core
 
         public ProcedureManager(ProcedureManagerSetting setting)
         {
-            _availableProcedureTypeNames = setting.AvailableProcedureTypeNames;
-            _startupProcedureTypeName = setting.StartupProcedureTypeName;
+            _setting = setting;
         }
 
         internal override void Init()
         {
             base.Init();
 
-            ProcedureBase[] procedures = new ProcedureBase[_availableProcedureTypeNames.Length];
+            ProcedureBase[] procedures = new ProcedureBase[_setting.AvailableProcedureTypeNames.Length];
             // 注册所有流程为状态
-            for (int i = 0; i < _availableProcedureTypeNames.Length; i++)
+            for (int i = 0; i < _setting.AvailableProcedureTypeNames.Length; i++)
             {
-                string typeName = _availableProcedureTypeNames[i];
+                string typeName = _setting.AvailableProcedureTypeNames[i];
                 Type type = TypeHelper.GetType(typeName) ?? throw new InvalidOperationException($"ProcedureManager init failed. Type '{typeName}' not found.");
                 procedures[i] = Activator.CreateInstance(type) as ProcedureBase;
-                if (typeName == _startupProcedureTypeName)
+                if (typeName == _setting.StartupProcedureTypeName)
                 {
                     _startupProcedure = procedures[i];
                 }
@@ -44,7 +42,7 @@ namespace XGame.Core
 
             if (_startupProcedure == null)
             {
-                throw new InvalidOperationException($"ProcedureManager init failed. Startup procedure '{_startupProcedureTypeName}' not found or failed to initialize.");
+                throw new InvalidOperationException($"ProcedureManager init failed. Startup procedure '{_setting.StartupProcedureTypeName}' not found or failed to initialize.");
             }
 
             _procedureStateMachine = M.StateMachineManager.Create(this, procedures);
