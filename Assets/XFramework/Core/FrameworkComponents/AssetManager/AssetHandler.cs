@@ -44,6 +44,10 @@ namespace XGame.Core
             RefCount = 1; // 初始化引用计数为 1
         }
 
+        /// <summary>
+        /// 异步实例化资源对象
+        /// </summary>
+        /// <returns>实例化得到的GameObject</returns>
         public async UniTask<GameObject> InstantiateAsync()
         {
             var option = _handle.InstantiateAsync();
@@ -83,7 +87,10 @@ namespace XGame.Core
             }
         }
 
-        internal void ForceRelease()
+        /// <summary>
+        /// 强制清空引用计数，释放句柄（谨慎使用，可能会造成资源缺失！）
+        /// </summary>
+        public void ForceRelease()
         {
             _handle?.Release();
             _handle = null;
