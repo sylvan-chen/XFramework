@@ -47,8 +47,7 @@ namespace XGame.Core
             base.Init();
 
             YooAssets.Initialize();
-            // 获取资源包对象，如果资源包不存在，则创建资源包
-            // 注意：需要先在 Collector 创建同名 Package
+            // 创建资源包实例（与Collector中创建的对应）
             _package = YooAssets.TryGetPackage(_setting.MainPackageName);
             _package ??= YooAssets.CreatePackage(_setting.MainPackageName);
             // 设置默认资源包，之后可以直接使用 YooAssets.XXX 接口来加载该资源包内容
