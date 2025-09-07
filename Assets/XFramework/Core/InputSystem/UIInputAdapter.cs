@@ -7,10 +7,20 @@ namespace XGame.InputSystem.Internal
     /// </summary>
     public class UIInputAdapter : GameInput.IUIActions
     {
+        private readonly GameInput _gameInput;
+
         public UIInputAdapter()
         {
-            GameInputWrapper.Instance.UI.SetCallbacks(this);
+            _gameInput = new GameInput();
+            _gameInput.UI.SetCallbacks(this);
         }
+
+        ~UIInputAdapter()
+        {
+            _gameInput.Dispose();
+        }
+
+        #region 接口实现
 
         public void OnCancel(InputAction.CallbackContext context)
         {
@@ -51,5 +61,7 @@ namespace XGame.InputSystem.Internal
         {
             throw new System.NotImplementedException();
         }
+
+        #endregion
     }
 }

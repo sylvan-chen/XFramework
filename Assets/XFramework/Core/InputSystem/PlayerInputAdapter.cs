@@ -9,14 +9,21 @@ namespace XGame.InputSystem
     /// </summary>
     public class PlayerInputAdapter : GameInput.IPlayerActions
     {
+        private readonly GameInput _gameInput;
+
         public PlayerInputAdapter()
         {
-            GameInputWrapper.Instance.Player.SetCallbacks(this);
+            _gameInput = new GameInput();
+            _gameInput.Player.SetCallbacks(this);
         }
 
-        public void Enable() => GameInputWrapper.Instance.Player.Enable();
-        public void Disable() => GameInputWrapper.Instance.Player.Disable();
-        public void Dispose() => GameInputWrapper.Instance.Dispose();
+        ~PlayerInputAdapter()
+        {
+            _gameInput.Dispose();
+        }
+
+        public void Enable() => _gameInput.Player.Enable();
+        public void Disable() => _gameInput.Player.Disable();
 
         #region 回调型Action
 
@@ -26,7 +33,7 @@ namespace XGame.InputSystem
 
         #region 轮询型Action
 
-        public Vector2 MoveInput => GameInputWrapper.Instance.Player.Move.ReadValue<Vector2>();
+        public Vector2 MoveInput => _gameInput.Player.Move.ReadValue<Vector2>();
 
         #endregion
 
