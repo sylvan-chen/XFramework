@@ -10,6 +10,8 @@ TextMesh Pro.meta
 Example[s]/
 Example[s].meta
 MagicaCloth2_SysInfo_*
+UnityEditorDarkMode/
+UnityEditorDarkMode.meta
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
