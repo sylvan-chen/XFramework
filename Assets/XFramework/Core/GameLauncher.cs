@@ -33,7 +33,10 @@ namespace XGame.Core
             base.Awake();
 
             gameObject.name ??= "[GameLauncher]";
-            if (Camera.main != null) DontDestroyOnLoad(Camera.main.gameObject);
+            if (Camera.main != null && Camera.main.transform.parent == null)
+            {
+                DontDestroyOnLoad(Camera.main.gameObject);
+            }
         }
 
         private void Start()
