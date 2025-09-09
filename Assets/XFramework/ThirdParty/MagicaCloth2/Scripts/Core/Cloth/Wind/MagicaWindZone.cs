@@ -111,26 +111,22 @@ namespace MagicaCloth2
 
 
         //=========================================================================================
-        public void Awake()
+        protected void Awake()
         {
             WindId = MagicaManager.Wind.AddWind(this);
         }
 
-        public void Start()
-        {
-        }
-
-        public void OnEnable()
+        protected void OnEnable()
         {
             MagicaManager.Wind.SetEnable(WindId, true);
         }
 
-        public void OnDisable()
+        protected void OnDisable()
         {
             MagicaManager.Wind?.SetEnable(WindId, false);
         }
 
-        public void OnDestroy()
+        protected void OnDestroy()
         {
             MagicaManager.Wind?.RemoveWind(WindId);
             WindId = -1;

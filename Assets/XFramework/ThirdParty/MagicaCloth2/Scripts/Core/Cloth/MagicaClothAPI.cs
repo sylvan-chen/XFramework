@@ -319,7 +319,8 @@ namespace MagicaCloth2
         /// <returns>null if not found</returns>
         public Mesh GetOriginalMesh(Renderer ren)
         {
-            return GetRenderData(ren)?.originalMesh ?? null;
+            var rdata = GetRenderData(ren);
+            return rdata != null ? rdata.originalMesh : null;
         }
 
         /// <summary>
@@ -330,7 +331,8 @@ namespace MagicaCloth2
         /// <returns>null if not found</returns>
         public Mesh GetCustomMesh(Renderer ren)
         {
-            return GetRenderData(ren)?.customMesh ?? null;
+            var rdata = GetRenderData(ren);
+            return rdata != null ? rdata.customMesh : null;
         }
 
         /// <summary>

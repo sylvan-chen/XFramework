@@ -452,8 +452,8 @@ namespace MagicaCloth2
             }
 
             // ビルド完了イベント
-            if (buildComplate)
-                cloth?.OnBuildComplete?.Invoke(cloth, ret);
+            if (buildComplate && cloth != null)
+                cloth.OnBuildComplete?.Invoke(cloth, ret);
 
             return ret;
         }

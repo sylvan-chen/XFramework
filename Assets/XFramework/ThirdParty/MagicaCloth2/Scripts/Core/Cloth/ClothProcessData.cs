@@ -362,7 +362,7 @@ namespace MagicaCloth2
                 interlockingAnimatorRenderers.Clear();
 
                 // PreBuildデータ解除
-                MagicaManager.PreBuild?.UnregisterPreBuildData(cloth?.GetSerializeData2()?.preBuildData.GetSharePreBuildData());
+                MagicaManager.PreBuild?.UnregisterPreBuildData(cloth != null ? cloth.GetSerializeData2()?.preBuildData.GetSharePreBuildData() : null);
 
                 // 作業バッファ破棄
                 SyncTopCloth = null;

@@ -80,8 +80,7 @@ namespace MagicaCloth2
             {
                 obj.transform.parent = parent.transform;
             }
-            obj.transform.localPosition = Vector3.zero;
-            obj.transform.localRotation = Quaternion.identity;
+            obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
 
             if (autoScale && parent)
             {

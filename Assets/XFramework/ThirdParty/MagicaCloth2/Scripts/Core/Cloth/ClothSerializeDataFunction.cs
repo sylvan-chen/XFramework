@@ -122,7 +122,7 @@ namespace MagicaCloth2
             int hash = 0;
             hash += (int)clothType;
             foreach (var ren in sourceRenderers)
-                hash += ren?.GetInstanceID() ?? NullHash;
+                hash += ren != null ? ren.GetInstanceID() : NullHash;
             foreach (var t in rootBones)
             {
                 var stack = new Stack<Transform>(30);

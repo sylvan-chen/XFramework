@@ -13,6 +13,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 242307
   packageName: Magica Cloth 2
-  packageVersion: 2.16.1
-  assetPath: Assets/MagicaCloth2/Scripts/Core/Cloth/Constraints/MotionConstraint.cs
-  uploadId: 756593
+  packageVersion: 2.16.2
+  assetPath: Assets/XFramework/ThirdParty/MagicaCloth2/Scripts/Core/Cloth/Constraints/MotionConstraint.cs
+  uploadId: 785062

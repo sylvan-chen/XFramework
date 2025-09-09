@@ -280,8 +280,7 @@ namespace MagicaCloth2
                 }
                 else
                 {
-                    var filter = ren.GetComponent<MeshFilter>();
-                    if (filter == null)
+                    if (!ren.TryGetComponent<MeshFilter>(out var filter))
                     {
                         result.SetError(Define.Result.RenderSetup_InvalidSource);
                         return;
@@ -678,8 +677,7 @@ namespace MagicaCloth2
                 if (transform.isValid == false)
                     return;
 
-                var pos = transform.position;
-                var rot = transform.rotation;
+                transform.GetPositionAndRotation(out var pos, out var rot);
                 float4x4 LtoW = transform.localToWorldMatrix;
 
                 positions[index] = pos;

@@ -956,8 +956,7 @@ namespace MagicaCloth2
                 drawList.Clear();
                 bool isPainting = ClothPainter.IsPainting();
                 bool isPlaying = EditorApplication.isPlaying;
-                var camPos = sceneView.camera.transform.position;
-                Quaternion camRot = sceneView.camera.transform.rotation;
+                sceneView.camera.transform.GetPositionAndRotation(out var camPos, out Quaternion camRot);
 
                 lock (editClothDict)
                 {

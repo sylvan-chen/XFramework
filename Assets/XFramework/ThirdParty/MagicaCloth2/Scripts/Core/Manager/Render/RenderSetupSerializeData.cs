@@ -71,8 +71,7 @@ namespace MagicaCloth2
                 if (hasSkinnedMesh)
                     return false;
 
-                var filter = ren.GetComponent<MeshFilter>();
-                if (filter == null)
+                if (!ren.TryGetComponent<MeshFilter>(out var filter))
                     return false;
 
                 var smesh = filter.sharedMesh;

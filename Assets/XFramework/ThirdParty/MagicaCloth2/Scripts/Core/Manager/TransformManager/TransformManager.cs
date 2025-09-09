@@ -633,8 +633,7 @@ namespace MagicaCloth2
                 if ((tdata.IsCameraCullingInvisible && tdata.IsCameraCullingKeep) || tdata.IsDistanceCullingInvisible)
                     return;
 
-                transform.localPosition = localPositionArray[index];
-                transform.localRotation = localRotationArray[index];
+                transform.SetLocalPositionAndRotation(localPositionArray[index], localRotationArray[index]);
 
                 // 物理更新チームの存在
                 if (tdata.IsFixedUpdate)
@@ -711,8 +710,7 @@ namespace MagicaCloth2
                 if ((tdata.IsCameraCullingInvisible && tdata.IsCameraCullingKeep) || tdata.IsDistanceCullingInvisible)
                     return;
 
-                transform.localPosition = baseLocalPositionArray[index];
-                transform.localRotation = baseLocalRotationArray[index];
+                transform.SetLocalPositionAndRotation(baseLocalPositionArray[index], baseLocalRotationArray[index]);
 
                 //Debug.Log($"RestoreTransform [{index}] lpos:{baseLocalPositionArray[index]}, lrot:{baseLocalRotationArray[index].value}");
             }
@@ -806,8 +804,7 @@ namespace MagicaCloth2
                 if (tdata.IsCullingInvisible)
                     return;
 
-                var pos = transform.position;
-                var rot = transform.rotation;
+                transform.GetPositionAndRotation(out var pos, out var rot);
                 float4x4 LtoW = transform.localToWorldMatrix;
 
                 positionArray[index] = pos;
@@ -929,8 +926,7 @@ namespace MagicaCloth2
                 else if (flag.IsSet(Flag_LocalPosRotWrite))
                 {
                     // ローカル座標・回転を書き込む
-                    transform.localPosition = localPositions[index];
-                    transform.localRotation = localRotations[index];
+                    transform.SetLocalPositionAndRotation(localPositions[index], localRotations[index]);
 
                     //Debug.Log($"WriteTransform [{index}] (local!) lpos:{localPositions[index]}, lrot:{localRotations[index]}");
                 }
@@ -1069,7 +1065,10 @@ namespace MagicaCloth2
                         sb.Append(flag.IsSet(Flag_Read) ? "r" : "");
                         sb.Append(flag.IsSet(Flag_WorldRotWrite) ? "W" : "");
                         sb.Append(flag.IsSet(Flag_LocalPosRotWrite) ? "w" : "");
-                        sb.AppendLine($") {t?.name ?? "(null)"}");
+                        if (t)
+                            sb.AppendLine($") {t.name}");
+                        else
+                            sb.AppendLine($") (null)");
                     }
                 }
 
@@ -1091,7 +1090,10 @@ namespace MagicaCloth2
                         sb.Append(flag.IsSet(Flag_Read) ? "r" : "");
                         sb.Append(flag.IsSet(Flag_WorldRotWrite) ? "W" : "");
                         sb.Append(flag.IsSet(Flag_LocalPosRotWrite) ? "w" : "");
-                        sb.AppendLine($") {t?.name ?? "(null)"}");
+                        if (t)
+                            sb.AppendLine($") {t.name}");
+                        else
+                            sb.AppendLine($") (null)");
                     }
                 }
             }

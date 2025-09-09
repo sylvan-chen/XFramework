@@ -1250,6 +1250,13 @@ namespace MagicaCloth2
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 TransformNormal(in float3 dir, in float4x4 m, float3 errDir)
+        {
+            // 姿勢変換後に単位化する
+            return math.normalizesafe(TransformVector(dir, m), errDir);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static quaternion TransformRotation(in quaternion rot, in float4x4 m, in float3 normalTangentFlip)
         {
             ToNormalTangent(rot, out float3 nor, out float3 tan);

@@ -187,7 +187,7 @@ namespace MagicaCloth2
                 {
                     // Transformからデータを取得（メインスレッドのみ）
                     idArray[index] = t.GetInstanceID();
-                    parentIdArray[index] = t.parent?.GetInstanceID() ?? 0;
+                    parentIdArray[index] = t.parent ? t.parent.GetInstanceID() : 0;
                     initLocalPositionArray[index] = t.localPosition;
                     initLocalRotationArray[index] = t.localRotation;
                     positionArray[index] = t.position;
@@ -222,7 +222,7 @@ namespace MagicaCloth2
                 {
                     // Transformからデータを取得（メインスレッドのみ）
                     idArray.Add(t.GetInstanceID());
-                    parentIdArray.Add(t.parent?.GetInstanceID() ?? 0);
+                    parentIdArray.Add(t.parent ? t.parent.GetInstanceID() : 0);
                     initLocalPositionArray.Add(t.localPosition);
                     initLocalRotationArray.Add(t.localRotation);
                     positionArray.Add(t.position);
@@ -535,7 +535,7 @@ namespace MagicaCloth2
             {
                 // Transformからデータを取得（メインスレッドのみ）
                 idArray[index] = t.GetInstanceID();
-                parentIdArray[index] = t.parent?.GetInstanceID() ?? 0;
+                parentIdArray[index] = t.parent ? t.parent.GetInstanceID() : 0;
                 initLocalPositionArray[index] = t.localPosition;
                 initLocalRotationArray[index] = t.localRotation;
                 positionArray[index] = t.position;
@@ -647,8 +647,7 @@ namespace MagicaCloth2
                 //byte flag = flagList[index];
                 //if ((flag & Flag_Write) != 0)
                 {
-                    transform.localPosition = localPositionArray[index];
-                    transform.localRotation = localRotationArray[index];
+                    transform.SetLocalPositionAndRotation(localPositionArray[index], localRotationArray[index]);
                 }
             }
         }
@@ -724,8 +723,7 @@ namespace MagicaCloth2
                 //byte flag = flagList[index];
                 //if ((flag & Flag_Read) != 0)
                 {
-                    var pos = transform.position;
-                    var rot = transform.rotation;
+                    transform.GetPositionAndRotation(out var pos, out var rot);
                     float4x4 LtoW = transform.localToWorldMatrix;
 
                     positionArray[index] = pos;

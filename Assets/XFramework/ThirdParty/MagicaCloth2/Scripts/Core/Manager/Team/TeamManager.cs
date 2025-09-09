@@ -2211,7 +2211,7 @@ namespace MagicaCloth2
             // ・慣性の小刻みな変化によるクロスの振動の緩和
             float3 smoothDeltaVector = 0;
 #if true
-            if (param.inertiaConstraint.movementInertiaSmoothing >= 1e-06f)
+            if (param.inertiaConstraint.movementInertiaSmoothing >= 1e-06f && !(tdata.IsKeepReset || tdata.IsReset))
             {
                 // 慣性速度をスムージングする
                 // 測定はシミュレーションが実行される場合のみ行う（そうしないと振動が発生する）

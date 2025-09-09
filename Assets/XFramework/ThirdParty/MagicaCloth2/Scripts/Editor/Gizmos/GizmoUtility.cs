@@ -292,7 +292,7 @@ namespace MagicaCloth2
             else if (collider is MagicaPlaneCollider)
             {
                 DrawWireCube(Vector3.zero, Quaternion.identity, new Vector3(1.0f, 0.0f, 1.0f) * 1.0f, true);
-                DrawLine(Vector3.zero, Vector3.up * 0.25f * direction, true);
+                DrawLine(Vector3.zero, 0.25f * direction * Vector3.up, true);
             }
             else if (collider is MagicaCapsuleCollider)
             {

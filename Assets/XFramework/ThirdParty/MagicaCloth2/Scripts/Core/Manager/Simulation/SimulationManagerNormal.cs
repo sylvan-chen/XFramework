@@ -1282,7 +1282,7 @@ namespace MagicaCloth2
 
                     if (math.abs(ylen) > y)
                     {
-                        v -= dir * (math.abs(ylen) - y) * math.sign(ylen);
+                        v -= (math.abs(ylen) - y) * math.sign(ylen) * dir;
                     }
                 }
             }

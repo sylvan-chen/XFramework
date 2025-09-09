@@ -357,8 +357,10 @@ namespace MagicaCloth2
 
                 // 再びローカル空間に変換する
                 localPositions[vindex] = MathUtility.TransformPoint(wpos, toM);
-                localNormals[vindex] = MathUtility.TransformDirection(wnor, toM);
-                localTangents[vindex] = MathUtility.TransformDirection(wtan, toM);
+                //localNormals[vindex] = MathUtility.TransformDirection(wnor, toM);
+                //localTangents[vindex] = MathUtility.TransformDirection(wtan, toM);
+                localNormals[vindex] = MathUtility.TransformNormal(wnor, toM, math.up());
+                localTangents[vindex] = MathUtility.TransformNormal(wtan, toM, math.right());
             }
         }
 

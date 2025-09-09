@@ -64,7 +64,7 @@ namespace MagicaCloth2
                 return;
 
             // シーンカメラ
-            var scam = SceneView.currentDrawingSceneView?.camera;
+            var scam = SceneView.currentDrawingSceneView != null ? SceneView.currentDrawingSceneView.camera : null;
             if (scam == null)
                 return;
             var crot = scam.transform.rotation;
@@ -466,7 +466,7 @@ namespace MagicaCloth2
                 return;
 
             // シーンカメラ
-            var scam = SceneView.currentDrawingSceneView?.camera;
+            var scam = SceneView.currentDrawingSceneView != null ? SceneView.currentDrawingSceneView.camera : null;
             if (scam == null)
                 return;
             var crot = scam.transform.rotation;

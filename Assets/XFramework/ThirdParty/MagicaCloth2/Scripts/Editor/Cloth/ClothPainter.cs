@@ -687,7 +687,8 @@ namespace MagicaCloth2
         {
             // セレクションデータデータをシリアライズ化する
             selectionData.userEdit = true; // ユーザー編集フラグを立てる
-            clothEditor?.ApplyClothPainter(selectionData);
+            if (clothEditor != null)
+                clothEditor.ApplyClothPainter(selectionData);
 
             // Undo/Redoの状態を切り替えるためセレクションデータのクローンを作成して切り替える
             selectionData = selectionData.Clone();
@@ -873,7 +874,8 @@ namespace MagicaCloth2
                     if (initSelectionData.Compare(selectionData) == false)
                     {
                         Develop.DebugLog($"Change selection data!");
-                        clothEditor?.UpdateEditMesh();
+                        if (clothEditor != null)
+                            clothEditor.UpdateEditMesh();
                     }
 
                     ExitPaint();

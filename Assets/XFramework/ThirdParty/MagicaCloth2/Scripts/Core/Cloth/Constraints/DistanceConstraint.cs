@@ -499,7 +499,7 @@ namespace MagicaCloth2
 
                         // 伸縮
                         float3 n = math.normalize(v);
-                        float3 corr = finalStiffness * n * (distance - restLength) / (invMass + t_invMass);
+                        float3 corr = (distance - restLength) * finalStiffness * n / (invMass + t_invMass);
                         float3 corr0 = invMass * corr;
                         //float3 corr1 = -t_invMass * corr; // 相手側(使用しない)
 

@@ -181,8 +181,8 @@ namespace MagicaCloth2
             MagicaManager.Render.SetBitsRenderDataWorkFlag(renderDataWorkIndex, RenderManager.RenderDataFlag_UseCustomMesh, true);
 
             // Event
-            if (process != null)
-                process.cloth?.OnRendererMeshChange?.Invoke(process.cloth, renderer, true);
+            if (process != null && process.cloth)
+                process.cloth.OnRendererMeshChange?.Invoke(process.cloth, renderer, true);
         }
 
         void ResetCustomMeshWorkData()
@@ -246,8 +246,8 @@ namespace MagicaCloth2
             rm.SetBitsRenderDataWorkFlag(renderDataWorkIndex, RenderManager.RenderDataFlag_UseCustomMesh, false);
 
             // Event
-            if (process != null)
-                process.cloth?.OnRendererMeshChange?.Invoke(process.cloth, renderer, false);
+            if (process != null && process.cloth)
+                process.cloth.OnRendererMeshChange?.Invoke(process.cloth, renderer, false);
         }
 
         /// <summary>

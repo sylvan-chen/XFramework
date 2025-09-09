@@ -115,25 +115,25 @@ namespace MagicaCloth2
         public int splitProxyMeshVertexCount = Define.System.SplitProxyMeshVertexCount;
 
         //=========================================================================================
-        public void Awake()
+        protected void Awake()
         {
             if (refreshMode == RefreshMode.OnAwake)
                 Refresh();
         }
 
-        public void Start()
+        protected void Start()
         {
             if (refreshMode == RefreshMode.OnStart)
                 Refresh();
         }
 
-        public void Update()
+        protected void Update()
         {
             if (refreshMode == RefreshMode.EveryFrame)
                 Refresh();
         }
 
-        private void OnValidate()
+        protected void OnValidate()
         {
             if (Application.isPlaying)
                 Refresh();

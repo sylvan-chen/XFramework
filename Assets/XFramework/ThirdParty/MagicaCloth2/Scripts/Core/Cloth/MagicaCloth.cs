@@ -80,7 +80,7 @@ namespace MagicaCloth2
         }
 
         //=========================================================================================
-        private void Reset()
+        protected void Reset()
         {
 #if UNITY_EDITOR
             // Automatically generate pre-build ID
@@ -88,12 +88,12 @@ namespace MagicaCloth2
 #endif
         }
 
-        private void OnValidate()
+        protected void OnValidate()
         {
             Process.DataUpdate();
         }
 
-        private void Awake()
+        protected void Awake()
         {
             if (MagicaManager.initializationLocation == MagicaManager.InitializationLocation.Awake)
             {
@@ -102,17 +102,17 @@ namespace MagicaCloth2
             }
         }
 
-        private void OnEnable()
+        protected void OnEnable()
         {
             Process.StartUse();
         }
 
-        private void OnDisable()
+        protected void OnDisable()
         {
             Process.EndUse();
         }
 
-        void Start()
+        protected void Start()
         {
             if (MagicaManager.initializationLocation == MagicaManager.InitializationLocation.Start)
             {
@@ -123,7 +123,7 @@ namespace MagicaCloth2
             Process.AutoBuild();
         }
 
-        private void OnDestroy()
+        protected void OnDestroy()
         {
             Process.Dispose();
         }
