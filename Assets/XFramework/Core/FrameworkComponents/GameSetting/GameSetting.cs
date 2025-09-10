@@ -60,9 +60,9 @@ namespace XGame.Core
             get { return Time.timeScale == 0f; }
         }
 
-        internal override void Init()
+        internal override void Initialize()
         {
-            base.Init();
+            base.Initialize();
 #if UNITY_5_3_OR_NEWER
             Application.targetFrameRate = _frameRate;
             Application.runInBackground = _allowRunInBackground;
@@ -77,9 +77,9 @@ namespace XGame.Core
 #endif
         }
 
-        internal override void Shutdown()
+        internal override void Dispose()
         {
-            base.Shutdown();
+            base.Dispose();
 #if UNITY_5_6_OR_NEWER
             Application.lowMemory -= OnLowMemory;
 #endif

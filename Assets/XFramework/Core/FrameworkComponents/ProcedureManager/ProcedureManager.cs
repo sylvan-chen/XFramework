@@ -23,9 +23,9 @@ namespace XGame.Core
             _setting = setting;
         }
 
-        internal override void Init()
+        internal override void Initialize()
         {
-            base.Init();
+            base.Initialize();
 
             ProcedureBase[] procedures = new ProcedureBase[_setting.AvailableProcedureTypeNames.Length];
             // 注册所有流程为状态
@@ -48,9 +48,9 @@ namespace XGame.Core
             _procedureStateMachine = M.StateMachineManager.CreateFsm(this, procedures);
         }
 
-        internal override void Shutdown()
+        internal override void Dispose()
         {
-            base.Shutdown();
+            base.Dispose();
 
             M.StateMachineManager.ShutdownFsm<ProcedureManager>();
             _procedureStateMachine = null;

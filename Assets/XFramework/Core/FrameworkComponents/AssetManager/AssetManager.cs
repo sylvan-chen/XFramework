@@ -42,9 +42,9 @@ namespace XGame.Core
             _setting = setting;
         }
 
-        internal override void Init()
+        internal override void Initialize()
         {
-            base.Init();
+            base.Initialize();
 
             YooAssets.Initialize();
             // 创建资源包实例（与Collector中创建的对应）
@@ -54,9 +54,9 @@ namespace XGame.Core
             YooAssets.SetDefaultPackage(_package);
         }
 
-        internal override void Shutdown()
+        internal override void Dispose()
         {
-            base.Shutdown();
+            base.Dispose();
 
             ClearAssetHandlerCache();
             ClearSceneHandleCache();

@@ -16,14 +16,14 @@ namespace XGame.Core
 
         public int Count => _poolDict.Count;
 
-        internal override void Init()
+        internal override void Initialize()
         {
-            base.Init();
+            base.Initialize();
         }
 
-        internal override void Shutdown()
+        internal override void Dispose()
         {
-            base.Shutdown();
+            base.Dispose();
             foreach (PoolBase pool in _poolDict.Values)
             {
                 pool.Destroy();

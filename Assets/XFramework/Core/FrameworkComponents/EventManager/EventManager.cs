@@ -11,37 +11,34 @@ namespace XGame.Core
         /// <summary>
         /// 事件字典
         /// </summary>
-        /// <remarks>
-        /// key 为事件 ID，value 为事件委托调用链。
-        /// </remarks>
-        private readonly Dictionary<int, EventHandlerChain> _handlerChainDict = new();
+        private readonly Dictionary<int, EventListenerChain> _listenerChainMap = new();
 
         /// <summary>
         /// 延迟发布事件列表
         /// </summary>
-        private readonly XLinkedList<DelayEventWrapper> _delayedEvents = new();
+        private readonly XLinkedList<DelayedEvent> _delayedEvents = new();
 
-        public int SubscribedEventCount => _handlerChainDict.Count;
+        public int EventCount => _listenerChainMap.Count;
         public int DelayedEventCount => _delayedEvents.Count;
 
-        internal override void Init()
+        internal override void Initialize()
         {
-            base.Init();
+            base.Initialize();
         }
 
-        internal override void Shutdown()
+        internal override void Dispose()
         {
-            base.Shutdown();
+            base.Dispose();
 
-            foreach (EventHandlerChain handlerChain in _handlerChainDict.Values)
+            foreach (EventListenerChain listenerChain in _listenerChainMap.Values)
             {
-                handlerChain.Destroy();
+                listenerChain.Destroy();
             }
-            foreach (DelayEventWrapper wrapper in _delayedEvents)
+            foreach (DelayedEvent delayedEvent in _delayedEvents)
             {
-                wrapper.Destroy();
+                delayedEvent.Destroy();
             }
-            _handlerChainDict.Clear();
+            _listenerChainMap.Clear();
             _delayedEvents.Clear();
         }
 
@@ -54,103 +51,109 @@ namespace XGame.Core
                 var node = _delayedEvents.First;
                 while (node != null)
                 {
-                    DelayEventWrapper wrapper = node.Value;
-                    wrapper.DelaySeconds -= deltaTime;
-                    if (wrapper.DelaySeconds <= 0)
+                    DelayedEvent delayedEvent = node.Value;
+                    delayedEvent.DelaySeconds -= deltaTime;
+                    if (delayedEvent.DelaySeconds <= 0)
                     {
-                        wrapper.HandlerChain.Fire(wrapper.Event);
+                        delayedEvent.ListenerChain.Invoke(delayedEvent.Event);
                         _delayedEvents.Remove(node);
-                        wrapper.Destroy();
+                        delayedEvent.Destroy();
                     }
                     node = node.Next;
                 }
             }
         }
 
-        public void Subscribe(int id, Action<IEvent> handler)
+        public void AddListener(int id, Action<IEvent> listener)
         {
-            if (handler == null)
+            if (listener == null)
             {
-                throw new ArgumentNullException(nameof(handler), "Subscribe failed, handler cannot be null.");
+                Log.Error("[EventManager] AddListener failed, listener cannot be null.");
+                return;
             }
-            if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChian))
+
+            if (_listenerChainMap.TryGetValue(id, out EventListenerChain listenerChian))
             {
-                handlerChian.AddHandler(handler);
+                listenerChian.AddListener(listener);
             }
             else
             {
-                _handlerChainDict.Add(id, EventHandlerChain.Create());
-                _handlerChainDict[id].AddHandler(handler);
+                _listenerChainMap.Add(id, EventListenerChain.Create());
+                _listenerChainMap[id].AddListener(listener);
             }
         }
 
-        public void Unsubscribe(int id, Action<IEvent> handler)
+        public void RemoveListener(int id, Action<IEvent> listener)
         {
-            if (handler == null)
+            if (listener == null)
             {
-                throw new ArgumentNullException(nameof(handler), "Unsubscribe failed, handler cannot be null.");
+                Log.Error("[EventManager] RemoveListener failed, listener cannot be null.");
+                return;
             }
-            if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChain))
+            if (_listenerChainMap.TryGetValue(id, out EventListenerChain listenerChain))
             {
-                handlerChain.RemoveHandler(handler);
-                if (handlerChain.Count == 0)
+                listenerChain.RemoveListener(listener);
+                if (listenerChain.Count == 0)
                 {
-                    handlerChain.Destroy();
-                    _handlerChainDict.Remove(id);
+                    listenerChain.Destroy();
+                    _listenerChainMap.Remove(id);
                 }
             }
             else
             {
-                Log.Error($"[XFramework] [EventManager] Unsubscribe failed, event id {id} does not exist.");
+                Log.Error($"[EventManager] RemoveListener failed, event id {id} does not exist.");
             }
         }
 
-        public void Publish(int id, IEvent evt)
+        public void Dispatch(int id, IEvent evt)
         {
             if (evt == null)
             {
-                throw new ArgumentNullException(nameof(evt), "Publish failed, event arguments cannot be null.");
+                Log.Error("[EventManager] Dispatch failed, event arguments cannot be null.");
+                return;
             }
-            if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChain))
+
+            if (_listenerChainMap.TryGetValue(id, out EventListenerChain listenerChain))
             {
-                handlerChain.Fire(evt);
+                listenerChain.Invoke(evt);
             }
             else
             {
-                Log.Error($"[XFramework] [EventManager] Publish failed, event id {id} does not exist.");
+                Log.Error($"[EventManager] Dispatch failed, event id {id} does not exist.");
             }
             evt.Destroy();
         }
 
-        public void PublishLater(int id, IEvent evt, float delaySeconds = 1f)
+        public void DispatchLater(int id, IEvent evt, float delaySeconds = 1f)
         {
             if (evt == null)
             {
-                throw new ArgumentNullException(nameof(evt), "PublishLater failed, event arguments cannot be null.");
+                Log.Error("[EventManager] DispatchLater failed, event arguments cannot be null.");
+                return;
             }
             lock (_delayedEvents)
             {
-                if (_handlerChainDict.TryGetValue(id, out EventHandlerChain handlerChain))
+                if (_listenerChainMap.TryGetValue(id, out EventListenerChain handlerChain))
                 {
-                    _delayedEvents.AddLast(DelayEventWrapper.Create(evt, handlerChain, delaySeconds));
+                    _delayedEvents.AddLast(DelayedEvent.Create(evt, handlerChain, delaySeconds));
                 }
                 else
                 {
-                    Log.Error($"[XFramework] [EventManager] PublishLater failed, event id {id} does not exist.");
+                    Log.Error($"[EventManager] DispatchLater failed, event id {id} does not exist.");
                 }
             }
         }
 
         /// <summary>
-        /// 移除所有订阅
+        /// 移除所有监听
         /// </summary>
-        public void RemoveAllSubscriptions()
+        public void ClearAllListeneers()
         {
-            foreach (EventHandlerChain handlerChain in _handlerChainDict.Values)
+            foreach (EventListenerChain handlerChain in _listenerChainMap.Values)
             {
                 handlerChain.Destroy();
             }
-            _handlerChainDict.Clear();
+            _listenerChainMap.Clear();
         }
     }
 }

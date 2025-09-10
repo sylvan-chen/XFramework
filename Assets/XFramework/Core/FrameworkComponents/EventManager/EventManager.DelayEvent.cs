@@ -7,17 +7,17 @@ namespace XGame.Core
         /// <summary>
         /// 延迟事件包装类
         /// </summary>
-        private class DelayEventWrapper : ICache
+        private class DelayedEvent : ICache
         {
             public IEvent Event;
-            public EventHandlerChain HandlerChain;
+            public EventListenerChain ListenerChain;
             public float DelaySeconds;
 
-            public static DelayEventWrapper Create(IEvent evt, EventHandlerChain handlerChain, float delaySeconds)
+            public static DelayedEvent Create(IEvent evt, EventListenerChain handlerChain, float delaySeconds)
             {
-                var wrapper = CachePool.Spawn<DelayEventWrapper>();
+                var wrapper = CachePool.Spawn<DelayedEvent>();
                 wrapper.Event = evt ?? throw new ArgumentNullException(nameof(evt), "Spawn DelayEventWrapper failed. Args is null.");
-                wrapper.HandlerChain = handlerChain ?? throw new ArgumentNullException(nameof(handlerChain), "Spawn DelayEventWrapper failed. HandlerChain is null.");
+                wrapper.ListenerChain = handlerChain ?? throw new ArgumentNullException(nameof(handlerChain), "Spawn DelayEventWrapper failed. HandlerChain is null.");
                 wrapper.DelaySeconds = delaySeconds;
                 return wrapper;
             }
@@ -31,7 +31,7 @@ namespace XGame.Core
             {
                 Event.Destroy();
                 Event = null;
-                HandlerChain = null;
+                ListenerChain = null;
                 DelaySeconds = 0;
             }
         }

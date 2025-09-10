@@ -27,18 +27,18 @@ namespace XGame.Core
             _setting = setting;
         }
 
-        internal override void Init()
+        internal override void Initialize()
         {
-            base.Init();
+            base.Initialize();
 
             CreateUIRoot();
             CreateUICamera();
             CreateUILayers();
         }
 
-        internal override void Shutdown()
+        internal override void Dispose()
         {
-            base.Shutdown();
+            base.Dispose();
 
             foreach (var handler in _assetHandlers)
             {

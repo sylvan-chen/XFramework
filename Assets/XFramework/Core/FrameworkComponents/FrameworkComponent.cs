@@ -11,12 +11,12 @@ namespace XGame.Core
         public bool IsShutDown { get; private set; }
         public int Priority { get; internal set; }
 
-        internal virtual void Init()
+        internal virtual void Initialize()
         {
             IsInitialized = true;
         }
 
-        internal virtual void Shutdown()
+        internal virtual void Dispose()
         {
             IsShutDown = true;
         }

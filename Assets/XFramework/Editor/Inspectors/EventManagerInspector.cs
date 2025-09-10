@@ -18,7 +18,7 @@ namespace XGame.Editor
 
             var targetObject = target as EventManagerDebugger;
             var targetComponent = targetObject.Component as EventManager;
-            EditorGUILayout.LabelField("Subscribed Event Count", targetComponent.SubscribedEventCount.ToString());
+            EditorGUILayout.LabelField("Subscribed Event Count", targetComponent.EventCount.ToString());
             EditorGUILayout.LabelField("Delayed Event Count", targetComponent.DelayedEventCount.ToString());
 
             Repaint();

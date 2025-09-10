@@ -22,9 +22,9 @@ namespace XGame.Core
             _setting = setting;
         }
 
-        internal override void Init()
+        internal override void Initialize()
         {
-            base.Init();
+            base.Initialize();
 
             if (_setting.PreloadOnInit)
             {

@@ -15,14 +15,14 @@ namespace XGame.Core
 
         private const string DefaultStateMachineName = "default";
 
-        internal override void Init()
+        internal override void Initialize()
         {
-            base.Init();
+            base.Initialize();
         }
 
-        internal override void Shutdown()
+        internal override void Dispose()
         {
-            base.Shutdown();
+            base.Dispose();
 
             foreach (StateMachineBase stateMachine in _stateMachines.Values)
             {

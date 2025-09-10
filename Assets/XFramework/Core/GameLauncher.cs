@@ -56,7 +56,7 @@ namespace XGame.Core
         {
             foreach (FrameworkComponent component in _cachedComponents)
             {
-                component.Init();
+                component.Initialize();
                 await UniTask.NextFrame(); // 等待一帧让组件完成初始化
             }
 
@@ -156,7 +156,7 @@ namespace XGame.Core
             _cachedComponents.Reverse();
             foreach (FrameworkComponent component in _cachedComponents)
             {
-                component.Shutdown();
+                component.Dispose();
             }
             _cachedComponents.Clear();
             _componentMap.Clear();
