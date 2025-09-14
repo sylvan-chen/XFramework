@@ -62,6 +62,16 @@ namespace XGame.InputSystem.Internal
             throw new System.NotImplementedException();
         }
 
+        public void OnTrackedDeviceOrientation(InputAction.CallbackContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void OnTrackedDevicePosition(InputAction.CallbackContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
         #endregion
     }
 }

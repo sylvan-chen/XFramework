@@ -5,6 +5,6 @@ namespace XGame.Core
     /// </summary>
     public interface IEvent : ICache
     {
-        internal void Destroy();
+        public void Destroy();
     }
 }
